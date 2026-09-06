@@ -24,7 +24,7 @@ wrong-shaped rather than absent.
 
 | Relationship | How to reach it |
 | ------------ | --------------- |
-| **Blocked-by / blocking** | `scripts/issue-deps.sh`. No MCP tool, no MCP field. |
+| **Blocked-by / blocking** | `${CLAUDE_PLUGIN_ROOT}/skills/issue-deps/scripts/issue-deps.sh`. No MCP tool, no MCP field. |
 | **Sub-issue / parent** | The MCP: `sub_issue_write`, `issue_read` with `get_sub_issues` / `get_parent`, `issue_write` with `parent_issue_number`. Cross-repo works. |
 | **Which PR closes an issue** | The MCP only: `issue_read` returns `closed_by_pull_requests`. REST has no such field. |
 
@@ -76,13 +76,20 @@ Blocked-by and blocking: the script
 traps described below by construction — it takes issue references, never raw
 ids, and verifies every write from the other end.
 
+Always invoke it through `${CLAUDE_PLUGIN_ROOT}`. A skill's Bash runs in the
+user's project, not in the plugin, so a relative `scripts/issue-deps.sh` is
+"No such file or directory" — or worse, silently runs an unrelated file in a
+project that has its own `scripts/`.
+
 ```sh
-scripts/issue-deps.sh blocked-by 191            # what #191 waits on
-scripts/issue-deps.sh blocking   188            # what waits on #188
-scripts/issue-deps.sh summary    191            # open and total, both directions
-scripts/issue-deps.sh add    191 199            # #191 is blocked by #199
-scripts/issue-deps.sh remove 191 199
-scripts/issue-deps.sh add 190 googleapis/release-please#2853
+deps="${CLAUDE_PLUGIN_ROOT}/skills/issue-deps/scripts/issue-deps.sh"
+
+"$deps" blocked-by 191            # what #191 waits on
+"$deps" blocking   188            # what waits on #188
+"$deps" summary    191            # open and total, both directions
+"$deps" add    191 199            # #191 is blocked by #199
+"$deps" remove 191 199
+"$deps" add 190 googleapis/release-please#2853
 ```
 
 An issue is `123`, `#123`, `owner/repo#123`, or a github.com URL; a bare number

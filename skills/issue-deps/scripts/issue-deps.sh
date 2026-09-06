@@ -142,7 +142,13 @@ parse_ref() {
 default_repo_from_git() {
 	local url
 	url=$(git remote get-url origin 2>/dev/null) || return 0
-	if [[ $url =~ github\.com[:/]([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+?)(\.git)?/?$ ]]; then
+	# Strip the suffixes before matching rather than inside the pattern. Bash
+	# uses POSIX ERE, where `+?` is not a lazy quantifier — it is greedy, and
+	# `.git` lands in the repository name. Every bare-number reference then
+	# resolves to `owner/repo.git`, which 404s and blames the token.
+	url=${url%/}
+	url=${url%.git}
+	if [[ $url =~ github\.com[:/]([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+)$ ]]; then
 		DEFAULT_OWNER=${BASH_REMATCH[1]}
 		DEFAULT_REPO=${BASH_REMATCH[2]}
 	fi
@@ -170,11 +176,18 @@ fetch_issue() { # fetch_issue OWNER REPO NUMBER
 	line=$(printf '%s' "$BODY" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
-s = d.get("issue_dependencies_summary") or {}
-counts = "blocked_by %s/%s open/total, blocking %s/%s" % (
-    s.get("blocked_by", 0), s.get("total_blocked_by", 0),
-    s.get("blocking", 0), s.get("total_blocking", 0),
-)
+# An absent summary is not a summary of zero. Rendering it as 0/0 would
+# present an absence as an answer, which is the failure this script exists
+# to refuse everywhere else.
+s = d.get("issue_dependencies_summary")
+if isinstance(s, dict):
+    counts = "blocked_by %s/%s open/total, blocking %s/%s" % (
+        s.get("blocked_by", 0), s.get("total_blocked_by", 0),
+        s.get("blocking", 0), s.get("total_blocking", 0),
+    )
+else:
+    counts = ("(no issue_dependencies_summary in the response — absent, which is "
+              "not the same as none; read blocked-by / blocking directly)")
 print(d["id"],
       "pull request" if "pull_request" in d else "issue",
       d.get("state", "?"),
@@ -199,12 +212,43 @@ refuse_pull_request() { # refuse_pull_request LABEL OWNER REPO NUMBER
 
 # ------------------------------------------------------------------- edges
 
+# The list endpoints paginate, and default to 30. A truncated read here is not
+# a smaller answer, it is a wrong one: `remove` would report "nothing to
+# remove" for an edge that exists, and `add` would call a good write
+# unverified. So every page is read before anything is decided.
+EDGES=
+
+fetch_edges() { # fetch_edges OWNER REPO NUMBER blocked_by|blocking
+	local page=1 raw= n
+	while :; do
+		request GET "repos/$1/$2/issues/$3/dependencies/$4?per_page=100&page=$page"
+		[[ $STATUS == 200 ]] || die "$1/$2#$3 $4: HTTP $STATUS — $(api_message)"
+		raw+=$BODY$'\n'
+		n=$(printf '%s' "$BODY" | python3 -c 'import json, sys; print(len(json.load(sys.stdin)))')
+		[[ $n -eq 100 ]] || break
+		page=$((page + 1))
+	done
+	EDGES=$(printf '%s' "$raw" | python3 -c '
+import json, sys
+dec = json.JSONDecoder()
+text = sys.stdin.read()
+rows, i, n = [], 0, len(text)
+while i < n:
+    while i < n and text[i].isspace():
+        i += 1
+    if i >= n:
+        break
+    page, i = dec.raw_decode(text, i)
+    rows.extend(page)
+json.dump(rows, sys.stdout)
+')
+}
+
 list_edges() { # list_edges OWNER REPO NUMBER blocked_by|blocking
-	request GET "repos/$1/$2/issues/$3/dependencies/$4"
-	[[ $STATUS == 200 ]] || die "$1/$2#$3 $4: HTTP $STATUS — $(api_message)"
+	fetch_edges "$1" "$2" "$3" "$4"
 	# Print the repository on both ends, always. A bare "#2853" under an edge
 	# reads as a local issue and need not be one.
-	printf '%s' "$BODY" | python3 -c '
+	printf '%s' "$EDGES" | python3 -c '
 import json, sys
 rows = json.load(sys.stdin)
 if not rows:
@@ -217,16 +261,28 @@ for r in rows:
 }
 
 has_edge() { # has_edge OWNER REPO NUMBER blocked_by|blocking OTHER_FULL#NUM
-	request GET "repos/$1/$2/issues/$3/dependencies/$4"
-	[[ $STATUS == 200 ]] || die "$1/$2#$3 $4: HTTP $STATUS — $(api_message)"
-	printf '%s' "$BODY" | python3 -c '
+	fetch_edges "$1" "$2" "$3" "$4"
+	# Owner and repository names are case-insensitive at GitHub, and the wanted
+	# reference is whatever the caller typed. Comparing it against the API's
+	# canonical casing would report a correct write as unverified, and would
+	# leave a real edge in place on `remove`.
+	#
+	# 0 found, 3 absent, anything else broken. A crash here must not read as
+	# "no such edge" — that is the false negative this whole script is against.
+	local rc=0
+	printf '%s' "$EDGES" | python3 -c '
 import json, sys
-want = sys.argv[1]
+want = sys.argv[1].lower()
 rows = json.load(sys.stdin)
-found = any("%s#%s" % (r.get("repository", {}).get("full_name"), r.get("number")) == want
+found = any(("%s#%s" % (r.get("repository", {}).get("full_name"), r.get("number"))).lower() == want
             for r in rows)
-raise SystemExit(0 if found else 1)
-' "$5"
+raise SystemExit(0 if found else 3)
+' "$5" || rc=$?
+	case $rc in
+	0) return 0 ;;
+	3) return 1 ;;
+	*) die "could not read $1/$2#$3 $4 for '$5' (comparison exited $rc)" ;;
+	esac
 }
 
 # ------------------------------------------------------------- subcommands
@@ -254,6 +310,9 @@ cmd_summary() {
 cmd_id() {
 	parse_ref "$1"
 	fetch_issue "$REF_OWNER" "$REF_REPO" "$REF_NUM"
+	# This is the one output that leaves the script and goes into a hand-written
+	# call, so it is the last place a pull request's id may escape from.
+	refuse_pull_request "either end" "$REF_OWNER" "$REF_REPO" "$REF_NUM"
 	printf '%s\n' "$I_ID"
 }
 
