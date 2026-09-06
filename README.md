@@ -13,14 +13,23 @@ read it, do not go further.
 | Skill | What it does |
 | ----- | ------------ |
 | `pr`  | Opens and updates GitHub pull requests: Conventional Commits title, draft by default, and a body with a one-line summary, a salutation in verse, an executive summary, and engineering detail. |
+| `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
 | `review` | Reviews a branch or pull request with a panel of reviewer agents, infers how deep to go from the diff itself, walks the findings through with you, and posts the result in verse. |
 
-The `pr` skill triggers on the literal `/pr`, on natural phrasings ("open a
-PR", "fix the PR title"), and on Claude's own calls to
-`mcp__github__create_pull_request` and `mcp__github__update_pull_request` — or
-to `gh pr create` and `gh pr edit` on a harness that still reaches for them.
-That last register is the point: a convention that only fires when a human
-types a command quietly stops applying as more of the work runs without one.
+Each skill triggers on the literal slash command, on natural phrasings ("open
+a PR", "this is blocked by #123"), and on Claude's own tool calls —
+`mcp__github__create_pull_request` and `mcp__github__update_pull_request` for
+`pr`, or `gh pr create` and `gh pr edit` on a harness that still reaches for
+them; the GitHub MCP's sub-issue and issue-read tools for `issue-deps`. That
+last register is the point: a convention that only fires when a human types a
+command quietly stops applying as more of the work runs without one.
+
+`issue-deps` carries the plugin's first runtime script,
+`skills/issue-deps/scripts/issue-deps.sh`. It is `curl` against REST rather
+than `gh`, because `gh` is not installed on a Claude Code web worker at all
+while the ambient token is present on both surfaces — and it exists only
+because the GitHub MCP exposes no blocked-by / blocking tool. Four endpoints
+hold it up, and it is deleted the day the MCP exposes them.
 
 `review` replaced four verbs — `/deep-review`, `/quick-review`, `/opinion`,
 and the session's own `/code-review` — which were four names for one activity,
@@ -58,6 +67,9 @@ claude-daily-driver/
 ├── scripts/                the manifest checks CI runs, the stanza, the MCP tally
 ├── skills/
 │   ├── pr/SKILL.md
+│   ├── issue-deps/
+│   │   ├── SKILL.md
+│   │   └── scripts/        plugin runtime, owned by the skill beside it
 │   └── review/
 │       ├── SKILL.md
 │       └── references/     the review guidelines, passed to every agent
