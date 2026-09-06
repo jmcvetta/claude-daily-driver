@@ -14,18 +14,39 @@ The **constitution** — `context/constitution.md`, delivered to every session b
 hook — plus skills that fire on activity:
 
 | Skill | What it does |
-| ----- | ------------ |
-| `pr`  | Opens and updates GitHub pull requests: Conventional Commits title, draft by default, and a body with a one-line summary, a salutation in verse, an executive summary, and engineering detail. |
+| ---------- | ------------ |
+| `pr`       | Opens the pull request for the current branch, or brings an open one up to date: branch guard, existing-PR check, draft by default, and the call on whether there is an issue to reference. Delegates the title and the body to the two below. |
+| `pr-title` | The title convention: concise, and Conventional Commits with the type the contents actually warrant — which is what release-please reads to decide the next version. |
+| `pr-body`  | The body structure: a one-line summary under 85 characters, a salutation in verse, an executive summary, as much engineering detail as fits, and the `Issues` section that closes it. |
+| `pr-threads` | The review-thread lifecycle for any reviewer: reply with a verdict, resolve, re-resolve a repeat finding, never leave a thread open silently — plus the comment minimisation the GitHub MCP does not expose. |
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
 | `review` | Reviews a branch or pull request with a panel of reviewer agents, infers how deep to go from the diff itself, walks the findings through with you, and posts the result in verse. |
 
-Each skill triggers on the literal slash command, on natural phrasings ("open
-a PR", "this is blocked by #123"), and on Claude's own tool calls —
-`mcp__github__create_pull_request` and `mcp__github__update_pull_request` for
-`pr`, or `gh pr create` and `gh pr edit` on a harness that still reaches for
-them; the GitHub MCP's sub-issue and issue-read tools for `issue-deps`. That
+Three PR skills rather than one because skill names are flat within a plugin,
+so siblings can be triggered independently: a decision to rewrite a PR body
+fires `pr-body` directly, without routing through `pr` to get there. The cost
+is two extra descriptions in context.
+
+Each skill carries its own trigger register: the literal slash command, natural
+phrasings — "open a PR" for `pr`, "fix the PR title" for `pr-title`, "rewrite
+the PR description" for `pr-body`, "address the review feedback" for
+`pr-threads`, "is this ready" for `review`, "this is blocked by #123" for
+`issue-deps` — and Claude's own tool calls. The PR skills split
+`mcp__github__create_pull_request` and `mcp__github__update_pull_request`
+between them, `pr-title` on a call that sets a `title`, `pr-body` on one that
+sets a `body`, `pr` on a create or on an update wider than either alone, with
+`gh pr create` / `gh pr edit` as a fallback on a harness that still reaches for
+them; `pr-threads` takes the reply and resolve tools and `get_review_comments`;
+`review` takes the moments before a branch is declared ready, marked
+non-draft, or sent to a reviewer; `issue-deps` takes the GitHub MCP's sub-issue
+and issue-read tools. That
 last register is the point: a convention that only fires when a human types a
 command quietly stops applying as more of the work runs without one.
+
+Naming the MCP tools is also a stronger trigger than naming `gh pr create` is —
+an exact tool name where the fallback is, in effect, a regex over a bash
+command line that a wrapper, a heredoc, a variable or a stray space would
+defeat.
 
 `issue-deps` carries the plugin's first runtime script,
 `skills/issue-deps/scripts/issue-deps.sh`. It is `curl` against REST rather
@@ -66,7 +87,7 @@ claude-daily-driver/
 │   └── constitution.md     always-on rules, one file, read by both hooks
 ├── docs/                   decisions, and the measurements behind them
 │   └── planning/           the plan, and the record of decisions made under it
-├── evals/                  the live half of the constitution's test
+├── evals/                  the trigger suites, and the constitution's live half
 ├── hooks/
 │   ├── hooks.json          SessionStart, and PreToolUse on the Agent tool
 │   └── inject-constitution.py
@@ -74,6 +95,11 @@ claude-daily-driver/
 ├── scripts/                the checks CI runs, the stanza, the MCP tally
 ├── skills/
 │   ├── pr/SKILL.md
+│   ├── pr-title/SKILL.md
+│   ├── pr-body/SKILL.md
+│   ├── pr-threads/
+│   │   ├── SKILL.md
+│   │   └── scripts/        the comment-minimisation path the MCP lacks
 │   ├── issue-deps/
 │   │   ├── SKILL.md
 │   │   └── scripts/        plugin runtime, owned by the skill beside it
@@ -179,6 +205,10 @@ described above.
 
 `make check-infra` parses the OpenTofu stack and is deliberately not part of
 `make check`; see [infra/github/README.md](infra/github/README.md).
+
+The trigger-accuracy evals are out for the same reason twice over: they need a
+live model, and CI here is deliberately credential-free. See
+[evals/README.md](evals/README.md) for what they assert and how to run them.
 
 `make mcp-usage` is not a check at all. It counts which GitHub MCP tools this
 laptop actually called, so the server's `--toolsets` list can be narrowed on
