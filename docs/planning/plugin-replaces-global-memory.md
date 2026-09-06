@@ -171,24 +171,44 @@ Costs, acknowledged:
 Constitutional line: *GitHub work goes through the GitHub MCP. `gh` only for what MCP
 cannot do, and say which.*
 
-### D3 — Retire six of seven `pr-review` shell scripts
+### D3 — Retire `pr-review` scripts one at a time, on evidence
 
-| Script | Replacement |
-| ------ | ----------- |
-| `pr-get-current-branch-number.sh` | trivial, inline |
-| `pr-fetch-data.sh` | `pull_request_read` + `minimal_output` |
-| `pr-post-comment.sh` | `add_issue_comment` |
-| `pr-reply-thread.sh` | `add_reply_to_pull_request_comment` + `resolve_review_thread` |
-| `pr-find-claude-comments.sh` | `search_issues` and listing tools |
-| `pr-minimize-comments.sh` | **no MCP equivalent** — survives |
-| `pr-minimize-previous-claude-comments.sh` | **no MCP equivalent** — survives |
+An earlier draft of this section retired six of the seven outright, on a table
+mapping each to a plausible MCP tool. That was too fast. Only two of the seven
+verdicts rested on evidence; the rest rested on a tool *name* looking like it
+would do the job, which is not the same as it doing the job.
 
-Comment minimisation is `minimizeComment`, GraphQL-only and not exposed by the
-GitHub MCP server. A real capability gap, not a legacy habit.
+So the rule for this directory is a bar, not a list:
 
-This yields a rule for the plugin's `scripts/` directory: **it holds only what
-the MCP demonstrably cannot do, and each script's header says why it exists.**
-A self-liquidating directory — as the MCP grows, scripts get deleted.
+> **A script is retired when its replacement has been demonstrated on a real
+> PR — not when a plausibly-named MCP tool exists.**
+
+Current state of knowledge, honestly labelled:
+
+| Script | Status |
+| ------ | ------ |
+| `pr-minimize-comments.sh` | **Keeps.** `minimizeComment` is GraphQL-only and unexposed by the MCP. A real capability gap. |
+| `pr-minimize-previous-claude-comments.sh` | **Keeps**, same gap. |
+| `pr-find-claude-comments.sh` | **Probably keeps.** It returns GraphQL node IDs (`IC_kwDO…`); `search_issues` does not. The surviving minimize scripts consume exactly those IDs, so retiring their supplier while keeping them makes no sense. |
+| `pr-fetch-data.sh` | **Unknown, leaning keeps.** It emits review *thread* IDs (`PRRT_…`). `resolve_review_thread` requires one. Whether `pull_request_read` surfaces thread IDs at all is unverified, and the answer decides this. |
+| `pr-reply-thread.sh` | **Unknown.** `add_reply_to_pull_request_comment` plus `resolve_review_thread` look equivalent, but only if thread IDs are obtainable — so this is blocked behind the row above. |
+| `pr-post-comment.sh` | **Likely retires.** `add_issue_comment` is a straightforward equivalent; still wants one demonstration. |
+| `pr-get-current-branch-number.sh` | **Likely retires**, but not free: there is no "PR for the current branch" MCP call, so it becomes `list_pull_requests` filtered by head ref. |
+
+Two things follow. First, the dependency chain matters more than the individual
+mappings: minimisation is a genuine gap, minimisation needs node IDs, and node
+IDs come from a script. Cut the middle of that chain and the surviving ends stop
+working — the kind of silent breakage that only shows up months later when an
+old review comment fails to collapse.
+
+Second, the surviving directory still needs its governing rule, which is
+unchanged and is the point of the exercise:
+
+> **`scripts/` holds only what the MCP demonstrably cannot do, and each
+> script's header says why it exists.**
+
+A self-liquidating directory. As the MCP grows, scripts get deleted — but each
+deletion is earned by a demonstration, not by an assumption.
 
 ### D4 — Retire the haiku convention; keep poetry
 
@@ -393,8 +413,9 @@ pinning to be removed.
 
 ### `dot-claude/tools/`
 
-`pr-review/` → one surviving script (D3). `opencode-port/` is unrelated to this
-work and stays put.
+`pr-review/` → an unknown number of surviving scripts, retired individually on
+evidence (D3); at least two keep, probably three. `opencode-port/` is unrelated
+to this work and stays put.
 
 ### `dot-claude/docs/`
 
