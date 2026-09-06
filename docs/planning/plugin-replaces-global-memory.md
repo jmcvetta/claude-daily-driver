@@ -384,10 +384,11 @@ work, and stays invocable for when it is not.
 Separately, and outside this work: `.github/dependabot.yml` is not configured in
 this repository at all, so nothing is opening those PRs here yet.
 
-### D13 — A relationship skill is a candidate, scoped by what is actually reachable
+### D13 — A relationship skill, wanted; blocked on one API question
 
-Proposed, not settled. GitHub has grown structured issue relationships, and the
-existing convention only touches them through prose.
+Promoted from candidate. Dependencies are a long-wanted capability, now
+available, and intended for constant use — which settles the scope question
+that would otherwise have gated this.
 
 What the MCP surface actually offers, checked rather than assumed:
 
@@ -397,25 +398,40 @@ What the MCP surface actually offers, checked rather than assumed:
 | **PR closes issue** | Readable. `issue_read` returns `closed_by_pull_requests` as a count plus up to five references. |
 | **Blocked-by / blocking** | **Not exposed by this MCP** — no tool, no field. |
 
-The blocker question is genuinely open on two counts: whether the underlying API
-supports the relationship programmatically at all, and whether it extends to
-pull requests or covers issues only. Neither could be checked from here, as
-`docs.github.com` is blocked by the container's egress proxy. **This is an RTFM
-task for the laptop, and it should happen before the skill is scoped** — a skill
-built around a relationship that turns out to be issues-only, or web-UI-only,
-would be built around nothing.
+**The critical path is one question, answerable only on the laptop** (this
+container's egress proxy blocks `docs.github.com`): does the GitHub API expose
+blocked-by / blocking programmatically, and does it cover pull requests or
+issues only? Everything else about this skill's shape follows from the answer.
 
-The observation that makes this worth doing regardless: the `pr` skill's
-`Closes #123` convention is *prose in a PR body*, and that prose is exactly what
-populates `closed_by_pull_requests`. The relationship graph is already being
-written to — through a string, unvalidated, with no way to notice when it is
-wrong. A relationship skill would treat the graph as the artifact and the text
-convention as one writer into it.
+- **If the API supports it**, the gap is the MCP's, not GitHub's, and
+  dependencies become the first new resident of `scripts/` under D3's rule —
+  a script that exists because the MCP demonstrably cannot do the job, with a
+  header saying exactly that, and a plausible expiry date when the MCP catches
+  up. That is the directory working as designed rather than accumulating.
+- **If it is web-UI only**, the skill covers sub-issues and closes-references,
+  and dependencies stay manual until the API arrives.
+- **If it is issues-only**, the PR half of the workflow reduces to
+  `closed_by_pull_requests` and the existing text convention.
 
-Scope should be settled by one prior question: **which of these relationships
-are actually in use?** Sub-issues and dependencies are recent additions, and
-building a skill for a workflow that is not yet a habit would reproduce the
-original mistake — ten commands, three remembered.
+Two design notes, both worth fixing before the skill is written.
+
+**The graph is already being written to, badly.** The `pr` skill's
+`Closes #123` convention is prose in a PR body, and that prose is exactly what
+populates `closed_by_pull_requests`. So the relationship graph has a writer
+today — an unvalidated string, with no way to notice when it is wrong. The skill
+should treat the graph as the artifact and the text convention as one writer
+into it, which also gives it a natural verification step: does the structured
+relationship match what the body claims?
+
+**Guard against manufactured relationships.** A skill whose description says
+these relationships are wanted constantly will start inventing them, for exactly
+the reason a role-framed security reviewer invents findings (Q5): an agent given
+a job feels obliged to produce output. The firing moment is real and specific —
+a dependency is discovered while planning work, or while writing a PR body and
+realising it cannot merge first — but the skill must **propose from evidence and
+let the user confirm**, never assert. A wrong dependency is worse than a missing
+one: it blocks work silently, and nobody thinks to look for a relationship they
+did not create.
 
 ## Migration inventory
 
