@@ -48,6 +48,87 @@ The same tree is read by more than one harness:
 
 [omp]: https://omp.sh
 
+## Enabling it in a repository
+
+Claude Code enables plugins per project, so a repository turns this one on for
+anyone working in it — laptop or web worker — by carrying the stanza in its own
+`.claude/settings.json`:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "claude-daily-driver": {
+      "source": {
+        "source": "github",
+        "repo": "jmcvetta/claude-daily-driver"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "daily-driver@claude-daily-driver": true
+  }
+}
+```
+
+Copy it verbatim; commit it. Both names are load-bearing and both come from
+[`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json):
+`claude-daily-driver` is the marketplace `name`, and the `enabledPlugins` key is
+the plugin `name` joined to it as `plugin@marketplace`. Note that the two differ
+— the marketplace is `claude-daily-driver` and the plugin inside it is
+`daily-driver` — and that a typo in either is not an error, it is silence.
+
+There is nothing else to run. Once the project folder is trusted, the next
+session adds the marketplace, clones it under `~/.claude/plugins/marketplaces/`,
+and enables the plugin, with no separate prompt.
+
+Three things about that are worth stating plainly.
+
+**It is per-repository, not per-user.** Marketplace state is stored once per
+user, in `~/.claude/plugins/known_marketplaces.json`, but the *enablement* rides
+in each repository's `.claude/settings.json`. Adding the marketplace on the
+laptop enables the plugin nowhere by itself; every repository worked in needs
+its own copy of the stanza.
+
+**It requires trusting the project folder.** Nothing above happens before trust.
+On an untrusted folder — `hasTrustDialogAccepted: false` for that path in
+`~/.claude.json` — the stanza is inert, and inert quietly: no marketplace, no
+clone, no plugin, no complaint.
+
+**A repository without the stanza fails silently.** This is R4 in [the planning
+document](docs/planning/plugin-replaces-global-memory.md), and it is the reason
+this section exists. A session in a repository that lacks the stanza runs with
+no constitution at all and gives no sign of it — no warning, no degraded mode,
+no missing-skill error, just a Claude that has never heard of any of this. So
+when a session feels unusually unconstrained, verify before concluding it is
+being disobedient. The check has to come from outside the session:
+
+```sh
+claude plugin list         # daily-driver@claude-daily-driver, project, enabled
+cat .claude/settings.json  # the stanza above
+```
+
+### Web workers: verify, do not assume
+
+The plugin documentation covers Claude Code generally and does not call out the
+web surface separately, so this was measured rather than asserted. On
+2026-09-06, against Claude Code 2.1.263, a Claude Code web worker was started
+on a branch of this repository carrying exactly the stanza above. **The plugin
+did not load.** `claude plugin marketplace list` reported no marketplaces,
+`claude plugin list` reported nothing installed, `known_marketplaces.json` did
+not exist, and no `daily-driver:pr` skill was present in the session. The
+checkout showed `hasTrustDialogAccepted: false`: a container that clones a
+repository and starts working never presents a trust dialog, so the gate above
+is never passed. The same stanza in a trusted folder on the CLI does take
+effect — the marketplace shows up in `claude plugin marketplace list` once a
+session has started there — which locates the difference in trust rather than in
+the stanza.
+
+Read that as a dated observation of one environment and one version, not as a
+permanent property of the platform; it is exactly the sort of thing that changes
+between releases. Read it also as the reason the R4 habit is not optional: run
+the two checks at the top of a web session before relying on the constitution
+being there.
+
 ## Checks
 
 `make check` is what CI runs — the same target, not a restatement of it, so a
