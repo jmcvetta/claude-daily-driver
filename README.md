@@ -13,12 +13,28 @@ read it, do not go further.
 | Skill | What it does |
 | ----- | ------------ |
 | `pr`  | Opens and updates GitHub pull requests: Conventional Commits title, draft by default, and a body with a one-line summary, a salutation in verse, an executive summary, and engineering detail. |
+| `review` | Reviews a branch or pull request with a panel of reviewer agents, infers how deep to go from the diff itself, walks the findings through with you, and posts the result in verse. |
 
 The `pr` skill triggers on the literal `/pr`, on natural phrasings ("open a
 PR", "fix the PR title"), and on Claude's own use of `gh pr create` and
 `gh pr edit`. That last register is the point: a convention that only fires
 when a human types a command quietly stops applying as more of the work runs
 without one.
+
+`review` replaced four verbs — `/deep-review`, `/quick-review`, `/opinion`,
+and the session's own `/code-review` — which were four names for one activity,
+which is precisely why none of them was ever remembered. There is nothing left
+to choose: depth comes off the diff, and anything touching auth, crypto, IAM or
+a migration pulls in the security reviewer whatever its size. Two rules shape
+the rest of it. It never fires when a pull request is *opened*, because
+expensive skills must be pulled rather than pushed — output that always appears
+gets skimmed, and a draft PR opens the conversation rather than ending the
+work. And its poetry attaches only to the comment it posts, never to the
+findings: a finding someone has to act on is prose.
+
+The panel it dispatches lives in [`agents/`](agents/) — `logic-reviewer`,
+`architecture-reviewer`, `security-reviewer`, `planning-fitness-reviewer` — and
+none of them pins a model. A pin ages into a cost decision nobody revisits.
 
 ## Layout
 
@@ -31,10 +47,14 @@ claude-daily-driver/
 │   ├── plugin.json         the plugin, and the version releases bump
 │   └── marketplace.json    the pointer `claude plugin install` reads
 ├── .github/workflows/      CI, PR title check, infra, release automation
+├── agents/                 the reviewer panel the `review` skill dispatches
 ├── infra/github/           the repository's own settings, as OpenTofu
 ├── scripts/                the manifest checks CI runs
 └── skills/
-    └── pr/SKILL.md
+    ├── pr/SKILL.md
+    └── review/
+        ├── SKILL.md
+        └── references/     the review guidelines, passed to every agent
 ```
 
 ## Portability
@@ -58,10 +78,12 @@ make check
 ```
 
 It runs `claude plugin validate --strict` over the marketplace manifest, the
-plugin manifest and the components, then `scripts/check-manifests.py` for the
-three things `validate` lets through: a skill whose frontmatter `name`
-disagrees with its directory, a `description:` that is present but empty, and
-a `name` disagreeing between the two manifests.
+plugin manifest, the skills and the agents — one invocation each, because
+`validate` reads a single directory at a time and would otherwise never see the
+panel — then `scripts/check-manifests.py` for the three things `validate` lets
+through: a skill whose frontmatter `name` disagrees with its directory, a
+`description:` that is present but empty, and a `name` disagreeing between the
+two manifests.
 
 `make check-infra` parses the OpenTofu stack and is deliberately not part of
 `make check`; see [infra/github/README.md](infra/github/README.md).
