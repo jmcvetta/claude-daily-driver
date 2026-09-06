@@ -14,11 +14,17 @@
 # release-please-config.json and .release-please-manifest.json out of the
 # checkout — the same two files release-please.yml reads.
 #
-# Until the first release is cut there is no tag to resolve the previous
-# release against, so the comment carries its unresolved-boundary warning.
-# That is correct and expected: a component's first release and a component
-# that lost its tag look identical from the outside, and the action reports
-# what it can see rather than guessing which one this is.
+# No unresolved-boundary warning appears before the first release, and the
+# `0.0.0` in .release-please-manifest.json is why. That warning reads a line
+# release-please logs only when a manifest names a version no tag or release
+# resolves — the state a lost tag leaves behind, where the commit walk
+# replays a component's whole history into one changelog. `0.0.0` is the
+# sentinel that says "never released" instead, and `Manifest.buildPullRequests`
+# guards the whole branch on it, so nothing is logged and nothing is warned
+# about. Writing a real version there before its tag exists is what would
+# make the two states indistinguishable — and would set the warning off.
+# Measured on the first run of this workflow, which projected 0.1.0 with no
+# warning attached.
 name: Projected Releases
 
 on:
