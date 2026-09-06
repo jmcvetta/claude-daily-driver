@@ -10,10 +10,13 @@
 # `.github/workflows/ci.yml`; the contract here is the job *name*, which
 # survives the placeholder being replaced with real CI.
 #
-# Two settings are deliberately loose for a solo repository: zero required
-# approving reviews, since requiring one would block every PR, and
+# Three settings are deliberately loose for a solo repository: zero required
+# approving reviews, since requiring one would block every PR;
 # `enforce_admins = false`, which leaves an escape hatch when CI itself is
-# what is broken.
+# what is broken; and `strict = false`, since requiring a branch to be up to
+# date re-invalidates every open PR each time another merges — a rebase tax
+# paid most often by the long-lived release-please PR, in exchange for little
+# on a repository where PRs rarely conflict.
 resource "github_branch_protection" "master" {
   repository_id = github_repository.this.node_id
   pattern       = "master"
