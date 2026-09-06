@@ -1,16 +1,20 @@
 # Continuous integration.
 #
-# PLACEHOLDER. `CI Success` is the single required status check on master
-# (see infra/github/branch_protection.tf), and a required check that never
-# reports blocks every pull request. This workflow exists so that contract is
-# satisfied from the moment branch protection is applied, before there is
-# anything to actually test.
+# `CI Success` is the single required status check on master (see
+# infra/github/branch_protection.tf), and the contract with that configuration
+# is the job *name*. Real jobs report into it through `needs`, so adding one
+# never means touching the Tofu.
 #
-# It asserts nothing. Real jobs — skill linting, plugin manifest validation,
-# link checking — get added alongside it and listed under `needs`, at which
-# point `CI Success` starts aggregating instead of rubber-stamping. The job
-# *name* is the contract with branch protection and must not change; adding
-# jobs never requires touching the Tofu.
+# What the jobs assert is the Makefile's `check` target, invoked rather than
+# restated. A CI leg that spelled out the same command line would be one edit
+# away from spelling it out differently, and the laptop and the required check
+# would quietly stop testing the same thing.
+#
+# **No `paths:` filter here, and there must not be one.** A path-filtered
+# workflow does not report a skipped check, it reports nothing at all, and a
+# required check that never reports leaves the pull request pending forever.
+# infra.yml and pr-title-check.yml are filtered or narrow precisely because
+# neither is required.
 name: CI
 
 on:
@@ -26,10 +30,48 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # The aggregating job. Real jobs are listed under `needs` as they arrive.
-  ci-success:
-    name: CI Success
+  check:
+    name: Plugin checks
     runs-on: ubuntu-latest
     steps:
-      - name: No checks configured yet
-        run: echo "Placeholder — no CI checks are configured for this repository yet."
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # Unpinned, deliberately. The thing being validated is a Claude Code
+      # plugin, so the question CI is asking is whether the CLI people
+      # actually run will accept it — a pinned CLI answers a question about
+      # last month instead. The cost is real and accepted: a new `--strict`
+      # warning can turn a green repository red without a commit. That is the
+      # signal, not the noise.
+      #
+      # `validate` reads files and calls nothing, so no credentials are
+      # needed; measured with an empty environment and an empty HOME.
+      - name: Install the Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code@latest
+
+      - run: make check
+
+  # The aggregating job branch protection names. `if: always()` is
+  # load-bearing: without it a failure upstream *skips* this job, and GitHub
+  # counts a skipped required check as satisfied — the pull request would go
+  # green on a failed check.
+  ci-success:
+    name: CI Success
+    needs: [check]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify every job succeeded
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          set -euo pipefail
+          echo "upstream results: $RESULTS"
+          for result in $RESULTS; do
+            if [[ "$result" != "success" ]]; then
+              echo "::error::a required job did not succeed: $RESULTS" >&2
+              exit 1
+            fi
+          done
