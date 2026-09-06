@@ -14,8 +14,9 @@ read it, do not go further.
 | ----- | ------------ |
 | `pr`  | Opens and updates GitHub pull requests: Conventional Commits title, draft by default, and a body with a one-line summary, a salutation in verse, an executive summary, and engineering detail. |
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
+| `review` | Reviews a branch or pull request with a panel of reviewer agents, infers how deep to go from the diff itself, walks the findings through with you, and posts the result in verse. |
 
-Both skills trigger on the literal slash command, on natural phrasings ("open
+Each skill triggers on the literal slash command, on natural phrasings ("open
 a PR", "this is blocked by #123"), and on Claude's own tool calls —
 `mcp__github__create_pull_request` and `mcp__github__update_pull_request` for
 `pr`, or `gh pr create` and `gh pr edit` on a harness that still reaches for
@@ -30,6 +31,21 @@ while the ambient token is present on both surfaces — and it exists only
 because the GitHub MCP exposes no blocked-by / blocking tool. Four endpoints
 hold it up, and it is deleted the day the MCP exposes them.
 
+`review` replaced four verbs — `/deep-review`, `/quick-review`, `/opinion`,
+and the session's own `/code-review` — which were four names for one activity,
+which is precisely why none of them was ever remembered. There is nothing left
+to choose: depth comes off the diff, and anything touching auth, crypto, IAM or
+a migration pulls in the security reviewer whatever its size. Two rules shape
+the rest of it. It never fires when a pull request is *opened*, because
+expensive skills must be pulled rather than pushed — output that always appears
+gets skimmed, and a draft PR opens the conversation rather than ending the
+work. And its poetry attaches only to the comment it posts, never to the
+findings: a finding someone has to act on is prose.
+
+The panel it dispatches lives in [`agents/`](agents/) — `logic-reviewer`,
+`architecture-reviewer`, `security-reviewer`, `planning-fitness-reviewer` — and
+none of them pins a model. A pin ages into a cost decision nobody revisits.
+
 ## Layout
 
 The plugin is the repository root — `"source": "./"` in the marketplace
@@ -42,6 +58,7 @@ claude-daily-driver/
 │   ├── plugin.json         the plugin, and the version releases bump
 │   └── marketplace.json    the pointer `claude plugin install` reads
 ├── .github/workflows/      CI, PR title check, infra, release automation
+├── agents/                 the reviewer panel the `review` skill dispatches
 ├── context/
 │   └── constitution.md     the always-on layer, injected by the hooks
 ├── docs/                   decisions, and the measurements behind them
@@ -50,9 +67,12 @@ claude-daily-driver/
 ├── scripts/                the manifest checks CI runs, the stanza, the MCP tally
 ├── skills/
 │   ├── pr/SKILL.md
-│   └── issue-deps/
+│   ├── issue-deps/
+│   │   ├── SKILL.md
+│   │   └── scripts/        plugin runtime, owned by the skill beside it
+│   └── review/
 │       ├── SKILL.md
-│       └── scripts/        plugin runtime, owned by the skill beside it
+│       └── references/     the review guidelines, passed to every agent
 └── template/.claude/       copied into a repository to enable the plugin
 ```
 
@@ -93,11 +113,14 @@ make check
 ```
 
 It runs `claude plugin validate --strict` over the marketplace manifest, the
-plugin manifest and the components, then `scripts/check-manifests.py` for the
-four things `validate` lets through: a skill whose frontmatter `name`
-disagrees with its directory, a `description:` that is present but empty, a
-`name` disagreeing between the two manifests, and a copy of the repository
-stanza that has drifted from the names it enables.
+plugin manifest, the skills and the agents — one invocation each, because
+`validate` reads a single directory at a time and would otherwise never see the
+panel — then `scripts/check-manifests.py` for what `validate` lets through: a
+skill whose frontmatter `name` disagrees with its directory, an agent whose
+`name` disagrees with its filename, two agents claiming one `name` so that only
+one of them is reachable, a `description:` that is present but empty, a `name`
+disagreeing between the two manifests, and a copy of the repository stanza that
+has drifted from the names it enables.
 
 `make check-infra` parses the OpenTofu stack and is deliberately not part of
 `make check`; see [infra/github/README.md](infra/github/README.md).
