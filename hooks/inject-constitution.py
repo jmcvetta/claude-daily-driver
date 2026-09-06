@@ -81,6 +81,13 @@ def render() -> tuple[str, str | None]:
     except OSError as error:
         reason = f"could not read {CONSTITUTION}: {error.strerror or error}"
         return BANNER.format(reason=reason), reason
+    except UnicodeDecodeError as error:
+        # A corrupt file is a route to "unreadable constitution" that does not
+        # go through `OSError`, and it deserves the same banner rather than a
+        # traceback: the traceback exits nonzero with an empty stdout, which is
+        # the silent failure this whole path exists to prevent.
+        reason = f"{CONSTITUTION} is not valid UTF-8: {error}"
+        return BANNER.format(reason=reason), reason
 
     if not body.strip():
         reason = f"{CONSTITUTION} is empty"
@@ -169,6 +176,19 @@ def main(argv: list[str]) -> int:
         # Malformed event JSON is the harness's problem, not the
         # constitution's, and it must not cost the session its constitution.
         print(f"inject-constitution: unparseable event JSON: {error}", file=sys.stderr)
+        event = {}
+
+    # Well-formed JSON that is not an object — `null`, `[]`, a bare string —
+    # parses without complaint and then fails on the first `.get()`. That
+    # failure is a traceback and an empty stdout, so it costs the subagent its
+    # constitution just as surely as unparseable input would, and just as
+    # quietly. Both roads lead to the same empty event.
+    if not isinstance(event, dict):
+        print(
+            f"inject-constitution: event JSON is {type(event).__name__}, "
+            "not an object",
+            file=sys.stderr,
+        )
         event = {}
 
     return session_start(event) if argv[1] == "session-start" else pre_tool_use(event)
