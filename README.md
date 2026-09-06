@@ -58,11 +58,12 @@ claude-daily-driver/
 
 ## Enabling it in a repository
 
-Plugin installation is per-project: a repository enables the plugin for
+Plugin installation is per-project: a repository declares the plugin for
 everyone who works in it — a web worker included — by carrying an
 `extraKnownMarketplaces` + `enabledPlugins` stanza in its
 `.claude/settings.json`. A repository without it runs without the plugin and
-gives no sign of it.
+gives no sign of it. Declares, not guarantees: carrying the stanza is necessary
+and, on the version measured, was not sufficient.
 
 [docs/bootstrapping-a-repository.md](docs/bootstrapping-a-repository.md) has
 the stanza to copy, the two names that are easy to get wrong, the three ways
