@@ -159,10 +159,20 @@ MCP_PREFIX = "mcp__github__"
 # A leading `VAR=value` does not stop `gh` from being in command position.
 ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 
+# `<<EOF`, `<<-EOF`, `<<'EOF'`, `<<"EOF"` — enough to find where a heredoc
+# body starts, so its contents are not read as commands.
+HEREDOC = re.compile(r"<<-?\s*(?:'([^']*)'|\"([^\"]*)\"|([A-Za-z_][A-Za-z0-9_]*))")
+
 
 def transcripts(root: Path):
-    """Every session transcript under a Claude Code projects directory."""
-    return sorted(root.glob("*/*.jsonl"))
+    """Every transcript under a Claude Code projects directory.
+
+    Recursive rather than `*/*.jsonl`: a session's subagent transcripts live
+    at `<project>/<session>/subagents/*.jsonl`, and their tool calls are tool
+    calls. A toolset reached for only from subagents would otherwise be absent
+    from the recommendation.
+    """
+    return sorted(root.rglob("*.jsonl"))
 
 
 def tool_uses(path: Path, since: str | None):
@@ -191,43 +201,86 @@ def tool_uses(path: Path, since: str | None):
                     yield block.get("name") or "", block.get("input") or {}
 
 
-def gh_subcommand(command: str) -> str | None:
-    """The `gh` subcommand a shell command line invokes, if it invokes one.
+OPERATORS = {"|", "||", "&&", ";", ";;", "&", "(", ")", "{", "}", "then", "do", "else", "env"}
+SUBCOMMAND = re.compile(r"^[a-z][a-z-]*$")
+
+
+def command_lines(command: str):
+    """The lines of a shell command, with heredoc bodies dropped.
+
+    A heredoc body is data, not commands, so `gh api` written inside one is
+    not a use of `gh`. Finding where the body ends needs only the delimiter.
+    """
+    lines = command.splitlines()
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        index += 1
+        yield line
+        match = HEREDOC.search(line)
+        if not match:
+            continue
+        delimiter = next(group for group in match.groups() if group is not None)
+        while index < len(lines) and lines[index].strip() != delimiter:
+            index += 1
+        index += 1  # the terminator itself
+
+
+def words_of(line: str) -> list[str]:
+    """A shell line's words, with operators as tokens of their own.
+
+    `shlex.split` leaves punctuation attached — `cd /repo; gh pr list` splits
+    to `['cd', '/repo;', 'gh', ...]`, which hides that `gh` is in command
+    position. `punctuation_chars` is what separates them.
+    """
+    lexer = shlex.shlex(line, posix=True, punctuation_chars=True)
+    lexer.whitespace_split = True
+    try:
+        return list(lexer)
+    except ValueError:
+        return line.split()
+
+
+def gh_subcommands(command: str) -> list[str]:
+    """Every `gh` subcommand a shell command line invokes, in order.
 
     Deliberately shallow, and only counts `gh` in command position — at the
-    start of the line or after a shell operator — so `command -v gh` and a
-    `gh api` written inside a heredoc do not register as uses. Two words of
-    subcommand are kept, making `gh pr create` and `gh run watch` distinct
-    rows while `gh api /repos/...` collapses to `gh api`.
+    start of a line or after a shell operator — so `command -v gh` and a
+    `gh api` written inside a heredoc do not register as uses. Every command
+    position counts, not just the first: `gh pr list && gh issue list` is two
+    uses of two different subcommands. Two words of subcommand are kept,
+    making `gh pr create` and `gh run watch` distinct rows while
+    `gh api /repos/...` collapses to `gh api`.
 
     This is a tally of what `gh` is still reached for, not a parser, and it is
     a live demonstration of D2's point: recognising a command in a shell
     string is guesswork, which is exactly why the hook that enforces MCP use
     matches an MCP tool name instead.
     """
-    try:
-        words = shlex.split(command)
-    except ValueError:
-        words = command.split()
-    operators = {"|", "||", "&&", ";", "&", "(", ")", "{", "}", "then", "do", "else", "env"}
-    subcommand = re.compile(r"^[a-z][a-z-]*$")
-    for index, word in enumerate(words):
-        if word != "gh":
-            continue
-        previous = words[index - 1] if index else None
-        if previous is not None and previous not in operators and not ASSIGNMENT.match(previous):
-            continue
-        rest = []
-        for candidate in words[index + 1 :]:
-            if not subcommand.match(candidate) or len(rest) == 2:
-                break
-            rest.append(candidate)
-        return " ".join(["gh", *rest]) if rest else "gh"
-    return None
+    found: list[str] = []
+    for line in command_lines(command):
+        words = words_of(line)
+        for index, word in enumerate(words):
+            if word != "gh":
+                continue
+            previous = words[index - 1] if index else None
+            if (
+                previous is not None
+                and previous not in OPERATORS
+                and not ASSIGNMENT.match(previous)
+            ):
+                continue
+            rest: list[str] = []
+            for candidate in words[index + 1 :]:
+                if not SUBCOMMAND.match(candidate) or len(rest) == 2:
+                    break
+                rest.append(candidate)
+            found.append(" ".join(["gh", *rest]) if rest else "gh")
+    return found
 
 
-def report(mcp: Counter, gh: Counter, unknown: Counter, sessions: int) -> None:
-    print(f"sessions read: {sessions}")
+def report(mcp: Counter, gh: Counter, unknown: Counter, transcript_count: int) -> None:
+    print(f"transcripts read: {transcript_count}")
 
     print("\nGitHub MCP tools called")
     if not mcp:
@@ -278,8 +331,16 @@ def report(mcp: Counter, gh: Counter, unknown: Counter, sessions: int) -> None:
     )
 
     print("\nWhat the calls justify")
+    if unknown:
+        # The table is stale, so `used` is a floor: a tool it does not know
+        # may be the only call into a toolset the line below omits. Say so
+        # here rather than beside the unknown tools, where a reader copying
+        # the flag has already scrolled past it.
+        print(f"  INCOMPLETE — {len(unknown)} called tool(s) are missing from this")
+        print("  script's table (listed above), so the line below may omit a")
+        print("  toolset. Regenerate the table before acting on it.")
     if not used:
-        print("  nothing was called; the measurement has not run long enough")
+        print("  nothing known was called; the measurement has not run long enough")
     else:
         print(f"  --toolsets {','.join(sorted(used))}")
         print(f"  {len(used)} of {len({t for s, _ in TOOLS.values() for t in s.split(',')})} toolsets")
@@ -325,8 +386,7 @@ def main() -> int:
                 tool = name[len(MCP_PREFIX) :]
                 (mcp if tool in TOOLS else unknown)[tool] += 1
             elif name == "Bash":
-                subcommand = gh_subcommand(str(payload.get("command") or ""))
-                if subcommand:
+                for subcommand in gh_subcommands(str(payload.get("command") or "")):
                     gh[subcommand] += 1
 
     report(mcp, gh, unknown, len(paths))
