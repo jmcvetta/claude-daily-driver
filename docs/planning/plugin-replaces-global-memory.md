@@ -251,10 +251,9 @@ One `review` skill:
    overlap with the `code-review` and `security-review` skills that now ship in
    the session.
 
-Open empirical question: whether four parallel reviewer agents still beat one
-agent handed `review-guidelines.md`. Four was right when context was tighter
-and models weaker; it may still be right, since independent passes genuinely
-catch more. Worth measuring with `claude plugin eval` rather than inheriting.
+Open empirical question, narrowed in Q5: not whether the panel as a whole
+earns its place — the cheap mechanical tier plainly does — but whether the two
+Opus judgment reviewers are better as two roles or one.
 
 ### D7 — `/save` and `/restructure` become a memory skill on `PreCompact`
 
@@ -455,12 +454,61 @@ answer already existed rather than by deciding anything.
 
 ## Open questions
 
-- **Q5** — Does the four-agent review panel still beat one agent handed
-  `review-guidelines.md`? Empirical; measure with `claude plugin eval` rather
-  than inherit. Raised in D6.
-- **Q6** — Which of the ~55 GitHub MCP tools does the workflow actually need?
-  Determines the `--toolsets` setting, and therefore the standing context cost
-  of D2.
+### Q5 — Is the Opus judgment layer better as two roles or one?
+
+Narrowed from "does the panel beat a single agent", which was the wrong
+framing. The panel is already heterogeneous — Haiku for mechanical checks,
+Sonnet for judgment, Opus for `security-reviewer` and `logic-reviewer`. The
+Haiku tier is not competing with a strong reviewer; it is doing cheap
+mechanical work and should stay regardless. **The live question is only whether
+the two Opus reviewers are better as two roles or one.**
+
+A panel is not free, and the costs are structural rather than incidental:
+
+1. **Cross-cutting findings are invisible to it.** The most valuable finding in
+   a review is often an interaction — this security fix breaks the retry path.
+   The security reviewer sees the fix, the logic reviewer sees the retry path,
+   neither sees the seam. A single agent holding the whole diff can. Panels are
+   structurally blind to precisely the findings that matter most.
+2. **Role framing manufactures findings.** An agent told it is the security
+   reviewer will find security issues, because a security reviewer reporting
+   nothing feels like a failed security reviewer. Single-agent review carries no
+   such quota pressure.
+3. **Synthesis is lossy.** The synthesiser sees findings, not the reasoning
+   behind them, and dedupes, ranks, softens and drops accordingly.
+4. **Volume dilutes.** A longer union gets skimmed, and the real bug sits at
+   position 14. Precision matters more than recall for a review someone
+   actually reads — the same argument that settled D10.
+5. **The independence is weaker than it looks.** Four instances of one base
+   model reading one diff have correlated errors: four draws from a single
+   distribution, not four experts.
+
+Against which the panel genuinely wins on recall for specialist dimensions
+where a checklist beats a generalist's skim, and on diffs longer than one
+attentive pass can hold.
+
+The reason to measure is not that the panel is wrong. It is that:
+
+> The panel was compensating for a weaker single reviewer. As the single agent
+> gets stronger, the panel's marginal recall gain shrinks while its precision
+> cost stays flat. **The crossover point moves.**
+
+`deep-review.md` was designed on the far side of that crossover. Nobody has
+checked whether it still is.
+
+### Q6 — Which GitHub MCP toolsets? Measure, do not guess
+
+Downgraded from a design question to a setup task, since the MCP has never been
+run locally.
+
+Setup has two paths: `github/github-mcp-server` locally via Docker or binary
+with a PAT, or GitHub's hosted remote server — **verify whether the hosted one
+requires a Copilot seat** before depending on it, as that subscription is
+cancelled. The local path certainly does not.
+
+On the toolset itself: enable everything, use it for a fortnight, then narrow to
+what was actually called. Choosing a toolset now would be exactly the kind of
+premature decision that produced ten commands nobody remembers.
 
 ## Sequencing
 
