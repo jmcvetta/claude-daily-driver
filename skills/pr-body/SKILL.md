@@ -7,8 +7,9 @@ description: >-
   for more detail in a PR, and including any call Claude makes on its own
   initiative to `mcp__github__create_pull_request`, or to
   `mcp__github__update_pull_request` that sets a `body`. Supplies the required
-  structure: one-line summary, salutation in verse, executive summary, and
-  engineering detail. Not for the PR title — that is `pr-title`.
+  structure: one-line summary, salutation in verse, executive summary,
+  engineering detail, and the issue-reference section that closes it. Not for
+  the PR title — that is `pr-title`.
 ---
 
 # PR Body
@@ -30,5 +31,26 @@ The body of a pull request, whether it is being opened or rewritten. In order:
 - **Unopinionated**: This is a short description of the branch, NOT a code
   review. Do NOT do opine on code quality or security.
 
-Issue references are the `pr` skill's concern. When it supplies an `Issues`
-section, that section goes last, after the engineering detail.
+Opening a pull request is the `pr` skill's job. When the body is being written
+as part of opening one, follow `pr` as well, for the branch guard, the
+existing-PR check and draft state.
+
+
+Issues
+------
+
+If the pull request fixes or implements a Github Issue, the body ends with an
+`Issues` section, last, after the engineering detail. Use the format shown
+below:
+
+```
+Issues
+------
+
+- Closes #123
+
+```
+
+When revising a body that already carries such a section, carry it across. A
+rewrite that drops a `Closes #123` silently stops the merge from closing the
+issue.

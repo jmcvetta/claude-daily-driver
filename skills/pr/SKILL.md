@@ -8,8 +8,8 @@ description: >-
   makes on its own initiative to `mcp__github__create_pull_request`, or to
   `mcp__github__update_pull_request` for anything wider than the title or the
   body alone. Supplies the branch guard, the existing-PR check, draft state
-  and issue-reference format; the title comes from `pr-title` and the body
-  from `pr-body`.
+  and the call on whether there is an issue to reference; the title comes from
+  `pr-title` and the body, issue reference included, from `pr-body`.
 ---
 
 # PR Workflow
@@ -61,14 +61,6 @@ Initial State
 Github Issues
 -------------
 
-If this PR was created to fix/implement a Github Issue, include a reference to
-the Issue. It goes last in the body, after the engineering detail. Use the
-format shown below:
-
-```
-Issues
-------
-
-- Closes #123
-
-```
+If this PR was created to fix/implement a Github Issue, reference it. Deciding
+that there is an issue to reference is this skill's call; the section's format
+and placement in the body belong to `pr-body`.

@@ -24,3 +24,7 @@ PR's title becomes the squashed commit subject, and that subject is what
 decides the next version. A `feat:` that was really a `fix:` ships a minor
 release nobody asked for, and a `fix:` that was really a `feat:` hides one
 somebody needed.
+
+Opening a pull request is the `pr` skill's job. When the title is being written
+as part of opening one, follow `pr` as well, for the branch guard, the
+existing-PR check and draft state.
