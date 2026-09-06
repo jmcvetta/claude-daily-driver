@@ -384,6 +384,39 @@ work, and stays invocable for when it is not.
 Separately, and outside this work: `.github/dependabot.yml` is not configured in
 this repository at all, so nothing is opening those PRs here yet.
 
+### D13 — A relationship skill is a candidate, scoped by what is actually reachable
+
+Proposed, not settled. GitHub has grown structured issue relationships, and the
+existing convention only touches them through prose.
+
+What the MCP surface actually offers, checked rather than assumed:
+
+| Relationship | Status |
+| ------------ | ------ |
+| **Sub-issues** (parent/child) | Fully exposed. `sub_issue_write` adds, removes, reprioritises and re-parents; `issue_read` reads `get_sub_issues` and `get_parent`; `issue_write` can create an issue directly under a parent — **including cross-repo**, via `parent_owner` / `parent_repo`. |
+| **PR closes issue** | Readable. `issue_read` returns `closed_by_pull_requests` as a count plus up to five references. |
+| **Blocked-by / blocking** | **Not exposed by this MCP** — no tool, no field. |
+
+The blocker question is genuinely open on two counts: whether the underlying API
+supports the relationship programmatically at all, and whether it extends to
+pull requests or covers issues only. Neither could be checked from here, as
+`docs.github.com` is blocked by the container's egress proxy. **This is an RTFM
+task for the laptop, and it should happen before the skill is scoped** — a skill
+built around a relationship that turns out to be issues-only, or web-UI-only,
+would be built around nothing.
+
+The observation that makes this worth doing regardless: the `pr` skill's
+`Closes #123` convention is *prose in a PR body*, and that prose is exactly what
+populates `closed_by_pull_requests`. The relationship graph is already being
+written to — through a string, unvalidated, with no way to notice when it is
+wrong. A relationship skill would treat the graph as the artifact and the text
+convention as one writer into it.
+
+Scope should be settled by one prior question: **which of these relationships
+are actually in use?** Sub-issues and dependencies are recent additions, and
+building a skill for a workflow that is not yet a habit would reproduce the
+original mistake — ten commands, three remembered.
+
 ## Migration inventory
 
 ### `dot-claude/commands/`
