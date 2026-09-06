@@ -1,5 +1,9 @@
 # OpenTofu / Terraform
+#
+# terraform.tfstate is tracked deliberately; the .backup beside it is
+# rewritten on every apply and carries nothing the state does not.
 .terraform/
+*.tfstate.backup
 *.log.txt
 
 # `claude plugin eval` writes its runs -- transcripts, scores, the HTML report
