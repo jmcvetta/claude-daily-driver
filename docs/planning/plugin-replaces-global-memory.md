@@ -398,27 +398,52 @@ without tests is broken* is carried by a shell script that must itself be
 tested, or the rule silently ceases to exist. Cheap safety net: end the
 constitution with a checkable token and provide a `verify` skill.
 
-### R2 — The constitution may not reach subagents
+### R2 — RESOLVED: the constitution does not reach subagents, and a hook repairs it
 
-Per constraint 5, this is undocumented. It matters because delegation to
-parallel background subagents is a core part of the workflow, and because today
-the global `CLAUDE.md` *does* reach them.
+Settled empirically on 2026-09-06 rather than left to the documentation, which
+is silent. Method: a `SessionStart` hook injecting a nonsense passphrase, a
+subagent asked for it, and the parent's `Agent` tool input inspected to confirm
+the parent did not leak the answer into the subagent prompt.
 
-**This must be settled empirically before anything else is designed around it**
-— a constitution containing a nonsense token, a subagent asked to repeat it
-back. Two minutes, and the answer determines whether the plugin can honestly
-claim to replace the global `CLAUDE.md` or only replaces it in the main
-session.
+| Delivery mechanism | Main session | Subagent |
+| ------------------ | ------------ | -------- |
+| `CLAUDE.md` | yes | **yes** |
+| `SessionStart` `additionalContext` | yes | **no** |
+| `SessionStart` + `PreToolUse` on `Agent` with `updatedInput` | yes | **yes** |
 
-Mitigations if the answer is no, in order of preference:
+The middle row is the finding that matters: **a plugin-delivered constitution is
+strictly weaker than the `CLAUDE.md` it replaces.** Delegation is central to the
+workflow, so shipping the hook alone would have been a silent regression — the
+worst kind of bug, invisible and only manifesting in the subagents doing the
+actual work.
 
-1. Conduct rules in the plugin's own `agents/*.md` system prompts. Reliable,
-   but covers only custom agents, not `Explore` / `Plan` / `general-purpose`.
-2. A constitutional rule to restate the non-negotiables in every delegation
-   prompt.
-   Works everywhere; costs tokens per delegation; depends on compliance.
-3. A `PreToolUse` hook on the `Agent` tool that appends the constitution.
-   Actually enforceable, but fiddly.
+The third row is the repair, and it is verified rather than proposed. A
+`PreToolUse` hook matching the `Agent` tool rewrites `tool_input.prompt` via
+`hookSpecificOutput.updatedInput`, prepending the constitution. In the test the
+prompt Claude *sent* contained no passphrase; the hook injected it in flight;
+the subagent answered correctly.
+
+This is the same house rule as everywhere else — *skill is the knowledge, hook
+is the guarantee* — applied to the constitution itself.
+
+**Consequence for the design (D12).** The constitution ships as one file in the
+plugin with two injection points reading it:
+
+1. `SessionStart` → `additionalContext`, for the main session.
+2. `PreToolUse` on `Agent` → `updatedInput`, for every subagent.
+
+One source of truth, two delivery paths, no drift. This supersedes the three
+speculative mitigations previously listed here; agent-definition system prompts
+and a "restate the rules when delegating" rule are both unnecessary now, the
+first because it covered only custom agents and the second because it depended
+on compliance rather than enforcement.
+
+**Acceptance test, to be committed with the hook.** The experiment above *is*
+the test, and it must ship as one: inject a known token, spawn a subagent, and
+assert the token comes back. It covers R1 and R2 together — a constitution that
+fails to load and a constitution that fails to propagate both show up as the
+same red test. Given that the constitution carries the rule *code without tests
+is broken*, it would be indefensible for its own delivery to be untested.
 
 ### R3 — Always-on context is a permanent tax
 
@@ -512,8 +537,11 @@ premature decision that produced ten commands nobody remembers.
 
 ## Sequencing
 
-1. Settle R2 empirically. Everything else depends on the answer.
-2. Draft the constitution and the `SessionStart` hook, with its test.
+1. ~~Settle R2 empirically.~~ **Done** — see R2. The answer requires a second
+   hook, folded into step 2.
+2. Draft the constitution plus *both* delivery hooks — `SessionStart` for the
+   main session, `PreToolUse` on `Agent` for subagents — and the acceptance
+   test that proves the token reaches both.
 3. Split `pr` into `pr` / `pr-title` / `pr-body`; adopt MCP triggers (D2, D5).
 4. Port `review` and the agent panel; audit for rot (D6).
 5. Memory skill on `PreCompact` (D7).
