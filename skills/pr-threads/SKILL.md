@@ -86,10 +86,18 @@ exposes; a script exists only where it demonstrably does not.
 
 **Reply takes a numeric comment ID, resolve takes a GraphQL thread node ID.**
 They are different identifiers for the same conversation and are not
-interchangeable — `add_reply_to_pull_request_comment` wants the number from a
-`#discussion_r…` anchor, `resolve_review_thread` wants `PRRT_…`. Both come out
-of `get_review_comments`; take them from the same response rather than
-reconstructing either.
+interchangeable. Both are in a `get_review_comments` response, but they are
+not both *fields* — measured on a real thread, 2026-09-06:
+
+- **Resolve** wants `PRRT_…`, which is the thread's `id`. Read it directly.
+- **Reply** wants a number that appears nowhere as a field. The comment object
+  carries no `id`. The number is the `#discussion_r…` suffix of the comment's
+  `html_url` — `…/pull/25#discussion_r3943994364` means `commentId: 3943994364`.
+
+So take the thread ID from `id` and the reply ID from the tail of `html_url`.
+Do not reach for the thread ID to reply with: it is the identifier that *is*
+present, which is exactly why it gets substituted, and the call fails on a
+type that looks plausible.
 
 
 Self-Identification
