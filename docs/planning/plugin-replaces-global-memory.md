@@ -168,8 +168,9 @@ Costs, acknowledged:
 
 `gh` stays installed as an escape hatch, demoted from default.
 
-Constitutional line: *GitHub work goes through the GitHub MCP. `gh` only for what MCP
-cannot do, and say which.*
+Constitutional line: *GitHub work goes through the GitHub MCP. Where the MCP
+cannot do the job, use `curl` against REST with the ambient `GITHUB_TOKEN` —
+not `gh`, which exists only on the laptop (see D13). Say which, and why.*
 
 ### D3 — Retire `pr-review` scripts one at a time, on evidence
 
@@ -450,9 +451,23 @@ timeline instead, which renders the PR that closed an issue and a PR that
 merely mentioned it *identically* — measured on `jmcvetta/career#177`, where
 `#178` closed it and `#176` only refers to it. So the verification this section
 already wants — *does the structured relationship match what the body claims?*
-— asks the MCP for the closes-link and `gh api` / `curl` for the dependency
-edges. One skill, two clients, for a reason that is neither arbitrary nor going
-away on its own.
+— asks the MCP for the closes-link and REST for the dependency edges. One
+skill, two clients, for a reason that is neither arbitrary nor going away on
+its own.
+
+**The second client must be `curl`, not `gh api`** — measured in a web worker
+on 2026-09-06, not assumed. `GITHUB_TOKEN` and `GH_TOKEN` are both present in
+the environment, so a REST script authenticates fine on either surface; but
+`gh` **is not installed on a web worker at all**. A script reaching for `gh api`
+would work on the laptop, fail on the web, and thereby defeat the one thing this
+whole plan exists to achieve.
+
+This is the first place where D2's *"`gh` only for what MCP cannot do"* needs
+sharpening. `gh` is not a fallback available everywhere — it is a
+laptop-only convenience. Anything that must work on both surfaces has exactly
+two clients open to it: the MCP, and `curl` against REST with the ambient
+token. The constitution should say so in those terms, since the failure mode is
+a script that passes every test on the machine where it was written.
 
 Two design notes, both worth fixing before the skill is written.
 
