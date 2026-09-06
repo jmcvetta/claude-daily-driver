@@ -4,9 +4,11 @@ description: >-
   This skill should be used whenever a GitHub pull request is being opened or
   its title or body is being written or revised — including when the user says
   "/pr", "open a PR", "create a PR", "update the PR", "fix the PR title", or
-  "rewrite the PR description", and including any use of `gh pr create` or
-  `gh pr edit` on Claude's own initiative. Supplies the required PR title
-  convention, body structure, draft state, and issue-reference format.
+  "rewrite the PR description", and including any use of
+  `mcp__github__create_pull_request`, `mcp__github__update_pull_request`, or
+  `gh pr create` / `gh pr edit` on Claude's own initiative. Supplies the
+  required PR title convention, body structure, draft state, and
+  issue-reference format.
 ---
 
 # PR Workflow

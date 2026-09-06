@@ -54,7 +54,7 @@ TOKEN_LINE = re.compile(r"^constitution-token: (\S+)$")
 # in `input_match` and never says the word, which is exactly the file whose
 # staleness matters most -- its `max: 0` leak control would go on matching a
 # retired value and pass vacuously. So the guard goes by the token's shape.
-TOKEN_SHAPE = re.compile(r"\b[a-z]+(?:-[a-z]+)+-\d{3,}\b")
+TOKEN_SHAPE = re.compile(r"\b[a-z]+(?:-[a-z]+)+-\d+\b")
 
 # The tool names a subagent spawn can arrive under. `Agent` is current; `Task`
 # is what the same tool was called for years, and a matcher that admits only

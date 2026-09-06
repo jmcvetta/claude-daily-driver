@@ -18,10 +18,11 @@ hook — plus skills that fire on activity:
 | `pr`  | Opens and updates GitHub pull requests: Conventional Commits title, draft by default, and a body with a one-line summary, a salutation in verse, an executive summary, and engineering detail. |
 
 The `pr` skill triggers on the literal `/pr`, on natural phrasings ("open a
-PR", "fix the PR title"), and on Claude's own use of `gh pr create` and
-`gh pr edit`. That last register is the point: a convention that only fires
-when a human types a command quietly stops applying as more of the work runs
-without one.
+PR", "fix the PR title"), and on Claude's own calls to
+`mcp__github__create_pull_request` and `mcp__github__update_pull_request` — or
+to `gh pr create` and `gh pr edit` on a harness that still reaches for them.
+That last register is the point: a convention that only fires when a human
+types a command quietly stops applying as more of the work runs without one.
 
 ## Layout
 
@@ -36,6 +37,7 @@ claude-daily-driver/
 ├── .github/workflows/      CI, PR title check, infra, release automation
 ├── context/
 │   └── constitution.md     always-on rules, one file, read by both hooks
+├── docs/planning/          the plan, and the record of decisions made under it
 ├── evals/                  the live half of the constitution's test
 ├── hooks/
 │   ├── hooks.json          SessionStart, and PreToolUse on the Agent tool
