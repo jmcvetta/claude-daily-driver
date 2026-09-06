@@ -8,9 +8,14 @@ are checked here, each measured against the CLI rather than assumed:
 - A skill whose frontmatter `name` disagrees with its directory. `validate`
   passes it; Claude Code resolves the skill by directory, so the name in the
   file is the one that is wrong and nothing says so.
-- A `description:` present but empty. `validate` warns only when the key is
-  missing outright, so `description: ""` is green under `--strict` and the
-  skill reaches users with nothing to trigger on.
+- An agent whose frontmatter `name` disagrees with its filename. Agents resolve
+  the other way round -- by the frontmatter `name`, measured -- so the file is
+  the misleading half, and a reader looking for `logic-reviewer` finds nothing.
+- Two agents claiming one `name`. Only one of them is dispatchable; the other
+  is silently shadowed, and `validate --strict` says nothing.
+- A `description:` present but empty, in a skill or an agent. `validate` warns
+  only when the key is missing outright, so `description: ""` is green under
+  `--strict` and the component reaches users with nothing to trigger on.
 - A `name` disagreeing between plugin.json and its marketplace entry, or
   between the marketplace and the repository it names. `validate` reads one
   manifest at a time, so it never compares them. (It *does* compare the
@@ -116,11 +121,43 @@ def main() -> int:
         if not fields.get("description"):
             errors.append(f"{where}: frontmatter description is empty")
 
+    # Agents resolve by their frontmatter `name`, not their filename -- the
+    # opposite of skills -- so a mismatch means the filename lies, and two
+    # agents sharing a name means one of them is unreachable.
+    agents = sorted((ROOT / "agents").glob("*.md"))
+    claimed: dict[str, Path] = {}
+    for agent in agents:
+        where = agent.relative_to(ROOT)
+        fields = frontmatter(agent)
+        if fields is None:
+            errors.append(f"{where}: no `---` frontmatter block")
+            continue
+        name = fields.get("name")
+        if name != agent.stem:
+            errors.append(
+                f"{where}: frontmatter name is {name!r} "
+                f"but the file is named {agent.stem!r}"
+            )
+        if not fields.get("description"):
+            errors.append(f"{where}: frontmatter description is empty")
+        if name:
+            if name in claimed:
+                errors.append(
+                    f"{where}: agent name {name!r} is already claimed by "
+                    f"{claimed[name].relative_to(ROOT)}; one of them is "
+                    "unreachable"
+                )
+            else:
+                claimed[name] = agent
+
     for error in errors:
         print(f"error: {error}", file=sys.stderr)
     if errors:
         return 1
-    print(f"manifests agree; {len(skills)} skill(s) checked")
+    print(
+        f"manifests agree; {len(skills)} skill(s) "
+        f"and {len(agents)} agent(s) checked"
+    )
     return 0
 
 

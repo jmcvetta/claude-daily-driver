@@ -148,6 +148,11 @@ Re-evaluate the severity. When uncertain, choose the more conservative path.
 Approval Criteria
 -----------------
 
+In Local mode the pull request's CI status cannot be read at all. Treat the GHA
+and Checkov criteria below as **unverified**, and say so in the verdict — an
+unreadable check is not a failing one, and the remaining criteria are judged on
+their own merits. Only a check that actually reports failure forces a 👎.
+
 Give thumbs up (👍) ONLY if ALL of these are true AND you passed the checklist:
 - [ ] No bugs or logic errors found
 - [ ] All GHA checks are passing (including Checkov)

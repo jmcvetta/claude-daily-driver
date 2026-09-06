@@ -80,10 +80,11 @@ make check
 It runs `claude plugin validate --strict` over the marketplace manifest, the
 plugin manifest, the skills and the agents — one invocation each, because
 `validate` reads a single directory at a time and would otherwise never see the
-panel — then `scripts/check-manifests.py` for the three things `validate` lets
-through: a skill whose frontmatter `name` disagrees with its directory, a
-`description:` that is present but empty, and a `name` disagreeing between the
-two manifests.
+panel — then `scripts/check-manifests.py` for what `validate` lets through: a
+skill whose frontmatter `name` disagrees with its directory, an agent whose
+`name` disagrees with its filename, two agents claiming one `name` so that only
+one of them is reachable, a `description:` that is present but empty, and a
+`name` disagreeing between the two manifests.
 
 `make check-infra` parses the OpenTofu stack and is deliberately not part of
 `make check`; see [infra/github/README.md](infra/github/README.md).

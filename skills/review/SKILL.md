@@ -91,15 +91,17 @@ Inferring depth
 Depth is read off the diff. Two signals decide it, and one override outranks
 both.
 
-**Signal 1 — kind.** Classify the changed paths:
+**Signal 1 — kind.** Classify the changed paths. The buckets overlap — a
+`README.md` is both planning-class and docs-only — so test them **in this
+order** and take the first that matches:
 
-- **Docs-only** — every path ends in `.md`, `.txt` or `.rst`, or is `LICENSE`.
-- **Planning-class** — at least one path is planning-class and every path is;
-  a path is planning-class if it lives under `docs/planning/` or
-  `docs/proposals/`, or its basename is `README.md` or `CLAUDE.md` anywhere.
-- **Test-only** — every path matches `*_test.*`, `test_*.*`, `*.test.*`,
-  `*.spec.*`, or lives under `**/tests/**` or `**/__tests__/**`.
-- **Code** — anything else.
+1. **Planning-class** — every path is planning-class, and there is at least
+   one; a path is planning-class if it lives under `docs/planning/` or
+   `docs/proposals/`, or its basename is `README.md` or `CLAUDE.md` anywhere.
+2. **Docs-only** — every path ends in `.md`, `.txt` or `.rst`, or is `LICENSE`.
+3. **Test-only** — every path matches `*_test.*`, `test_*.*`, `*.test.*`,
+   `*.spec.*`, or lives under `**/tests/**` or `**/__tests__/**`.
+4. **Code** — anything else.
 
 **Signal 2 — size.** Changed lines across non-generated files, ignoring
 lockfiles and vendored trees. The thresholds below are a prior, not a rule: a
@@ -122,14 +124,20 @@ make is now made from the diff.
   file-path and URL handling
 - dependency manifests and lockfiles
 
+The table below reads the *kind* and the *size*; the override is orthogonal to
+it and is applied afterwards, never by promoting a row.
+
 | Depth | When | Panel |
 | ----- | ---- | ----- |
-| **Skim** | docs-only, or under ~50 changed lines, with no sensitive touch | mechanical tier only |
-| **Standard** | the default: code, under ~800 changed lines, no sensitive touch | mechanical tier + `logic-reviewer` + `architecture-reviewer` |
-| **Full** | over ~800 changed lines, or a sensitive touch, or the user asked for depth | Standard + `security-reviewer` |
-| **Planning** | planning-class diff | `planning-fitness-reviewer` + `architecture-reviewer`, under the planning rubric |
+| **Planning** | planning-class | `planning-fitness-reviewer` + `architecture-reviewer`, under the planning rubric |
+| **Skim** | docs-only, or under ~50 changed lines | mechanical tier only |
+| **Standard** | the default: code or tests, under ~800 changed lines | mechanical tier + `logic-reviewer` + `architecture-reviewer` |
+| **Full** | over ~800 changed lines, or the user asked for depth | Standard + `security-reviewer` |
 
-A sensitive touch adds `security-reviewer` to whatever tier the size chose; it
+Tests sit with code rather than with docs: a test that asserts the bug passes,
+and the mechanical tier alone will not notice.
+
+A sensitive touch adds `security-reviewer` to whatever tier the table chose; it
 does not promote a fifteen-line diff to a full panel in every other respect.
 
 The user may still name a depth, and a named depth wins. Inference is the
@@ -161,7 +169,8 @@ If `/code-review` is not available in this session, fall back in order:
    `silent-failure-hunter`, `code-simplifier`, and `comment-analyzer`,
    `pr-test-analyzer`, `type-design-analyzer` where they have something to
    evaluate (skip `comment-analyzer` when no comment lines are touched; skip
-   `pr-test-analyzer` on a docs-only or test-only diff; skip
+   `pr-test-analyzer` on a docs-only diff — but never on a test-only one,
+   where it is the reviewer with the most to say; skip
    `type-design-analyzer` when no new types or interfaces are introduced).
 2. Otherwise one general-purpose agent carrying
    `references/review-guidelines.md`.

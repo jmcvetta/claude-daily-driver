@@ -16,7 +16,7 @@ design quality.
   or does it introduce an inconsistent new pattern?
 - **Complexity budget**: Does the change introduce complexity proportional to
   the value it delivers? Are there simpler alternatives?
-  *(Skip micro-level simplification — the code-simplifier agent covers that.
+  *(Skip micro-level simplification — the review's mechanical tier covers that.
   Focus on macro design choices.)*
 - **Maintainability**: Will a future developer understand this code without
   context from this PR? Is the design obvious?

@@ -19,8 +19,9 @@ changes for correctness.
 - **Type confusion**: Implicit conversions, integer overflow, string/number mixups
 - **Resource management**: Unclosed handles, leaked connections, missing cleanup
 - **Error propagation**: Incorrect error wrapping, wrong error types
-  *(Skip silent-failure detection — the silent-failure-hunter agent covers that.
-  Focus on errors that propagate incorrectly, not errors that are swallowed.)*
+- **Silent failures**: Errors swallowed rather than propagated — an empty catch
+  block, a discarded error return, a bare `except: pass`, a fallback value
+  substituted for a failure the caller needed to see
 - **Nil/null safety**: Dereferencing potentially nil values, missing nil guards
 
 ## Output Format
