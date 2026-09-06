@@ -1,0 +1,35 @@
+# Continuous integration.
+#
+# PLACEHOLDER. `CI Success` is the single required status check on master
+# (see infra/github/branch_protection.tf), and a required check that never
+# reports blocks every pull request. This workflow exists so that contract is
+# satisfied from the moment branch protection is applied, before there is
+# anything to actually test.
+#
+# It asserts nothing. Real jobs — skill linting, plugin manifest validation,
+# link checking — get added alongside it and listed under `needs`, at which
+# point `CI Success` starts aggregating instead of rubber-stamping. The job
+# *name* is the contract with branch protection and must not change; adding
+# jobs never requires touching the Tofu.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The aggregating job. Real jobs are listed under `needs` as they arrive.
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    steps:
+      - name: No checks configured yet
+        run: echo "Placeholder — no CI checks are configured for this repository yet."
