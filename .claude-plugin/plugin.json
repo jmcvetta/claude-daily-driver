@@ -1,0 +1,16 @@
+{
+  "name": "daily-driver",
+  "version": "0.1.0",
+  "description": "Daily-driver skills for Claude Code: the PR workflow, and whatever else earns its place.",
+  "author": {
+    "name": "Jason McVetta",
+    "email": "jason.mcvetta@gmail.com"
+  },
+  "repository": "https://github.com/jmcvetta/claude-daily-driver",
+  "license": "LicenseRef-Anti-License",
+  "keywords": [
+    "pull-request",
+    "workflow",
+    "conventional-commits"
+  ]
+}
