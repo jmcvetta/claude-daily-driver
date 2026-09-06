@@ -26,12 +26,14 @@ phrasings like "open a PR"; `pr-title` takes "fix the PR title"; `pr-body`
 takes "rewrite the PR description". Alongside those, each takes Claude's own
 calls to `mcp__github__create_pull_request` and
 `mcp__github__update_pull_request`, narrowed to its own half — `pr-title` on a
-call that sets a `title`, `pr-body` on one that sets a `body`, `pr` on a
-create or on an update wider than either alone. That last register is the
-point: a convention that only fires when a human types a command quietly stops
-applying as more of the work runs without one.
-Naming the MCP tools is also a stronger trigger than naming `gh pr create`
-was — an exact tool name where the old one was, in effect, a regex over a bash
+call that sets a `title`, `pr-body` on one that sets a `body`, `pr` on a create
+or on an update wider than either alone — and `gh pr create` / `gh pr edit` on
+a harness that still reaches for them. That last register is the point: a
+convention that only fires when a human types a command quietly stops applying
+as more of the work runs without one.
+
+Naming the MCP tools is also a stronger trigger than naming `gh pr create` is —
+an exact tool name where the fallback is, in effect, a regex over a bash
 command line that a wrapper, a heredoc, a variable or a stray space would
 defeat.
 
@@ -46,6 +48,9 @@ claude-daily-driver/
 │   ├── plugin.json         the plugin, and the version releases bump
 │   └── marketplace.json    the pointer `claude plugin install` reads
 ├── .github/workflows/      CI, PR title check, infra, release automation
+├── context/
+│   └── constitution.md     the always-on layer, injected by the hooks
+├── docs/planning/          the plan, and the record of decisions made under it
 ├── evals/                  `claude plugin eval` suites, one per skill
 ├── infra/github/           the repository's own settings, as OpenTofu
 ├── scripts/                the manifest checks CI runs

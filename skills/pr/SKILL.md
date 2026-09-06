@@ -5,11 +5,13 @@ description: >-
   the current branch, or an existing one is being brought up to date as a
   whole — including when the user says "/pr", "open a PR", "create a PR",
   "raise a pull request", or "update the PR", and including any call Claude
-  makes on its own initiative to `mcp__github__create_pull_request`, or to
+  makes on its own initiative to `mcp__github__create_pull_request`, to
   `mcp__github__update_pull_request` for anything wider than the title or the
-  body alone. Supplies the branch guard, the existing-PR check, draft state
-  and the call on whether there is an issue to reference; the title comes from
-  `pr-title` and the body, issue reference included, from `pr-body`.
+  body alone, or to `gh pr create` / `gh pr edit` on a harness that still
+  reaches for them. Supplies the branch guard, the existing-PR check, draft
+  state and the call on whether there is an issue to reference; the title
+  comes from `pr-title` and the body, issue reference included, from
+  `pr-body`.
 ---
 
 # PR Workflow

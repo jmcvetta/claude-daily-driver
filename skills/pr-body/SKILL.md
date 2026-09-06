@@ -5,11 +5,12 @@ description: >-
   being written or revised — including when the user says "rewrite the PR
   description", "update the PR body", "the PR description is thin", or asks
   for more detail in a PR, and including any call Claude makes on its own
-  initiative to `mcp__github__create_pull_request`, or to
-  `mcp__github__update_pull_request` that sets a `body`. Supplies the required
-  structure: one-line summary, salutation in verse, executive summary,
-  engineering detail, and the issue-reference section that closes it. Not for
-  the PR title — that is `pr-title`.
+  initiative to `mcp__github__create_pull_request`, to
+  `mcp__github__update_pull_request` that sets a `body`, or to
+  `gh pr edit --body` on a harness that still reaches for it. Supplies the
+  required structure: one-line summary, salutation in verse, executive
+  summary, engineering detail, and the issue-reference section that closes it.
+  Not for the PR title — that is `pr-title`.
 ---
 
 # PR Body

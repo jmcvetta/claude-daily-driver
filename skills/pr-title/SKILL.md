@@ -5,8 +5,9 @@ description: >-
   being written or revised — including when the user says "fix the PR title",
   "rename the PR", "that title is wrong", or asks what a PR should be called,
   and including any call Claude makes on its own initiative to
-  `mcp__github__create_pull_request`, or to
-  `mcp__github__update_pull_request` that sets a `title`. Supplies the
+  `mcp__github__create_pull_request`, to
+  `mcp__github__update_pull_request` that sets a `title`, or to
+  `gh pr edit --title` on a harness that still reaches for it. Supplies the
   Conventional Commits convention the title must conform to. Not for commit
   messages, and not for the PR body — that is `pr-body`.
 ---
