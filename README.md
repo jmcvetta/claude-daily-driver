@@ -16,11 +16,12 @@ read it, do not go further.
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
 
 Both skills trigger on the literal slash command, on natural phrasings ("open
-a PR", "this is blocked by #123"), and on Claude's own tool calls — `gh pr
-create` and `gh pr edit` for `pr`, the GitHub MCP's sub-issue and issue-read
-tools for `issue-deps`. That last register is the point: a convention that only
-fires when a human types a command quietly stops applying as more of the work
-runs without one.
+a PR", "this is blocked by #123"), and on Claude's own tool calls —
+`mcp__github__create_pull_request` and `mcp__github__update_pull_request` for
+`pr`, or `gh pr create` and `gh pr edit` on a harness that still reaches for
+them; the GitHub MCP's sub-issue and issue-read tools for `issue-deps`. That
+last register is the point: a convention that only fires when a human types a
+command quietly stops applying as more of the work runs without one.
 
 `issue-deps` carries the plugin's first runtime script,
 `skills/issue-deps/scripts/issue-deps.sh`. It is `curl` against REST rather
@@ -40,6 +41,9 @@ claude-daily-driver/
 │   ├── plugin.json         the plugin, and the version releases bump
 │   └── marketplace.json    the pointer `claude plugin install` reads
 ├── .github/workflows/      CI, PR title check, infra, release automation
+├── context/
+│   └── constitution.md     the always-on layer, injected by the hooks
+├── docs/planning/          the plan, and the record of decisions made under it
 ├── infra/github/           the repository's own settings, as OpenTofu
 ├── scripts/                the manifest checks CI runs
 └── skills/
