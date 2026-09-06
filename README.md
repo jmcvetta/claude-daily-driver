@@ -31,6 +31,7 @@ manifest — so there is no nested plugin directory:
 
 ```
 claude-daily-driver/
+├── .claude/settings.json   the stanza, applied to this repository too
 ├── .claude-plugin/
 │   ├── plugin.json         the plugin, and the version releases bump
 │   └── marketplace.json    the pointer `claude plugin install` reads
@@ -44,9 +45,10 @@ claude-daily-driver/
 │   ├── hooks.json          SessionStart, and PreToolUse on the Agent tool
 │   └── inject-constitution.py
 ├── infra/github/           the repository's own settings, as OpenTofu
-├── scripts/                the checks CI runs, and the MCP usage tally
-└── skills/
-    └── pr/SKILL.md
+├── scripts/                the checks CI runs, the stanza, the MCP tally
+├── skills/
+│   └── pr/SKILL.md
+└── template/.claude/       copied into a repository to enable the plugin
 ```
 
 ## The constitution
@@ -97,7 +99,20 @@ credential requirement starts:
 They fail for different reasons and deserve to fail separately: the first
 tests this plugin, the second tests an assumption about the harness that a
 future release could withdraw without telling anyone.
+## Enabling it in a repository
 
+Plugin installation is per-project: a repository enables the plugin for
+everyone who works in it — a web worker included — by carrying an
+`extraKnownMarketplaces` + `enabledPlugins` stanza in its
+`.claude/settings.json`. A repository without it runs without the plugin and
+gives no sign of it.
+
+[docs/bootstrapping-a-repository.md](docs/bootstrapping-a-repository.md) has
+the stanza to copy, the two names that are easy to get wrong, the three ways
+to write it into a repository, and how to tell whether it actually loaded.
+`python3 scripts/stanza.py` prints the same stanza, derived from the
+manifests, and `python3 scripts/stanza.py --write <repo>` merges it into
+another checkout.
 ## Portability
 
 The same tree is read by more than one harness:
@@ -120,9 +135,10 @@ make check
 
 It runs `claude plugin validate --strict` over the marketplace manifest, the
 plugin manifest and the components, then `scripts/check-manifests.py` for the
-three things `validate` lets through: a skill whose frontmatter `name`
-disagrees with its directory, a `description:` that is present but empty, and
-a `name` disagreeing between the two manifests. Then
+four things `validate` lets through: a skill whose frontmatter `name`
+disagrees with its directory, a `description:` that is present but empty, a
+`name` disagreeing between the two manifests, and a copy of the repository
+stanza that has drifted from the names it enables. Then
 `scripts/check-constitution.py`, described above.
 
 `make check-infra` parses the OpenTofu stack and is deliberately not part of
