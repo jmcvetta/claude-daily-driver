@@ -25,33 +25,107 @@ exclusion below.
 
 - **`github_repository`** — merge settings, visibility, feature toggles
 - **`github_repository_vulnerability_alerts`** — Dependabot alerts
+- **`github_workflow_repository_permissions`** — the default workflow token
+  scope, and whether Actions may open a pull request (the release job needs
+  the latter)
 - **`github_branch_protection`** on `master` — required `CI Success` check
   (strict), linear history, conversation resolution, no force pushes or
   deletions
 
-## The `CI Success` Check Is a Placeholder Today
+## The `CI Success` Check
 
 Branch protection requires a status check named `CI Success`, and a required
 check that never reports blocks every pull request. `.github/workflows/ci.yml`
-therefore ships a job with exactly that name which asserts nothing.
+ships a job with exactly that name, which aggregates the real jobs through
+`needs`.
 
-Replacing it with real CI is a change to the workflow, not to this
-configuration: the Tofu binds to the job *name*, so jobs can be added under
-`needs` without touching `branch_protection.tf`.
+Adding CI is therefore a change to the workflow, not to this configuration:
+the Tofu binds to the job *name*, so jobs can be added under `needs` without
+touching `branch_protection.tf`.
 
-Two consequences worth knowing:
+Three consequences worth knowing:
 
 - A pull request whose branch predates the workflow will not report the check
   and cannot merge until it picks up `master`. `strict = true` already
   requires that.
 - `enforce_admins = false` leaves an escape hatch for the case where CI
   itself is what is broken.
+- **The release pull request needs that escape hatch.** GitHub suppresses
+  workflow events for anything pushed with the default token, and
+  `release-please.yml` falls back to that token while the App variables under
+  **Deliberate Exclusions** are unset. So the release pull request arrives
+  with *no* check runs at all, and `CI Success` sits "expected" on the one
+  pull request whose merge cuts a permanent tag. Configuring the App removes
+  that, because an App is a distinct identity whose pushes do produce
+  workflow events.
+
+`ci.yml` carries no `paths:` filter, and must not grow one. A path-filtered
+workflow does not report a *skipped* check, it reports nothing at all, so a
+required context naming a filtered job leaves every unmatched pull request
+pending forever. `infra.yml` is filtered precisely because it is not required;
+requiring it later means dropping its filter in the same commit, and nothing
+enforces that.
+
+## The Release Job Depends on a Workflow Permission
+
+`release-please.yml`'s fallback to `github.token` works only while **Settings
+-> Actions -> General -> Allow GitHub Actions to create and approve pull
+requests** is on. With it off, release-please does all its work, pushes its
+release branch, and then fails on the last call:
+
+```
+release-please failed: GitHub Actions is not permitted to create or approve
+pull requests.
+```
+
+The branch it pushed stays behind, so the failure looks like a partial
+success — which is how the first Release Please run on this repository
+actually ended.
+
+So `can_approve_pull_request_reviews` is declared, in `repository.tf`. It was
+briefly argued here that it should not be, on the grounds that the release bot
+App is the real fix and a Tofu-managed permission would only prop up the
+fallback the App replaces. That reasoning was wrong twice over: the App is not
+configured, so the fallback is not a fallback but the actual mechanism; and a
+setting the release job depends on belongs written down next to the reason it
+is needed whether or not something better exists. Configuring the App makes
+the release job stop depending on it. It does not make it wrong to declare.
+
+## The Provider Lock Has To Be What `init` Produces
+
+`.terraform.lock.hcl` is committed, and `.github/workflows/infra.yml` fails a
+pull request whose lock file `tofu init` would rewrite. That is stricter than
+it sounds: initialising against the registry records an `h1:` hash for every
+platform the provider publishes, so a lock file carrying fewer of them is
+rewritten on the next init, on any machine. A file that init rewrites is not a
+pin anyone reads — the diff appears, nobody asked for it, and it gets
+committed unread.
+
+So when the provider version changes, let init write the file and commit what
+it wrote:
+
+```bash
+cd infra/github
+tofu init -backend=false
+git diff -- .terraform.lock.hcl
+```
+
+`.opentofu-version` pins the toolchain the same way, and is read by both a
+version manager (`tenv`, `asdf`, `mise`) on a laptop and by
+`opentofu/setup-opentofu` in CI, so both install the same OpenTofu from the
+same file.
 
 ## Deliberate Exclusions
 
 **Actions secrets.** The provider writes secret values into state, and this
-state is committed. Set them by hand and leave them there. Variables would be
-fine; there are none yet.
+state is committed. Set them by hand and leave them there.
+
+**`RELEASE_BOT_APP_ID` and `RELEASE_BOT_PRIVATE_KEY`.** The variable would be
+manageable here — it holds no secret — and is deliberately left out anyway.
+`release-please.yml` switches to the App the moment the variable is set, so
+setting it while the private key is missing or the App is not installed makes
+the release job fail on its first step, which is worse than the fallback it
+replaces. Both go in together, by hand, alongside installing the App.
 
 **Labels.** Tofu owns only what it declares, so declaring none neither adopts
 nor deletes GitHub's defaults. The repository has no labels of its own yet;
@@ -67,6 +141,29 @@ A GitHub token with admin rights on the repository, exported as
 ```bash
 export GITHUB_TOKEN=$(gh auth token)
 ```
+
+## Checking a Change Before Applying It
+
+`tofu apply` is the first thing that parses these files, and it runs against
+live branch protection — a bad moment to discover a typo. `make check-infra`,
+from the repository root, moves that discovery earlier:
+
+```bash
+make check-infra
+```
+
+It runs `tofu fmt -check`, then `tofu init -backend=false`, then `tofu
+validate`. The `-backend=false` is what keeps it credential-free: providers
+are installed for validation, and neither state nor the GitHub API is touched.
+`.github/workflows/infra.yml` runs it on every pull request that touches this
+directory, so a syntax error or an attribute the provider does not have fails
+in review.
+
+It is not part of `make check`, which is what a laptop runs while editing a
+skill and which must not start requiring OpenTofu to be installed.
+
+This is not a substitute for reading `tofu plan` before an apply. Validation
+knows the configuration is well-formed; only the plan knows what it will do.
 
 ## Usage
 
@@ -88,6 +185,7 @@ than the "No changes." a fully-imported stack would:
   and body as the commit subject and message, branch deletion on merge, auto
   merge enabled
 - `github_repository_vulnerability_alerts.this` created
+- `github_workflow_repository_permissions.this` created
 - `github_branch_protection.master` created
 
 After applying, commit `terraform.tfstate` to Git.

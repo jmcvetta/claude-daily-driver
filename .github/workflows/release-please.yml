@@ -1,0 +1,119 @@
+# Cut releases from Conventional Commit subjects on master.
+#
+# One package, one version, one tag series — the same shape as
+# jmcvetta/release-please-projected-releases-action, reached a different way.
+# That repository configures release-please from the action's `release-type:`
+# input, in what release-please calls plain mode. Here the version being
+# released is the `version` field of .claude-plugin/plugin.json, and it has to
+# stay equal to the `version` on the marketplace entry that describes the same
+# plugin. Only `extra-files` can bump a pair like that, and `extra-files` is a
+# config-file key that release-please-action exposes no input for. So this
+# repository runs in manifest mode with a single package at `"."`:
+# release-please-config.json and .release-please-manifest.json, and no
+# `release-type:` here.
+#
+# **The first release is 0.1.0**, set by `initial-version` in
+# release-please-config.json. Left alone release-please releases 1.0.0 first,
+# because with no prior tag it takes the version from the strategy rather than
+# from any file in the checkout. `initial-version` is reachable only from a
+# config file, which manifest mode gives us; it applies to the bootstrap
+# release only, so the `feat:` after 0.1.0 gives 0.2.0 as normal. The
+# `release-as:` *input* would also produce 0.1.0 and is the wrong tool: it is
+# sticky, and holds every later release at that version until the line is
+# removed.
+#
+# `.release-please-manifest.json` says `0.0.0`, which is release-please's
+# sentinel for "nothing released yet" — `Manifest.buildPullRequests` skips its
+# backfill for exactly that string. plugin.json and the marketplace entry say
+# 0.0.0 too, so the tree agrees with the manifest, and the first release moves
+# all three to 0.1.0 together.
+name: Release Please
+
+on:
+  push:
+    branches: [master]
+
+# Nothing at the top level; the job below takes what it needs.
+permissions: {}
+
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      # Open and groom the release pull request, write the tag, and move the
+      # major and minor tags onto it.
+      contents: write
+      pull-requests: write
+      # release-please labels its pull request and comments after releasing,
+      # and both go through the Issues API.
+      issues: write
+    steps:
+      # GitHub suppresses workflow events for anything pushed with the default
+      # token, so a release pull request opened with GITHUB_TOKEN arrives with
+      # no checks — on the one pull request whose merge cuts a permanent tag.
+      # `CI Success` is required, so that pull request needs the admin escape
+      # hatch `enforce_admins = false` leaves open. A GitHub App is a distinct
+      # identity, so CI runs on its pull requests normally and the escape
+      # hatch stops being part of the release procedure.
+      #
+      # Set the repository variable RELEASE_BOT_APP_ID and the secret
+      # RELEASE_BOT_PRIVATE_KEY to use one; without them this step is skipped
+      # and the fallback below is the default token. That fallback works at
+      # all only while Settings -> Actions -> General -> "Allow GitHub Actions
+      # to create and approve pull requests" is on. With that off,
+      # release-please pushes its release branch and then fails on the call
+      # that opens the pull request, which looks like a partial success -- and
+      # is how this workflow's first run ended. That setting is now declared
+      # in infra/github/repository.tf, so it is applied rather than
+      # remembered.
+      - id: app-token
+        if: vars.RELEASE_BOT_APP_ID != ''
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+
+      # No `release-type:`. Its presence is release-please-action's mode
+      # switch, and setting it here would make release-please ignore
+      # release-please-config.json — including the extra-files that are the
+      # whole reason for the config file.
+      - id: release
+        uses: googleapis/release-please-action@v5
+        with:
+          token: ${{ steps.app-token.outputs.token || github.token }}
+
+      # A plugin is installed from a marketplace rather than pinned by tag, so
+      # the moving aliases are a smaller deal here than on an action. They are
+      # kept anyway: they are what makes `git checkout v0` mean the newest
+      # 0.x, and the two workflows staying alike is worth more than the few
+      # lines. release-please writes only the exact tag.
+      - uses: actions/checkout@v7
+        if: steps.release.outputs.release_created == 'true'
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token || github.token }}
+      - name: Move the major and minor tags onto the release
+        if: steps.release.outputs.release_created == 'true'
+        # Through the environment rather than interpolated into the shell
+        # line. These particular outputs are numbers, so the upstream recipe's
+        # interpolation is safe, but a workflow that runs `${{ }}` inside a
+        # shell command is one edit away from not being.
+        env:
+          MAJOR: ${{ steps.release.outputs.major }}
+          MINOR: ${{ steps.release.outputs.minor }}
+          TAG: ${{ steps.release.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for alias in "v$MAJOR" "v$MAJOR.$MINOR"; do
+            # Annotated and forced, so the alias moves rather than erroring on
+            # the second release. `git push --force` on a tag is the whole
+            # point here; it is what "v0 follows the latest 0.x" means.
+            git tag -f -a "$alias" -m "Release $alias ($TAG)" "$TAG"
+            git push --force origin "refs/tags/$alias"
+          done
