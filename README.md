@@ -15,10 +15,11 @@ read it, do not go further.
 | `pr`  | Opens and updates GitHub pull requests: Conventional Commits title, draft by default, and a body with a one-line summary, a salutation in verse, an executive summary, and engineering detail. |
 
 The `pr` skill triggers on the literal `/pr`, on natural phrasings ("open a
-PR", "fix the PR title"), and on Claude's own use of `gh pr create` and
-`gh pr edit`. That last register is the point: a convention that only fires
-when a human types a command quietly stops applying as more of the work runs
-without one.
+PR", "fix the PR title"), and on Claude's own calls to
+`mcp__github__create_pull_request` and `mcp__github__update_pull_request` — or
+to `gh pr create` and `gh pr edit` on a harness that still reaches for them.
+That last register is the point: a convention that only fires when a human
+types a command quietly stops applying as more of the work runs without one.
 
 ## Layout
 
@@ -31,8 +32,12 @@ claude-daily-driver/
 │   ├── plugin.json         the plugin, and the version releases bump
 │   └── marketplace.json    the pointer `claude plugin install` reads
 ├── .github/workflows/      CI, PR title check, infra, release automation
+├── context/
+│   └── constitution.md     the always-on layer, injected by the hooks
+├── docs/                   decisions, and the measurements behind them
+│   └── planning/           the plan, and the record of decisions made under it
 ├── infra/github/           the repository's own settings, as OpenTofu
-├── scripts/                the manifest checks CI runs
+├── scripts/                the manifest checks CI runs, and the MCP usage tally
 └── skills/
     └── pr/SKILL.md
 ```
@@ -65,6 +70,10 @@ a `name` disagreeing between the two manifests.
 
 `make check-infra` parses the OpenTofu stack and is deliberately not part of
 `make check`; see [infra/github/README.md](infra/github/README.md).
+
+`make mcp-usage` is not a check at all. It counts which GitHub MCP tools this
+laptop actually called, so the server's `--toolsets` list can be narrowed on
+evidence rather than taste; see [docs/github-mcp.md](docs/github-mcp.md).
 
 ## Releases
 
