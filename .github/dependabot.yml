@@ -1,0 +1,18 @@
+# There is no package manifest to track here — the plugin is Markdown and
+# JSON, and the Claude Code CLI that validates it is installed unpinned by
+# ci.yml on purpose. What is pinned, and so can go stale silently, is the
+# actions the workflows call and the OpenTofu provider the infra stack locks.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  # infra/github/.terraform.lock.hcl. `infra.yml` fails a pull request whose
+  # lock file `tofu init` would rewrite, so a provider bump that arrives here
+  # is checked the same way a hand-written one is.
+  - package-ecosystem: terraform
+    directory: /infra/github
+    schedule:
+      interval: weekly
