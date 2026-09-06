@@ -39,3 +39,29 @@ resource "github_repository_vulnerability_alerts" "this" {
   repository = github_repository.this.name
   enabled    = true
 }
+
+# Settings -> Actions -> General -> Workflow permissions, which is the setting
+# the release job actually depends on.
+#
+# `can_approve_pull_request_reviews` is GitHub's "Allow GitHub Actions to
+# create and approve pull requests", and the create half is the one that
+# matters. With it off, release-please does all its work, pushes its release
+# branch, and then fails the run on the call that opens the pull request -- so
+# the failure reads as a partial success and no release ever gets cut.
+#
+# That is not hypothetical here. It is exactly how the first Release Please
+# run ended: `release-please--branches--master` pushed, no pull request on it,
+# and a red run whose log says everything worked until the last call.
+#
+# This repository releases itself, so the switch is part of its configuration
+# rather than a preference. Configuring the release bot App makes the release
+# job stop depending on it, but does not make it wrong to declare.
+#
+# `default_workflow_permissions` stays at read. Every workflow here declares
+# the scopes its jobs need, so a permissive default would only widen the token
+# for a workflow that forgot to.
+resource "github_workflow_repository_permissions" "this" {
+  repository                       = github_repository.this.name
+  default_workflow_permissions     = "read"
+  can_approve_pull_request_reviews = true
+}
