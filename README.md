@@ -31,8 +31,9 @@ claude-daily-driver/
 │   ├── plugin.json         the plugin, and the version releases bump
 │   └── marketplace.json    the pointer `claude plugin install` reads
 ├── .github/workflows/      CI, PR title check, infra, release automation
+├── docs/                   decisions, and the measurements behind them
 ├── infra/github/           the repository's own settings, as OpenTofu
-├── scripts/                the manifest checks CI runs
+├── scripts/                the manifest checks CI runs, and the MCP usage tally
 └── skills/
     └── pr/SKILL.md
 ```
@@ -65,6 +66,10 @@ a `name` disagreeing between the two manifests.
 
 `make check-infra` parses the OpenTofu stack and is deliberately not part of
 `make check`; see [infra/github/README.md](infra/github/README.md).
+
+`make mcp-usage` is not a check at all. It counts which GitHub MCP tools this
+laptop actually called, so the server's `--toolsets` list can be narrowed on
+evidence rather than taste; see [docs/github-mcp.md](docs/github-mcp.md).
 
 ## Releases
 
