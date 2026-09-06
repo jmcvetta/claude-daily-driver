@@ -30,7 +30,7 @@ constitution to every subagent prompt, so the multiplier is not one per
 session but one plus the number of subagents — and this is a workflow built
 around delegation.
 
-Result: **16,919 bytes in, 7,131 bytes out**, and most of what survived was
+Result: **16,919 bytes in, 7,427 bytes out**, and most of what survived was
 rewritten to name its firing moment rather than merely to state a preference.
 
 ## Disposition
@@ -63,9 +63,12 @@ rewritten to name its firing moment rather than merely to state a preference.
 
 Two things were **added** that were not in the source:
 
-- **The GitHub client rule** (D2): MCP first, `curl` with the ambient
-  `GITHUB_TOKEN` where the MCP cannot do the job, and never `gh`, which is
-  absent from a web worker altogether.
+- **The GitHub client rule** (D2): MCP first, `curl` against the REST or
+  GraphQL API where the MCP cannot do the job, and no `gh` for the work
+  itself, since it is absent from a web worker altogether. The one exception
+  is `gh auth token`: `$GITHUB_TOKEN` is ambient on a web worker but not on
+  the laptop, so banning `gh` outright would have left the laptop's `curl`
+  fallback with no credential and no way to get one.
 - **The verification token** (R1): the constitution ends with a token a
   session can be asked to quote, so that "did it load?" has an answer. The
   hooks and their acceptance test are #15's; the token lives here because the
