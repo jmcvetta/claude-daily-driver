@@ -967,7 +967,7 @@ premature decision that produced ten commands nobody remembers.
    D5).~~ **Done** — three sibling skills, triggering on
    `mcp__github__create_pull_request` and
    `mcp__github__update_pull_request`, with a `claude plugin eval` suite each
-   under `evals/`. `pr-threads` and `pr-ci` remain.
+   under `evals/`. `pr-threads` has since landed too; `pr-ci` remains.
 4. Port `review` and the agent panel; audit for rot (D6).
 5. Memory skill, written by the compaction hook (D7) — and the `PostCompact`
    `additionalContext` question answered first, since it decides whether the
