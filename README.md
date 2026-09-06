@@ -28,8 +28,11 @@ manifest — so there is no nested plugin directory:
 ```
 claude-daily-driver/
 ├── .claude-plugin/
-│   ├── plugin.json         the plugin
+│   ├── plugin.json         the plugin, and the version releases bump
 │   └── marketplace.json    the pointer `claude plugin install` reads
+├── .github/workflows/      CI, PR title check, infra, release automation
+├── infra/github/           the repository's own settings, as OpenTofu
+├── scripts/                the manifest checks CI runs
 └── skills/
     └── pr/SKILL.md
 ```
@@ -44,6 +47,42 @@ The same tree is read by more than one harness:
   checkout can be loaded directly with `omp --plugin-dir <path>`.
 
 [omp]: https://omp.sh
+
+## Checks
+
+`make check` is what CI runs — the same target, not a restatement of it, so a
+leg added here is a leg the required check gains:
+
+```sh
+make check
+```
+
+It runs `claude plugin validate --strict` over the marketplace manifest, the
+plugin manifest and the components, then `scripts/check-manifests.py` for the
+three things `validate` lets through: a skill whose frontmatter `name`
+disagrees with its directory, a `description:` that is present but empty, and
+a `name` disagreeing between the two manifests.
+
+`make check-infra` parses the OpenTofu stack and is deliberately not part of
+`make check`; see [infra/github/README.md](infra/github/README.md).
+
+## Releases
+
+release-please cuts them from the Conventional Commit type in a merged pull
+request's **title**, which squash-merge makes the commit subject. The version
+it bumps is `version` in `.claude-plugin/plugin.json`, and it bumps the
+matching field on the marketplace entry in the same commit — `claude plugin
+validate --strict` fails when those two disagree, so they cannot be released
+apart.
+
+The first release is `0.1.0`. Until it is cut, both manifests read `0.0.0`,
+which is release-please's way of spelling "nothing released yet".
+
+Each pull request also gets a comment saying which tags merging it would cut,
+from [release-please-projected-releases-action][prpra] — the type in the title
+being otherwise invisible until it is too late to change.
+
+[prpra]: https://github.com/jmcvetta/release-please-projected-releases-action
 
 ## Don't install this
 
