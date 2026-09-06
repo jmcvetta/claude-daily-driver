@@ -10,6 +10,9 @@ read it, do not go further.
 
 ## What's in it
 
+The **constitution** — `context/constitution.md`, delivered to every session by
+hook — plus skills that fire on activity:
+
 | Skill | What it does |
 | ----- | ------------ |
 | `pr`  | Opens and updates GitHub pull requests: Conventional Commits title, draft by default, and a body with a one-line summary, a salutation in verse, an executive summary, and engineering detail. |
@@ -31,11 +34,66 @@ claude-daily-driver/
 │   ├── plugin.json         the plugin, and the version releases bump
 │   └── marketplace.json    the pointer `claude plugin install` reads
 ├── .github/workflows/      CI, PR title check, infra, release automation
+├── context/
+│   └── constitution.md     always-on rules, one file, read by both hooks
+├── evals/                  the live half of the constitution's test
+├── hooks/
+│   ├── hooks.json          SessionStart, and PreToolUse on the Agent tool
+│   └── inject-constitution.py
 ├── infra/github/           the repository's own settings, as OpenTofu
-├── scripts/                the manifest checks CI runs
+├── scripts/                the checks CI runs
 └── skills/
     └── pr/SKILL.md
 ```
+
+## The constitution
+
+`context/constitution.md` is the always-on layer: identity and
+non-negotiables, in force in every session. A plugin cannot ship a
+`CLAUDE.md` — plugins contribute context through skills, agents and hooks —
+so it is delivered by hook, and it takes **two** hooks rather than one:
+
+| Delivery | Main session | Subagent |
+| -------- | ------------ | -------- |
+| `CLAUDE.md` | yes | yes |
+| `SessionStart` `additionalContext` | yes | **no** |
+| `SessionStart` + `PreToolUse` on `Agent` | yes | **yes** |
+
+That middle row was measured, not assumed, and it is why shipping only the
+first hook would have been a silent regression against the `CLAUDE.md` this
+replaces — invisible, and manifesting only in the subagents doing the actual
+work. The repair is a `PreToolUse` hook that rewrites the subagent's prompt
+through `hookSpecificOutput.updatedInput`. The evidence and method are in
+[the planning doc](docs/planning/plugin-replaces-global-memory.md) under R2.
+
+Both hooks are one script reading one file by exact path — never a glob over
+`context/`, which is how two injection points come to disagree the day a
+second file lands. When the file cannot be read, the hooks say so in the
+model's context, in a `systemMessage` to the terminal, and on stderr, rather
+than handing back a session that quietly has no constitution.
+
+The last line of the file is a token. Ask a session for it: a session that
+cannot quote it did not get the constitution, whatever else it may believe.
+
+## Testing the constitution
+
+The rule *code without tests is broken* is carried by the very hooks that
+deliver it, so the delivery is tested in two halves, split where the
+credential requirement starts:
+
+- **`make check`** runs `scripts/check-constitution.py`: both hooks against
+  synthetic event JSON, asserting the constitution comes back from each — and
+  that the subagent's prompt is *exactly* the main session's context plus the
+  original prompt, which is the assertion that catches drift between the two
+  injection points. No model, no credentials.
+- **`claude plugin eval evals/`** runs the live half, which is the R2
+  experiment itself: a subagent is asked for a token nobody put in its prompt.
+  Only a real session can prove the harness honours `updatedInput`, and a
+  credentialed run is the price of asking.
+
+They fail for different reasons and deserve to fail separately: the first
+tests this plugin, the second tests an assumption about the harness that a
+future release could withdraw without telling anyone.
 
 ## Portability
 
@@ -61,7 +119,8 @@ It runs `claude plugin validate --strict` over the marketplace manifest, the
 plugin manifest and the components, then `scripts/check-manifests.py` for the
 three things `validate` lets through: a skill whose frontmatter `name`
 disagrees with its directory, a `description:` that is present but empty, and
-a `name` disagreeing between the two manifests.
+a `name` disagreeing between the two manifests. Then
+`scripts/check-constitution.py`, described above.
 
 `make check-infra` parses the OpenTofu stack and is deliberately not part of
 `make check`; see [infra/github/README.md](infra/github/README.md).

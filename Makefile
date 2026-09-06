@@ -7,7 +7,7 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -o pipefail -c
 
-.PHONY: git_sync check check-plugin check-skills check-infra
+.PHONY: git_sync check check-plugin check-skills check-constitution check-infra
 
 # git_sync: sync master with origin and delete local branches whose upstream
 # is gone. Branches checked out in a linked worktree (marked '+' by
@@ -24,7 +24,7 @@ git_sync:
 # check: everything CI asserts about this plugin. CI runs this target rather
 # than restating its legs, so a leg added here is a leg CI gains — and there
 # is no second command line to fall behind this one.
-check: check-plugin check-skills
+check: check-plugin check-skills check-constitution
 
 # `claude plugin validate --strict` reads one manifest at a time and picks the
 # marketplace when handed a directory, so the plugin manifest is named
@@ -39,6 +39,14 @@ check-plugin:
 check-skills:
 	claude plugin validate --strict skills
 	python3 scripts/check-manifests.py
+
+# The credential-free half of the constitution's acceptance test: run both
+# delivery hooks against synthetic event JSON and assert the constitution comes
+# back, identically, from each. The live half needs a model and therefore
+# credentials, so it is a `claude plugin eval` case under evals/ rather than a
+# leg here -- see the script's docstring for where the seam is and why.
+check-constitution:
+	python3 scripts/check-constitution.py
 
 # check-infra: parse the OpenTofu stack without credentials. Not part of
 # `check`, which must not start requiring OpenTofu on a laptop that is only
