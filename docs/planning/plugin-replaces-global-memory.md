@@ -205,11 +205,29 @@ old review comment fails to collapse.
 Second, the surviving directory still needs its governing rule, which is
 unchanged and is the point of the exercise:
 
-> **`scripts/` holds only what the MCP demonstrably cannot do, and each
-> script's header says why it exists.**
+> **A skill's `scripts/` holds only what the MCP demonstrably cannot do, and
+> each script's header says why it exists.**
 
 A self-liquidating directory. As the MCP grows, scripts get deleted — but each
 deletion is earned by a demonstration, not by an assumption.
+
+**Naming collision, introduced by `master`.** The plugin *is* the repository
+root (`"source": "./"`), and `master` now carries `scripts/check-manifests.py`
+— repository tooling that runs in CI, not plugin runtime. A single root
+`scripts/` would mean two unrelated things, and the self-liquidating rule above
+would read as though it governed the CI helper, which it must not: that script
+has nothing to do with the MCP and is never going away.
+
+So they separate by location, and the rule follows the runtime ones:
+
+- `/scripts/` — repository tooling. Runs in CI, on the repo itself. Governed by
+  nothing in this document.
+- `skills/<skill>/scripts/` — plugin runtime. Governed by the rule above, owned
+  by the skill that calls it, and deleted when that skill no longer needs it.
+
+Putting runtime scripts beside their skill is better than a shared directory
+anyway: it makes the owner obvious, and it means a skill and its scripts are
+retired together rather than leaving orphans behind.
 
 ### D4 — Retire the haiku convention; keep poetry
 
@@ -382,8 +400,9 @@ is a duty triggered by a condition (open dependabot PRs exist), which is exactly
 the shape of a skill: it fires when the condition is noticed during ordinary PR
 work, and stays invocable for when it is not.
 
-Separately, and outside this work: `.github/dependabot.yml` is not configured in
-this repository at all, so nothing is opening those PRs here yet.
+Since this was written, `.github/dependabot.yml` has landed on `master` —
+github-actions and terraform ecosystems, weekly — so the schedule this decision
+declines to duplicate is now live in this repository too.
 
 ### D13 — A relationship skill, wanted; the MCP is the gap, not the API
 
@@ -407,7 +426,8 @@ edges, and a probe table of what the API refuses. Start there; do not
 rediscover it.
 
 So the gap is the **MCP's, not GitHub's**, and the shape follows: dependencies
-become the first new resident of `scripts/` under D3's rule — a script that
+become the first new resident of a skill's `scripts/` under D3's rule — a
+script that
 exists because the MCP demonstrably cannot do the job, with a header saying
 exactly that and a plausible expiry date for when the MCP catches up. That is
 the self-liquidating directory working as designed rather than accumulating.
@@ -438,7 +458,8 @@ refuses, and only the write says so.
 **The write surface is half what was assumed, which bounds the script.**
 `POST .../dependencies/blocking` does not exist: `404` in GitHub's own error
 shape, with `blocking` listed under reads only. So the first resident of
-`scripts/` needs exactly one write route (`POST .../dependencies/blocked_by`),
+this skill's `scripts/` needs exactly one write route
+(`POST .../dependencies/blocked_by`),
 one `DELETE`, and two `GET`s. Four endpoints is small enough to make D3's
 expiry note concrete — the script goes the day the MCP exposes them.
 
