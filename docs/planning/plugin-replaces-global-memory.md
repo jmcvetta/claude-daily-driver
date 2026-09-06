@@ -1,7 +1,7 @@
 # Daily Driver: Replacing the Global CLAUDE.md
 
-**Status**: draft — under active discussion
-**Branch**: `claude/daily-driver-plugin-brainstorm-x8azls`
+**Status**: living document. Kept current as the work proceeds, and amended by
+pull request — the same process it specifies for the constitution itself.
 
 ## Goal
 
@@ -40,8 +40,11 @@ Established by reading the plugin and hooks references, not by assumption.
 3. **Always-on context in the main session comes from a `SessionStart` hook**
    emitting
    `hookSpecificOutput.additionalContext`. The plugin ships `hooks/hooks.json`
-   plus a script that reads `${CLAUDE_PLUGIN_ROOT}/context/*.md`. Being
-   harness-executed, it behaves the same on CLI and web.
+   plus a script that reads exactly one file,
+   `${CLAUDE_PLUGIN_ROOT}/context/constitution.md` — not a glob over that
+   directory. D12 feeds the subagent hook from the same file, and a glob is how
+   the two injection points would silently diverge the day a second file landed.
+   Being harness-executed, the script behaves the same on CLI and web.
 
 4. **`InstructionsLoaded` and `SubagentStart` are observation-only.** Neither
    supports decision control, so neither can inject or amend instructions.
@@ -61,6 +64,18 @@ Established by reading the plugin and hooks references, not by assumption.
    trusted. This is per-project, so every repo needs the stanza — a job for a
    `bootstrap` skill.
 
+8. **No hook can make the model take a turn.** A hook is a shell command, and
+   the only way back into the conversation is text the harness chooses to
+   forward. At the end of a session there is nothing to forward it to:
+   `PreCompact` and `PostCompact` *"can't make decisions that affect
+   compaction; they can only observe it and emit side effects"*; `SessionEnd`
+   *"can't block the session end or affect it"*; and even `Stop`, the event
+   that looks built for this, is documented as *"Claude Code doesn't read any
+   decision from your hook's JSON output"* — it can react, not continue. So a
+   duty that needs judgement at one of those moments must be discharged **by
+   the hook script itself**, never delegated back to the model. This constraint
+   is what reshapes D7.
+
 ## Architecture
 
 ### Three layers
@@ -79,8 +94,8 @@ in force, and amended only by a deliberate reviewable process. Under D7 that
 process is literally a pull request against this repository.
 
 **There is no line limit.** A cap would be arbitrary and would get gamed by
-compression rather than by cutting. Admission is governed by two filters
-instead:
+compression rather than by cutting. Admission is governed by filters instead —
+two here, and a third from D1:
 
 *Does this change behaviour in most sessions?*
 
@@ -161,8 +176,13 @@ heredoc, a variable, or a stray space.
 
 Costs, acknowledged:
 
-- ~55 tool definitions in context. Mitigate with the server's `--toolsets`
-  flag; `pull_requests,issues,repos` covers the workflow.
+- ~55 tool definitions in context. The server's `--toolsets` flag is the
+  mitigation, but *which* toolsets is deliberately not settled here: Q6 answers
+  it by measurement, after a fortnight with everything enabled. Naming a list
+  now would also be wrong on its face — `pull_requests,issues,repos` omits the
+  actions and checks tools that D5's `pr-ci` is defined in terms of, and a
+  toolset chosen before the workflow exists is the premature decision Q6 is
+  written to avoid.
 - Local auth needs a PAT or `gh auth token`; web is wired automatically.
 - Gaps remain: comment minimisation, `gh run watch`, log tailing.
 
@@ -196,13 +216,34 @@ Current state of knowledge, honestly labelled:
 | `pr-post-comment.sh` | **Likely retires.** `add_issue_comment` is a straightforward equivalent; still wants one demonstration. |
 | `pr-get-current-branch-number.sh` | **Likely retires**, but not free: there is no "PR for the current branch" MCP call, so it becomes `list_pull_requests` filtered by head ref. |
 
-Two things follow. First, the dependency chain matters more than the individual
-mappings: minimisation is a genuine gap, minimisation needs node IDs, and node
+Three things follow. First, the dependency chain matters more than the
+individual mappings: minimisation is a genuine gap, minimisation needs node IDs, and node
 IDs come from a script. Cut the middle of that chain and the surviving ends stop
 working — the kind of silent breakage that only shows up months later when an
 old review comment fails to collapse.
 
-Second, the surviving directory still needs its governing rule, which is
+Second, **the client these scripts use is a retirement condition of its own,
+and the table above does not look at it.** Every verdict there weighs one
+question — can the MCP do this? — while D13 measures a second: `gh` is absent
+from a web worker altogether. A script that keeps on MCP-gap grounds and
+reaches for `gh` still fails the one thing this plan exists to achieve, and
+fails it invisibly, on the surface nobody develops on. So a keep is
+conditional:
+
+> **A script that survives on an MCP gap must reach GitHub the way both
+> surfaces can.** The gaps named above are GraphQL — `minimizeComment` and the
+> node-ID queries alike — so the portable client is `curl` against
+> `api.github.com/graphql` with the ambient token, which is where D13 lands for
+> the same reason.
+
+Whether that means rewriting or merely confirming is unchecked: these scripts
+predate this plan, and *which* client each already uses has not been read.
+Reading them is a step in the port, not an assumption to make here. What is
+settled is the bar — a survivor ships only once it runs on both surfaces —
+because the alternative is a keep that passes every test on the machine where
+it was written.
+
+Third, the surviving directory still needs its governing rule, which is
 unchanged and is the point of the exercise:
 
 > **A skill's `scripts/` holds only what the MCP demonstrably cannot do, and
@@ -321,22 +362,60 @@ Open empirical question, narrowed in Q5: not whether the panel as a whole
 earns its place — the cheap mechanical tier plainly does — but whether the two
 Opus judgment reviewers are better as two roles or one.
 
-### D7 — `/save` and `/restructure` become a memory skill on `PreCompact`
+### D7 — `/save` and `/restructure` become a memory skill, fired at compaction
 
 "Update project and local memory files" is a duty, not a command — and
 remembering to save memory is the one thing that should never require
 remembering.
 
-`PreCompact` is the correct event: context is about to be discarded, which is
-exactly when memory should be written. `SessionEnd` as a backstop for sessions
-that end without compacting. `/restructure` is the same skill's other half —
-compaction of memory rather than capture — triggered by a size threshold.
+`PreCompact` is the correct *moment*: context is about to be discarded, which
+is exactly when memory should be written, and `SessionEnd` is the backstop for
+sessions that end without compacting.
+
+**The obvious wiring, though, does nothing at all.** Constraint 8 is the
+reason: neither event can hand the model a turn, and `Stop` cannot hold one
+open. A hook registered on any of them fires a shell command into a
+conversation that is already over. Written that way, the memory skill would
+never once run — and would fail exactly like R1, silently, in the direction
+nobody checks, with the first evidence being a memory file that stopped growing
+months ago.
+
+So the hook does the work instead of asking for it. `transcript_path` is a
+common input field, present on every event, and it is the entire input a memory
+write needs: the hook script spends it on a headless `claude -p` pass that
+reads the transcript and edits the memory files directly. The duty stays
+automatic; what changes is *who* discharges it.
+
+Two costs, both real and both accepted:
+
+- **A nested Claude invocation** on every compaction, with its own credentials
+  and its own latency. On a web worker the ambient credentials are already
+  there; on the laptop this is the first hook to need any.
+- **The skill is no longer the thing that fires.** A headless pass is not the
+  session's own reasoning, so the memory prompt lives in the hook script and
+  the skill becomes its manual twin — kept invocable for when the automatic
+  path is not what is wanted. The same shape D9 gives `/godoc`, for the same
+  reason.
+
+**One thing to check before building**, since constraint 8 is quoted from the
+hooks reference and this is not stated there either way: whether `PostCompact`
+supports `additionalContext`. If it does,
+the common case gets a cheaper path — the pre-compaction hook drops a marker,
+the post-compaction hook injects *"memory was not saved across the last
+compaction; write it now"*, and the session's own next turn does the work with
+no nested invocation and no second set of credentials. It cannot cover
+`SessionEnd`, where no later turn exists, so it is an optimisation over the
+headless pass rather than a replacement for it.
+
+`/restructure` is the same skill's other half — compaction of memory rather
+than capture — triggered by a size threshold.
 
 **The memory model loses its top tier.** Global `CLAUDE.md` becomes the plugin,
 so "restructure your three memory files" now means three different things:
 
 - project `CLAUDE.md` hygiene — unchanged
-- `CLAUDE.local.md` compaction — the automatic half, fires on `PreCompact`
+- `CLAUDE.local.md` compaction — the automatic half, driven by the
+  compaction hook rather than by the session
 - global rules — a PR against `claude-daily-driver` instead of against
   `dot-claude`
 
@@ -361,10 +440,21 @@ move into `pr-threads`. The Copilot framing is the disposable half.
 ### D9 — `/godoc` survives as a manual sweep
 
 It is a workaround for a rule that does not fire, and that is accepted
-knowingly. The fix is at the source: give the rule an attachment point (before
-committing), optionally enforced by a `PreToolUse` hook on `git commit`. Then
-`/godoc` is what it should have been all along — a sweep over *old* code, a
-legitimate on-demand task — rather than the primary mechanism for new code.
+knowingly. The fix is at the source: give the rule an attachment point —
+*before committing* — so that it hangs off a moment recurring often enough to
+be worth stating.
+
+The tempting second half was a `PreToolUse` hook enforcing it, and that half is
+withdrawn. Matching `git commit` means a regex over a bash command line, which
+is the mechanism D2 rejects three sections earlier as *"defeated by a wrapper, a
+heredoc, a variable, or a stray space"* — and a commit hook that catches most
+commits is worse than none, because it gets believed. What rescued D2 from that
+regex was an exact MCP tool name to match on; there is no MCP commit tool, so
+nothing rescues this one. The rule therefore rests on its attachment point and
+on compliance, and says so rather than implying an enforcement that does not
+exist. Then `/godoc` is what it should have been all along — a sweep over *old*
+code, a legitimate on-demand task — rather than the primary mechanism for new
+code.
 
 ### D10 — `review` never fires automatically on PR open
 
@@ -404,11 +494,30 @@ Since this was written, `.github/dependabot.yml` has landed on `master` —
 github-actions and terraform ecosystems, weekly — so the schedule this decision
 declines to duplicate is now live in this repository too.
 
+### D12 — The constitution is one file with two injection points
+
+Forced by measurement rather than chosen; R2 carries the evidence and the
+method. It is restated here because the Decisions list is where an implementer
+reads their instructions, and a decision that exists only inside a risk section
+is a decision waiting to be missed.
+
+The constitution ships as a single file in the plugin, read by two hooks:
+
+1. `SessionStart` → `hookSpecificOutput.additionalContext`, for the main
+   session.
+2. `PreToolUse` on the `Agent` tool → `hookSpecificOutput.updatedInput`,
+   prepending the same text to the subagent prompt.
+
+One source of truth, two delivery paths, no drift. Shipping only the first is
+the silent regression R2 describes; constraint 3 is worded to keep the second
+reading the same file rather than a directory; and R3 records what the second
+path costs.
+
 ### D13 — A relationship skill, wanted; the MCP is the gap, not the API
 
-Promoted from candidate. Dependencies are a long-wanted capability, now
-available, and intended for constant use — which settles the scope question
-that would otherwise have gated this.
+Wanted, and decided here rather than deferred. Dependencies are a long-wanted
+capability, now available, and intended for constant use — which answers the
+scope question that would otherwise have gated the decision.
 
 What the MCP surface actually offers, checked rather than assumed:
 
@@ -438,7 +547,7 @@ at both ends — dependencies with "Source issue may only be an issue" and
 "Target issue may only be an issue", sub-issues with "Parent may only be an
 issue" and "Sub issue may only be an issue".
 
-So the conditional stands as written: **this is an issue-graph skill that PRs
+So the scope narrows to one sentence: **this is an issue-graph skill that PRs
 merely reference.** The PR half reduces to `closed_by_pull_requests` and the
 `Closes #123` convention, and a pull request that must wait on another pull
 request has nowhere structural to record it — that dependency belongs on the
@@ -516,7 +625,7 @@ did not create.
 
 | Command | Disposition |
 | ------- | ----------- |
-| `save.md` | → memory skill, `PreCompact` hook |
+| `save.md` | → memory skill; the compaction hook does the writing (D7), the skill stays manual |
 | `restructure.md` | → memory skill (compaction half) + PR-to-plugin (constitutional half) |
 | `opinion.md` | delete — fourth review verb |
 | `quick-review.md` | delete — alias |
@@ -572,6 +681,17 @@ without tests is broken* is carried by a shell script that must itself be
 tested, or the rule silently ceases to exist. Cheap safety net: end the
 constitution with a checkable token and provide a `verify` skill.
 
+**That skill covers three of the four causes listed above and cannot cover the
+fourth.** A skill ships *inside* the plugin, so in a repo where the plugin is
+not enabled the `verify` skill is not there to be invoked either: the failure
+disables its own detector. A bad path, a missing `${CLAUDE_PLUGIN_ROOT}` and a
+non-zero exit are all answerable from inside, because the plugin loaded and the
+hook merely misbehaved. "Not enabled here" has to be answered from outside —
+`claude plugin list` on the CLI, or reading `.claude/settings.json` for the R4
+stanza — and that check belongs to `bootstrap` (R4) plus one human-facing
+habit: when a session feels unusually unconstrained, verify before assuming it
+is being disobedient.
+
 ### R2 — RESOLVED: the constitution does not reach subagents, and a hook repairs it
 
 Settled empirically on 2026-09-06 rather than left to the documentation, which
@@ -600,8 +720,8 @@ the subagent answered correctly.
 This is the same house rule as everywhere else — *skill is the knowledge, hook
 is the guarantee* — applied to the constitution itself.
 
-**Consequence for the design (D12).** The constitution ships as one file in the
-plugin with two injection points reading it:
+**Consequence for the design, recorded as D12.** The constitution ships as one
+file in the plugin with two injection points reading it:
 
 1. `SessionStart` → `additionalContext`, for the main session.
 2. `PreToolUse` on `Agent` → `updatedInput`, for every subagent.
@@ -619,21 +739,93 @@ fails to load and a constitution that fails to propagate both show up as the
 same red test. Given that the constitution carries the rule *code without tests
 is broken*, it would be indefensible for its own delivery to be untested.
 
-### R3 — Always-on context is a permanent tax
+**But it cannot run in `make check`, and the split that follows is a better
+test anyway.** Spawning a subagent needs a live model and therefore
+credentials; this repository's CI is deliberately credential-free
+(`permissions: contents: read`, and a `check` target reaching no further than
+`claude plugin validate` and a manifest script). Adding a secret to CI to run
+one test would trade that property away, so the test divides at the seam where
+the credential requirement actually starts:
 
-Every constitutional line is paid for in every session, forever. With no line
-limit (deliberately), the two filters above — behaviour change in most
-sessions, and a nameable firing moment — are the only thing holding the line.
-They have to be applied honestly at each amendment, which is another argument
-for amendments being reviewable pull requests.
+- **The credential-free half joins `make check`.** Run each hook script
+  directly, feeding it synthetic event JSON on stdin, and assert on what it
+  emits: `SessionStart` returns the token inside `additionalContext`, and the
+  `Agent` `PreToolUse` hook returns an `updatedInput` whose prompt contains it.
+  No model in the loop, and it catches every R1 cause — bad path, missing
+  `${CLAUDE_PLUGIN_ROOT}`, malformed JSON, non-zero exit.
+- **The live half runs on demand**, as a `claude plugin eval` case on the
+  laptop or in a credentialed workflow. Only it can prove the harness
+  *honours* `updatedInput`, which is the R2 finding proper.
+
+The division is honest rather than merely convenient: the first half tests this
+plugin, the second tests an assumption about the harness that a future release
+could withdraw without telling anyone. They fail for different reasons and
+deserve to fail separately.
+
+### R3 — Always-on context is a permanent tax, and D12 charges it twice
+
+Every constitutional line is paid for in every session, forever — **and, under
+D12, in every subagent that session spawns**, since the `PreToolUse` hook
+prepends the whole constitution to each `Agent` prompt. The multiplier is not
+one per session but one plus the number of subagents, and a workflow built
+around delegation is precisely the one that pays it most often. The plan
+encourages delegation, so the number grows.
+
+This argues for the D12 repair, not against it: the alternative is subagents
+that do not know the rules, which is the regression R2 exists to prevent. What
+it does mean is that the admission filters were being calibrated against a cost
+understated several-fold in any session that delegates. With no line limit
+(deliberately), the three filters above — behaviour change in most sessions, a
+nameable firing moment, and nothing the harness already says — are the only
+thing holding the line, and each amendment has to apply them against the
+multiplied cost rather than the per-session one. Another argument for
+amendments being reviewable pull requests.
+
+The cost is measurable rather than notional: `claude plugin details` reports a
+plugin's projected token cost, which makes "what does this amendment cost"
+a number a reviewer can ask for.
+
+One mitigation, worth holding in reserve rather than building: the subagent
+injection could carry a *reduced* constitution — identity and non-negotiables
+without the skill index a subagent has less use for. That reintroduces exactly
+the drift D12 exists to prevent, so it needs evidence that the full text is
+actually hurting, not merely that it is large.
 
 ### R4 — Per-repo bootstrap friction
 
 Plugin installation on web is per-project (constraint 7). Every new repo needs
 the `extraKnownMarketplaces` / `enabledPlugins` stanza, and a repo that lacks it
 silently runs without the constitution — the same failure mode as R1, from a
-different direction. A `bootstrap` skill should write the stanza; a repo
-template should carry it.
+different direction.
+
+**The obvious mitigation is circular, and seeing why decides where the stanza
+really comes from.** A `bootstrap` skill ships inside the plugin, so in the one
+situation that needs it — a repo whose missing stanza is why the plugin did not
+load — the skill is not there to run. It can never bootstrap the repo it is
+standing in.
+
+What it can bootstrap is a *different* one, and that turns out to be the actual
+workflow. The laptop has the plugin installed at user level, so a laptop
+session carries the skill whatever repo is checked out; writing the stanza is a
+laptop-side act, committed like any other file, and the web worker that clones
+that repo later finds it already present. Three writers, in the order to reach
+for them:
+
+1. **A repo template** carrying `.claude/settings.json`, so new repos are never
+   without it. Zero effort at the moment of creation, and the only one that
+   scales.
+2. **The `bootstrap` skill, run from the laptop** against a repo that predates
+   the template. That is its whole job — retrofitting from outside, not
+   self-repair from within.
+3. **A copyable stanza in this repository's `README.md`.** The only route that
+   survives a genuinely cold start, which is why it has to exist even though
+   nobody will use it twice.
+
+The cold start deserves stating plainly, because it is the case none of the
+three fully covers: on a web worker, in a repo with no stanza and no laptop in
+reach, the constitution is absent and nothing inside the plugin can say so.
+Only R1's human-facing habit — check when a session feels unconstrained —
+reaches it at all.
 
 ## Settled questions
 
@@ -718,6 +910,9 @@ premature decision that produced ten commands nobody remembers.
    test that proves the token reaches both.
 3. Split `pr` into `pr` / `pr-title` / `pr-body`; adopt MCP triggers (D2, D5).
 4. Port `review` and the agent panel; audit for rot (D6).
-5. Memory skill on `PreCompact` (D7).
-6. Deletions (D1, D3, D4, D8) and the `bootstrap` skill (R4).
+5. Memory skill, written by the compaction hook (D7) — and the `PostCompact`
+   `additionalContext` question answered first, since it decides whether the
+   hook needs a nested Claude invocation at all.
+6. Deletions (D1, D3, D4, D8), the `curl` rewrite of the surviving `gh`
+   scripts (D3), and the repo template plus `bootstrap` skill (R4).
 7. `claude plugin eval` suites for trigger accuracy across every skill.
