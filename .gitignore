@@ -1,3 +1,6 @@
 # OpenTofu / Terraform
 .terraform/
 *.log.txt
+
+# claude plugin eval
+evals/results/

@@ -916,7 +916,11 @@ premature decision that produced ten commands nobody remembers.
 2. Draft the constitution plus *both* delivery hooks — `SessionStart` for the
    main session, `PreToolUse` on `Agent` for subagents — and the acceptance
    test that proves the token reaches both.
-3. Split `pr` into `pr` / `pr-title` / `pr-body`; adopt MCP triggers (D2, D5).
+3. ~~Split `pr` into `pr` / `pr-title` / `pr-body`; adopt MCP triggers (D2,
+   D5).~~ **Done** — three sibling skills, triggering on
+   `mcp__github__create_pull_request` and
+   `mcp__github__update_pull_request`, with a `claude plugin eval` suite each
+   under `evals/`. `pr-threads` and `pr-ci` remain.
 4. Port `review` and the agent panel; audit for rot (D6).
 5. Memory skill, written by the compaction hook (D7) — and the `PostCompact`
    `additionalContext` question answered first, since it decides whether the

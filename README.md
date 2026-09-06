@@ -11,14 +11,25 @@ read it, do not go further.
 ## What's in it
 
 | Skill | What it does |
-| ----- | ------------ |
-| `pr`  | Opens and updates GitHub pull requests: Conventional Commits title, draft by default, and a body with a one-line summary, a salutation in verse, an executive summary, and engineering detail. |
+| ---------- | ------------ |
+| `pr`       | Opens the pull request for the current branch, or brings an open one up to date: branch guard, existing-PR check, draft by default, issue references. Delegates the title and the body to the two below. |
+| `pr-title` | The title convention: concise, and Conventional Commits with the type the contents actually warrant — which is what release-please reads to decide the next version. |
+| `pr-body`  | The body structure: a one-line summary under 85 characters, a salutation in verse, an executive summary, and as much engineering detail as fits. |
 
-The `pr` skill triggers on the literal `/pr`, on natural phrasings ("open a
-PR", "fix the PR title"), and on Claude's own use of `gh pr create` and
-`gh pr edit`. That last register is the point: a convention that only fires
-when a human types a command quietly stops applying as more of the work runs
-without one.
+Three skills rather than one because skill names are flat within a plugin, so
+siblings can be triggered independently: a decision to rewrite a PR body fires
+`pr-body` directly, without routing through `pr` to get there. The cost is two
+extra descriptions in context.
+
+Each triggers on the literal `/pr`, on natural phrasings ("open a PR", "fix
+the PR title"), and on Claude's own calls to
+`mcp__github__create_pull_request` and `mcp__github__update_pull_request`.
+That last register is the point: a convention that only fires when a human
+types a command quietly stops applying as more of the work runs without one.
+Naming the MCP tools is also a stronger trigger than naming `gh pr create`
+was — an exact tool name where the old one was, in effect, a regex over a bash
+command line that a wrapper, a heredoc, a variable or a stray space would
+defeat.
 
 ## Layout
 
@@ -31,10 +42,13 @@ claude-daily-driver/
 │   ├── plugin.json         the plugin, and the version releases bump
 │   └── marketplace.json    the pointer `claude plugin install` reads
 ├── .github/workflows/      CI, PR title check, infra, release automation
+├── evals/                  `claude plugin eval` suites, one per skill
 ├── infra/github/           the repository's own settings, as OpenTofu
 ├── scripts/                the manifest checks CI runs
 └── skills/
-    └── pr/SKILL.md
+    ├── pr/SKILL.md
+    ├── pr-title/SKILL.md
+    └── pr-body/SKILL.md
 ```
 
 ## Portability
@@ -65,6 +79,10 @@ a `name` disagreeing between the two manifests.
 
 `make check-infra` parses the OpenTofu stack and is deliberately not part of
 `make check`; see [infra/github/README.md](infra/github/README.md).
+
+The trigger-accuracy evals are out for the same reason twice over: they need a
+live model, and CI here is deliberately credential-free. See
+[evals/README.md](evals/README.md) for what they assert and how to run them.
 
 ## Releases
 
