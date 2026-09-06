@@ -58,18 +58,28 @@ Established by reading the plugin and hooks references, not by assumption.
 
 ## Architecture
 
-### Three tiers
+### Three layers
 
-| Tier | Contents | Cost |
-| ---- | -------- | ---- |
-| **0 — Constitution** | Injected into every session by the `SessionStart` hook. Identity and non-negotiables only, plus a one-line index of the plugin's skills. Target: ~50 lines. | Every session, forever |
-| **1 — Skills** | Fired by activity: PR workflow, review, memory, language style, delegation. | Only when triggered |
-| **2 — References** | Files inside skills, read on demand. | Only when read |
+Named, not numbered — a layer whose name has to be decoded is a layer nobody
+will remember the rules for.
 
-The filter for Tier 0: *if a line does not change behaviour in most sessions,
-it is not Tier 0.*
+| Layer | Contents | Cost |
+| ----- | -------- | ---- |
+| **Constitution** | Injected into every session by the `SessionStart` hook. Identity and non-negotiables only, plus a one-line index of the plugin's skills. | Every session, forever |
+| **Skills** | Fired by activity: PR workflow, review, memory, language style, delegation. | Only when triggered |
+| **References** | Files inside skills, read on demand. | Only when read |
 
-A second filter, discovered while triaging `/godoc`:
+"Constitution" is chosen deliberately, and earns its weight: supreme law, always
+in force, and amended only by a deliberate reviewable process. Under D7 that
+process is literally a pull request against this repository.
+
+**There is no line limit.** A cap would be arbitrary and would get gamed by
+compression rather than by cutting. Admission is governed by two filters
+instead:
+
+*Does this change behaviour in most sessions?*
+
+And, discovered while triaging `/godoc`:
 
 > **A rule with no attachment point decays. A rule attached to a moment
 > survives.**
@@ -77,7 +87,7 @@ A second filter, discovered while triaging `/godoc`:
 "Always write GoDoc comments" applies at every line of code, therefore at no
 particular moment, therefore never fires. "Before committing, GoDoc-comment
 every exported symbol you added" hangs off an event that recurs constantly. Any
-Tier-0 candidate for which no firing moment can be named is probably
+constitutional candidate for which no firing moment can be named is probably
 decorative.
 
 ### Skills, not commands
@@ -110,7 +120,7 @@ into place instead. For a tool-calling agent with a persistent but invisible
 cwd, absolute paths are the robust form.
 
 - Delete the rule, delete `hooks/block_chained_cd.sh`.
-- Replace with one Tier-0 line preferring absolute paths.
+- Replace with one constitutional line preferring absolute paths.
 
 ### D2 — Adopt the GitHub MCP everywhere, including locally
 
@@ -131,7 +141,7 @@ Costs, acknowledged:
 
 `gh` stays installed as an escape hatch, demoted from default.
 
-Tier-0 line: *GitHub work goes through the GitHub MCP. `gh` only for what MCP
+Constitutional line: *GitHub work goes through the GitHub MCP. `gh` only for what MCP
 cannot do, and say which.*
 
 ### D3 — Retire six of seven `pr-review` shell scripts
@@ -165,14 +175,41 @@ are per-branch and never merged, so they carry poetry for free.
 
 > **Poetry belongs on ephemeral artifacts, never on tracked files.**
 
-- Remove: `commands/haiku.md`, the `Haiku` section of `CLAUDE.md`, the
-  "plans always include a step for updating the haiku" clause, and `HAIKU.md`
-  from both repos.
-- Keep, already specified: the `pr-body` salutation — *a brief poem, in
-  classical style, conveying the gist of the PR, formatted in italics.*
-- Add, not yet specified: poetry in reviews. Currently a habit rather than a
-  convention, and habits do not survive being ported into a skill. Needs one
-  spec sentence. Open question Q1 settles its placement.
+Removals are wider than the file itself. `HAIKU.md` has accreted special-case
+handling across the review tooling, all of which goes with it:
+
+- `commands/haiku.md`
+- the `Haiku` section of `CLAUDE.md`, and the "plans always include a step for
+  updating the haiku" clause
+- `HAIKU.md` from both repos
+- the `HAIKU.md` skip rules in `deep-review.md` (three of them) and the
+  "not subject to review at all" carve-out in `review-guidelines.md` — both
+  exist only because the file changes on every branch
+- the "Do NOT reuse the haiku from `HAIKU.md`" clause in `post-deep-review.md`
+
+That the convention needed a carve-out in the review rules is itself evidence
+against it.
+
+**Poetry survives, and is already fully specified — no new spec needed.** The
+existing convention is more precise than the "salutation or envoi" framing that
+prompted this question, because it is both, and the second one is *earned*:
+
+| Where | Spec | Source |
+| ----- | ---- | ------ |
+| PR body | A brief poem, classical style, conveying the gist of the PR, in italics. | `skills/pr/SKILL.md` |
+| Review comment, opening | A formal poem, any style, max 6 lines, summarising the PR. | `post-deep-review.md:36` |
+| Review comment, closing | Only on a 👍 verdict: a terse panegyric in formal verse, heroic style, in the Roman / Greek / Persian / Chinese tradition. | `post-deep-review.md:57` |
+| Review *findings* | *"No poems. No accolades. Keep it terse."* | `deep-review.md:285` |
+
+The distinction in the last row is the load-bearing one: poetry attaches to the
+*posted artifact*, never to the analysis. A finding someone has to act on is
+prose.
+
+One coupling to preserve while porting: the review comment's `*Claude {model
+version}*` self-identification line is not decoration. It is how
+`pr-minimize-previous-claude-comments.sh` — one of the two scripts surviving D3
+— recognises its own comments. Self-ID and the minimise script move together or
+not at all.
 
 ### D5 — The PR skill splits three ways
 
@@ -264,6 +301,43 @@ committing), optionally enforced by a `PreToolUse` hook on `git commit`. Then
 `/godoc` is what it should have been all along — a sweep over *old* code, a
 legitimate on-demand task — rather than the primary mechanism for new code.
 
+### D10 — `review` never fires automatically on PR open
+
+Rejected, and the rejection sets a boundary the rest of the design needs.
+
+"Skill, not command" is about *duties that decay because nobody remembers to
+invoke them*. It is not a mandate that every skill self-trigger. Review is
+expensive in time, tokens and attention; a skill that costs that much should be
+**pulled, not pushed**. Firing it on every PR open would tax every trivial
+branch to catch the occasional serious one, and would train exactly the reflex
+that makes review worthless — skimming the output because it always appears.
+
+There is also a workflow reason. PRs open as **drafts** (D5). Opening a draft is
+the start of the conversation, not the end of the work; review belongs on the
+draft when the branch is actually ready, which is a judgement call, not an
+event.
+
+> **Cheap skills may push. Expensive skills must be pulled.**
+
+So `review` keeps an explicit invocation, and its self-triggering descriptions
+(D6.1) cover the *asking* moments — "is this ready", "review this branch",
+"about to request review" — never the mechanical act of opening a PR.
+
+### D11 — `dependabot` is a response, not a schedule
+
+The premise behind Q2 was wrong. Dependabot **is already the Routine**: GitHub
+runs it from `.github/dependabot.yml` and opens PRs on a schedule of its own.
+Wrapping it in a second scheduler would be one cron job watching another.
+
+What `dependabot.md` actually encodes is the *response* — batch the open
+dependabot PRs, upgrade in a worktree, validate, open one consolidated PR. That
+is a duty triggered by a condition (open dependabot PRs exist), which is exactly
+the shape of a skill: it fires when the condition is noticed during ordinary PR
+work, and stays invocable for when it is not.
+
+Separately, and outside this work: `.github/dependabot.yml` is not configured in
+this repository at all, so nothing is opening those PRs here yet.
+
 ## Migration inventory
 
 ### `dot-claude/commands/`
@@ -278,7 +352,7 @@ legitimate on-demand task — rather than the primary mechanism for new code.
 | `post-deep-review.md` | → folded into `review` / `pr-threads` |
 | `godoc.md` | → skill, manual sweep |
 | `copilot.md` | delete; protocol harvested into `pr-threads` |
-| `dependabot.md` | keep invocable — or a Routine (Q2) |
+| `dependabot.md` | → skill, fires on noticing open dependabot PRs (D11) |
 | `haiku.md` | delete |
 
 ### `dot-claude/agents/`
@@ -298,13 +372,11 @@ work and stays put.
 
 ### `dot-claude/docs/`
 
-`review-guidelines.md` → plugin, as a Tier-2 reference under the `review`
-skill.
+`review-guidelines.md` → plugin, as a reference under the `review` skill.
 
 ### `dot-claude/CLAUDE.md`
 
-Split across Tier 0 (constitution), Tier 1 (skills) and Tier 2 (references) per
-the architecture above. Most of the 17KB is conditional — Cinc/InSpec,
+Split across constitution, skills and references per the architecture above. Most of the 17KB is conditional — Cinc/InSpec,
 Terraform, `gh` API recipes, pr-review tool docs — and currently pays rent in
 every session for nothing.
 
@@ -343,16 +415,19 @@ Mitigations if the answer is no, in order of preference:
 
 1. Conduct rules in the plugin's own `agents/*.md` system prompts. Reliable,
    but covers only custom agents, not `Explore` / `Plan` / `general-purpose`.
-2. A Tier-0 rule to restate the non-negotiables in every delegation prompt.
+2. A constitutional rule to restate the non-negotiables in every delegation
+   prompt.
    Works everywhere; costs tokens per delegation; depends on compliance.
 3. A `PreToolUse` hook on the `Agent` tool that appends the constitution.
    Actually enforceable, but fiddly.
 
 ### R3 — Always-on context is a permanent tax
 
-Every Tier-0 line is paid for in every session, forever. The two filters above
-(behaviour change in most sessions; a nameable firing moment) exist to keep
-this honest.
+Every constitutional line is paid for in every session, forever. With no line
+limit (deliberately), the two filters above — behaviour change in most
+sessions, and a nameable firing moment — are the only thing holding the line.
+They have to be applied honestly at each amendment, which is another argument
+for amendments being reviewable pull requests.
 
 ### R4 — Per-repo bootstrap friction
 
@@ -362,23 +437,35 @@ silently runs without the constitution — the same failure mode as R1, from a
 different direction. A `bootstrap` skill should write the stanza; a repo
 template should carry it.
 
+## Settled questions
+
+Kept for the reasoning, since three of the four were resolved by finding the
+answer already existed rather than by deciding anything.
+
+- **Q1 — poetry in reviews: salutation or envoi?** Neither; both, already
+  specified in `post-deep-review.md`, with the envoi conditional on approval.
+  See D4.
+- **Q2 — should `dependabot` be a Routine?** Bad premise: GitHub already runs
+  that schedule. See D11.
+- **Q3 — should `review` fire before every PR open?** No, definitively, and the
+  reasoning generalises into a rule about which skills may self-trigger. See
+  D10.
+- **Q4 — how fat may the constitution get?** No limit, and the numbered "tiers"
+  are renamed to named layers. See the architecture section.
+
 ## Open questions
 
-- **Q1** — Poetry in reviews: opening salutation, or closing envoi after the
-  findings? Inline comments stay prose either way; a poem on line 47 of a diff
-  is noise in a thread someone has to act on.
-- **Q2** — Should `dependabot` be a weekly Routine rather than something to
-  remember to type?
-- **Q3** — Should `review` fire automatically before *every* PR open? The
-  purest expression of skill-not-command, and the one place it costs real
-  latency on every single PR.
-- **Q4** — How fat is Tier 0 allowed to get? Needs a number, or it will grow to
-  17KB again.
+- **Q5** — Does the four-agent review panel still beat one agent handed
+  `review-guidelines.md`? Empirical; measure with `claude plugin eval` rather
+  than inherit. Raised in D6.
+- **Q6** — Which of the ~55 GitHub MCP tools does the workflow actually need?
+  Determines the `--toolsets` setting, and therefore the standing context cost
+  of D2.
 
 ## Sequencing
 
 1. Settle R2 empirically. Everything else depends on the answer.
-2. Draft the Tier-0 constitution and the `SessionStart` hook, with its test.
+2. Draft the constitution and the `SessionStart` hook, with its test.
 3. Split `pr` into `pr` / `pr-title` / `pr-body`; adopt MCP triggers (D2, D5).
 4. Port `review` and the agent panel; audit for rot (D6).
 5. Memory skill on `PreCompact` (D7).
