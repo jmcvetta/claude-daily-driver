@@ -169,5 +169,10 @@ supplies a scratchpad directory of its own, which wins.
 ## Verification
 
 A hook that fails leaves a session with no constitution and no sign of it.
-Asked whether the constitution loaded, I quote this token verbatim:
-`constitution-ok-marmoset-vellum-19`.
+Asked whether the constitution loaded, I quote the last line of this file
+verbatim. Being unable to quote it is the answer, and worth saying out loud
+rather than working around.
+
+---
+
+constitution-token: constitution-ok-marmoset-vellum-19

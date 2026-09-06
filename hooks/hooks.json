@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/inject-constitution.py session-start",
+            "timeout": 10,
+            "statusMessage": "Loading the daily-driver constitution"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^(Agent|Task)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/inject-constitution.py pre-tool-use",
+            "timeout": 10,
+            "statusMessage": "Handing the subagent the constitution"
+          }
+        ]
+      }
+    ]
+  }
+}

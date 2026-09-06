@@ -9,6 +9,11 @@ evals/
 └── pr-body/      … when a body is being written, and only then?
 ```
 
+`evals/constitution-reaches-subagent/` sits beside them and is not a
+trigger-accuracy suite: it is the live half of the constitution's own test,
+described under "Testing the constitution" in the repository README. It runs
+under the same commands.
+
 The three skills are siblings with overlapping vocabulary — every one of them
 has "PR" in its description — so the thing that can actually break is *which*
 one fires. Each suite therefore has two halves, and the second is the one that

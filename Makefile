@@ -7,8 +7,8 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -o pipefail -c
 
-.PHONY: git_sync check check-plugin check-skills check-agents \
-	check-scripts check-manifests check-infra mcp-usage
+.PHONY: git_sync check check-plugin check-skills check-agents check-scripts \
+	check-manifests check-constitution check-infra mcp-usage
 
 # git_sync: sync master with origin and delete local branches whose upstream
 # is gone. Branches checked out in a linked worktree (marked '+' by
@@ -25,7 +25,8 @@ git_sync:
 # check: everything CI asserts about this plugin. CI runs this target rather
 # than restating its legs, so a leg added here is a leg CI gains — and there
 # is no second command line to fall behind this one.
-check: check-plugin check-skills check-agents check-scripts check-manifests
+check: check-plugin check-skills check-agents check-scripts check-manifests \
+	check-constitution
 
 # `claude plugin validate --strict` reads one manifest at a time and picks the
 # marketplace when handed a directory, so the plugin manifest is named
@@ -51,6 +52,14 @@ check-agents:
 # skills and agents alike. See the docstring in the script.
 check-manifests:
 	python3 scripts/check-manifests.py
+
+# The credential-free half of the constitution's acceptance test: run both
+# delivery hooks against synthetic event JSON and assert the constitution comes
+# back, identically, from each. The live half needs a model and therefore
+# credentials, so it is a `claude plugin eval` case under evals/ rather than a
+# leg here -- see the script's docstring for where the seam is and why.
+check-constitution:
+	python3 scripts/check-constitution.py
 
 # check-scripts: lint the shell a skill ships. `claude plugin validate` reads
 # manifests and never opens a `scripts/` file, so without this leg the plugin's
