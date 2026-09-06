@@ -1,3 +1,6 @@
 # OpenTofu / Terraform
 .terraform/
 *.log.txt
+
+# Python
+__pycache__/
