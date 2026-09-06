@@ -384,7 +384,7 @@ work, and stays invocable for when it is not.
 Separately, and outside this work: `.github/dependabot.yml` is not configured in
 this repository at all, so nothing is opening those PRs here yet.
 
-### D13 — A relationship skill, wanted; blocked on one API question
+### D13 — A relationship skill, wanted; the MCP is the gap, not the API
 
 Promoted from candidate. Dependencies are a long-wanted capability, now
 available, and intended for constant use — which settles the scope question
@@ -398,20 +398,21 @@ What the MCP surface actually offers, checked rather than assumed:
 | **PR closes issue** | Readable. `issue_read` returns `closed_by_pull_requests` as a count plus up to five references. |
 | **Blocked-by / blocking** | **Not exposed by this MCP** — no tool, no field. |
 
-**The critical path is one question, answerable only on the laptop** (this
-container's egress proxy blocks `docs.github.com`): does the GitHub API expose
-blocked-by / blocking programmatically, and does it cover pull requests or
-issues only? Everything else about this skill's shape follows from the answer.
+**The API does expose blocked-by / blocking programmatically.** Confirmed by the
+user, who has already documented the endpoints in another repository — that
+documentation is the starting point when this skill is built, and should be
+located and cited here rather than rediscovered.
 
-- **If the API supports it**, the gap is the MCP's, not GitHub's, and
-  dependencies become the first new resident of `scripts/` under D3's rule —
-  a script that exists because the MCP demonstrably cannot do the job, with a
-  header saying exactly that, and a plausible expiry date when the MCP catches
-  up. That is the directory working as designed rather than accumulating.
-- **If it is web-UI only**, the skill covers sub-issues and closes-references,
-  and dependencies stay manual until the API arrives.
-- **If it is issues-only**, the PR half of the workflow reduces to
-  `closed_by_pull_requests` and the existing text convention.
+So the gap is the **MCP's, not GitHub's**, and the shape follows: dependencies
+become the first new resident of `scripts/` under D3's rule — a script that
+exists because the MCP demonstrably cannot do the job, with a header saying
+exactly that and a plausible expiry date for when the MCP catches up. That is
+the self-liquidating directory working as designed rather than accumulating.
+
+One thing still to confirm from that existing documentation: **whether the
+relationship covers pull requests or issues only.** If issues-only, the PR half
+of the workflow reduces to `closed_by_pull_requests` and the existing text
+convention, and the skill is an issue-graph skill that PRs merely reference.
 
 Two design notes, both worth fixing before the skill is written.
 
