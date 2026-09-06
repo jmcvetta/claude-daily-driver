@@ -209,11 +209,11 @@ Current state of knowledge, honestly labelled:
 
 | Script | Status |
 | ------ | ------ |
-| `pr-minimize-comments.sh` | **Keeps.** `minimizeComment` is GraphQL-only and unexposed by the MCP. A real capability gap. |
-| `pr-minimize-previous-claude-comments.sh` | **Keeps**, same gap. |
-| `pr-find-claude-comments.sh` | **Probably keeps.** It returns GraphQL node IDs (`IC_kwDO…`); `search_issues` does not. The surviving minimize scripts consume exactly those IDs, so retiring their supplier while keeping them makes no sense. |
-| `pr-fetch-data.sh` | **Unknown, leaning keeps.** It emits review *thread* IDs (`PRRT_…`). `resolve_review_thread` requires one. Whether `pull_request_read` surfaces thread IDs at all is unverified, and the answer decides this. |
-| `pr-reply-thread.sh` | **Unknown.** `add_reply_to_pull_request_comment` plus `resolve_review_thread` look equivalent, but only if thread IDs are obtainable — so this is blocked behind the row above. |
+| `pr-minimize-comments.sh` | **Kept**, ported under `skills/pr-threads/scripts/`. `minimizeComment` is GraphQL-only and unexposed by the MCP. A real capability gap. |
+| `pr-minimize-previous-claude-comments.sh` | **Kept**, ported, same gap. |
+| `pr-find-claude-comments.sh` | **Kept**, ported. It returns GraphQL node IDs (`IC_kwDO…`); `search_issues` does not. The surviving minimize scripts consume exactly those IDs, so retiring their supplier while keeping them makes no sense. |
+| `pr-fetch-data.sh` | **Retires.** Thread IDs *are* obtainable — measured on `#25`, 2026-09-06. `pull_request_read` with `get_review_comments` returns each thread's `id` as `PRRT_…` directly. Nothing else the script gathered lacks an MCP route. |
+| `pr-reply-thread.sh` | **Retires**, unblocked by the row above. `add_reply_to_pull_request_comment` plus `resolve_review_thread` are equivalent, with the identifier caveat below. |
 | `pr-post-comment.sh` | **Likely retires.** `add_issue_comment` is a straightforward equivalent; still wants one demonstration. |
 | `pr-get-current-branch-number.sh` | **Likely retires**, but not free: there is no "PR for the current branch" MCP call, so it becomes `list_pull_requests` filtered by head ref. |
 
@@ -243,6 +243,53 @@ Reading them is a step in the port, not an assumption to make here. What is
 settled is the bar — a survivor ships only once it runs on both surfaces —
 because the alternative is a keep that passes every test on the machine where
 it was written.
+
+**Answered by the port: rewriting.** All seven reach for `gh`, so every
+survivor was rewritten against `curl`. Two findings from doing it are worth
+more than the verdict.
+
+**The portable client above is not portable, and the paragraph naming it is
+wrong.** Measured in a web worker on 2026-09-06: `POST
+api.github.com/graphql` with the session's ambient `GITHUB_TOKEN` refuses
+*every* operation — `minimizeComment`, a `reviewThreads` query and
+`addPullRequestReviewThreadReply` alike — with
+
+> This GraphQL query is not enabled for this session — only the pinned set of
+> PR-review operations is served.
+
+The token is brokered, not personal, and the gate is the broker's. REST over
+`curl` is unaffected, which is why the node-ID supplier ports cleanly and the
+mutation does not. D13 had already recorded this about *its* container in
+passing; what is new is that it defeats the retirement condition this section
+states as settled, because the gap the condition was written to protect —
+minimisation — is the one thing on the wrong side of the gate.
+
+So the bar needs its second clause, and it is a narrower thing than "runs on
+both surfaces":
+
+> A survivor must **fail legibly** where it cannot run. Minimisation is a
+> laptop capability on a personal token; `skills/pr-threads/scripts/` reports
+> the HTTP status and GitHub's own message for every failure, and names the
+> gate specifically when the message is the gate's. A script that cannot be
+> portable is acceptable. A script that is silently non-portable is what this
+> plan exists to prevent, and an obscure failure on the surface nobody
+> develops on is the same defect wearing a different coat.
+
+Detecting the gate by the *absence* of a `data` key was the first attempt and
+is wrong. Measured 2026-09-06: the broker answers ahead of GitHub, so a
+deliberately invalid token draws the same 403 and the same bare `message` as a
+valid one. The shape identifies the surface, not the fault — so a stale token
+on the laptop would have been diagnosed as "run this from the laptop". Match
+the gate's text; report everything else as what it is.
+
+**The identifier trap the MCP route replaces `pr-reply-thread.sh` with.** The
+two MCP calls want different identifiers, and only one of them is a field.
+`get_review_comments` gives the thread's `id` as `PRRT_…`, which
+`resolve_review_thread` takes; `add_reply_to_pull_request_comment` wants a
+*number* that appears nowhere in the response — it is the `#discussion_r…`
+suffix of the comment's `html_url`. The thread ID is therefore the identifier
+that is present, conveniently typed, and wrong for replying. Recorded in
+`skills/pr-threads/SKILL.md`, where the calls are actually made.
 
 Third, the surviving directory still needs its governing rule, which is
 unchanged and is the point of the exercise:
