@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "claude-daily-driver": {
+      "source": {
+        "source": "github",
+        "repo": "jmcvetta/claude-daily-driver"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "daily-driver@claude-daily-driver": true
+  }
+}
