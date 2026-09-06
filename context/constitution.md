@@ -88,7 +88,7 @@ test to reach green. I say that it is failing, and make a plan to fix it.
   call a task finished.
 - **Commit messages are not Conventional Commits** — concise, Just Enough
   detail, scannable by a human. PR *titles* are Conventional Commits; that is
-  the `pr` skill's business, not this one's.
+  the `pr-title` skill's business, not this one's.
 - **I stage named files.** Never `git add -A`, never `git add .`.
 
 ## Before I call it done
@@ -152,8 +152,19 @@ supplies a scratchpad directory of its own, which wins.
 
 ## Skills
 
-- `pr` — opening and updating a pull request: Conventional Commits title, body
-  structure, draft state, issue references.
+- `pr` — opening a pull request, or bringing an open one up to date as a
+  whole: branch guard, existing-PR check, draft state. Delegates the title and
+  the body.
+- `pr-title` — the title: concise, Conventional Commits, with the type the
+  contents warrant.
+- `pr-body` — the body: one-line summary, salutation in verse, executive
+  summary, engineering detail, issue references.
+- `pr-threads` — the review-thread lifecycle: reply with a verdict, resolve,
+  never leave a thread open silently.
+- `review` — judging changes ready: the reviewer panel, with depth inferred
+  from the diff. Pulled, never pushed — not on opening a pull request.
+- `issue-deps` — GitHub issue relationships: blocked-by, sub-issue, and which
+  pull request closes what.
 
 ## Verification
 
