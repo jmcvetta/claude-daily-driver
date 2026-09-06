@@ -35,9 +35,10 @@ claude-daily-driver/
 ├── .github/workflows/      CI, PR title check, infra, release automation
 ├── context/
 │   └── constitution.md     the always-on layer, injected by the hooks
-├── docs/                   bootstrapping a repository, and the planning record
+├── docs/                   decisions, and the measurements behind them
+│   └── planning/           the plan, and the record of decisions made under it
 ├── infra/github/           the repository's own settings, as OpenTofu
-├── scripts/                the manifest checks CI runs, and the stanza
+├── scripts/                the manifest checks CI runs, the stanza, the MCP tally
 ├── skills/
 │   └── pr/SKILL.md
 └── template/.claude/       copied into a repository to enable the plugin
@@ -87,6 +88,10 @@ stanza that has drifted from the names it enables.
 
 `make check-infra` parses the OpenTofu stack and is deliberately not part of
 `make check`; see [infra/github/README.md](infra/github/README.md).
+
+`make mcp-usage` is not a check at all. It counts which GitHub MCP tools this
+laptop actually called, so the server's `--toolsets` list can be narrowed on
+evidence rather than taste; see [docs/github-mcp.md](docs/github-mcp.md).
 
 ## Releases
 
