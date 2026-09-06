@@ -66,7 +66,10 @@ jobs:
       # all only while Settings -> Actions -> General -> "Allow GitHub Actions
       # to create and approve pull requests" is on. With that off,
       # release-please pushes its release branch and then fails on the call
-      # that opens the pull request, which looks like a partial success.
+      # that opens the pull request, which looks like a partial success -- and
+      # is how this workflow's first run ended. That setting is now declared
+      # in infra/github/repository.tf, so it is applied rather than
+      # remembered.
       - id: app-token
         if: vars.RELEASE_BOT_APP_ID != ''
         uses: actions/create-github-app-token@v3

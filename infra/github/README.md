@@ -25,6 +25,9 @@ exclusion below.
 
 - **`github_repository`** — merge settings, visibility, feature toggles
 - **`github_repository_vulnerability_alerts`** — Dependabot alerts
+- **`github_workflow_repository_permissions`** — the default workflow token
+  scope, and whether Actions may open a pull request (the release job needs
+  the latter)
 - **`github_branch_protection`** on `master` — required `CI Success` check
   (strict), linear history, conversation resolution, no force pushes or
   deletions
@@ -63,15 +66,12 @@ pending forever. `infra.yml` is filtered precisely because it is not required;
 requiring it later means dropping its filter in the same commit, and nothing
 enforces that.
 
-## The Release Job's Fallback Rests on a Setting Not Managed Here
+## The Release Job Depends on a Workflow Permission
 
 `release-please.yml`'s fallback to `github.token` works only while **Settings
 -> Actions -> General -> Allow GitHub Actions to create and approve pull
-requests** is on. That setting is deliberately *not* declared here: the honest
-fix is the App under **Deliberate Exclusions**, not a Tofu-managed permission
-propping up the fallback the App exists to replace. With the setting off,
-release-please does all its work, pushes its release branch, and then fails on
-the last call:
+requests** is on. With it off, release-please does all its work, pushes its
+release branch, and then fails on the last call:
 
 ```
 release-please failed: GitHub Actions is not permitted to create or approve
@@ -79,7 +79,17 @@ pull requests.
 ```
 
 The branch it pushed stays behind, so the failure looks like a partial
-success.
+success — which is how the first Release Please run on this repository
+actually ended.
+
+So `can_approve_pull_request_reviews` is declared, in `repository.tf`. It was
+briefly argued here that it should not be, on the grounds that the release bot
+App is the real fix and a Tofu-managed permission would only prop up the
+fallback the App replaces. That reasoning was wrong twice over: the App is not
+configured, so the fallback is not a fallback but the actual mechanism; and a
+setting the release job depends on belongs written down next to the reason it
+is needed whether or not something better exists. Configuring the App makes
+the release job stop depending on it. It does not make it wrong to declare.
 
 ## The Provider Lock Has To Be What `init` Produces
 
@@ -175,6 +185,7 @@ than the "No changes." a fully-imported stack would:
   and body as the commit subject and message, branch deletion on merge, auto
   merge enabled
 - `github_repository_vulnerability_alerts.this` created
+- `github_workflow_repository_permissions.this` created
 - `github_branch_protection.master` created
 
 After applying, commit `terraform.tfstate` to Git.
