@@ -219,7 +219,7 @@ refuse_pull_request() { # refuse_pull_request LABEL OWNER REPO NUMBER
 EDGES=
 
 fetch_edges() { # fetch_edges OWNER REPO NUMBER blocked_by|blocking
-	local page=1 raw= n
+	local page=1 raw='' n
 	while :; do
 		request GET "repos/$1/$2/issues/$3/dependencies/$4?per_page=100&page=$page"
 		[[ $STATUS == 200 ]] || die "$1/$2#$3 $4: HTTP $STATUS — $(api_message)"
