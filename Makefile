@@ -7,7 +7,8 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -o pipefail -c
 
-.PHONY: git_sync check check-plugin check-skills check-agents check-manifests check-infra
+.PHONY: git_sync check check-plugin check-skills check-agents \
+	check-manifests check-infra mcp-usage
 
 # git_sync: sync master with origin and delete local branches whose upstream
 # is gone. Branches checked out in a linked worktree (marked '+' by
@@ -56,3 +57,10 @@ check-manifests:
 # editing a skill.
 check-infra:
 	$(MAKE) -C infra/github check-fmt validate
+
+# mcp-usage: which GitHub MCP tools were actually called, rolled up to the
+# toolsets that supply them. Laptop-only like git_sync — it reads Claude
+# Code's session transcripts, which CI does not have — and deliberately not
+# part of `check`. See docs/github-mcp.md for what the answer is for.
+mcp-usage:
+	python3 scripts/github-mcp-usage.py
