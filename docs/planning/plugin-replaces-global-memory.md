@@ -64,17 +64,18 @@ Established by reading the plugin and hooks references, not by assumption.
    trusted. This is per-project, so every repo needs the stanza — a job for a
    `bootstrap` skill.
 
-8. **No hook can make the model take a turn.** A hook is a shell command, and
-   the only way back into the conversation is text the harness chooses to
-   forward. At the end of a session there is nothing to forward it to:
-   `PreCompact` and `PostCompact` *"can't make decisions that affect
+8. **Only `Stop` can hand the model another turn — and only via its exit
+   code.** A hook is a shell command, and the way back into the conversation is
+   narrow. `PreCompact` and `PostCompact` *"can't make decisions that affect
    compaction; they can only observe it and emit side effects"*; `SessionEnd`
-   *"can't block the session end or affect it"*; and even `Stop`, the event
-   that looks built for this, is documented as *"Claude Code doesn't read any
-   decision from your hook's JSON output"* — it can react, not continue. So a
-   duty that needs judgement at one of those moments must be discharged **by
-   the hook script itself**, never delegated back to the model. This constraint
-   is what reshapes D7.
+   *"can't block the session end or affect it"*; neither supports
+   `additionalContext`. `Stop` is the exception, and the distinction is exact:
+   **its JSON decision fields are not read** — *"Claude Code doesn't read any
+   decision from your hook's JSON output"* — but **exit code 2 is**, documented
+   as *"Prevents Claude from stopping, continues the conversation"*. So a duty
+   needing the model's judgement at one of these moments is discharged by the
+   hook script itself at compaction or session end, and by a `Stop` hook exiting
+   2 when a later turn is acceptable. This constraint is what reshapes D7.
 
 ## Architecture
 
@@ -372,40 +373,47 @@ remembering.
 is exactly when memory should be written, and `SessionEnd` is the backstop for
 sessions that end without compacting.
 
-**The obvious wiring, though, does nothing at all.** Constraint 8 is the
-reason: neither event can hand the model a turn, and `Stop` cannot hold one
-open. A hook registered on any of them fires a shell command into a
-conversation that is already over. Written that way, the memory skill would
-never once run — and would fail exactly like R1, silently, in the direction
-nobody checks, with the first evidence being a memory file that stopped growing
-months ago.
+**The obvious wiring does nothing at all.** Constraint 8 is the reason:
+`PreCompact` and `SessionEnd` cannot hand the model a turn, so a hook
+registered on either fires a shell command into a conversation that is already
+over. Written that way the memory skill would never once run — failing exactly
+like R1, silently, in the direction nobody checks, the first evidence being a
+memory file that stopped growing months ago.
 
-So the hook does the work instead of asking for it. `transcript_path` is a
-common input field, present on every event, and it is the entire input a memory
-write needs: the hook script spends it on a headless `claude -p` pass that
-reads the transcript and edits the memory files directly. The duty stays
-automatic; what changes is *who* discharges it.
+There are two working mechanisms, and the cheap one covers the common case.
 
-Two costs, both real and both accepted:
+**`Stop`, exiting 2 — the session writes its own memory.** Constraint 8's
+exception: exit code 2 *"prevents Claude from stopping, continues the
+conversation"*. The hook's stderr becomes the instruction, and the session
+discharges the duty with the context it already holds — no nested invocation,
+no second set of credentials, and the memory is written by the reasoning that
+produced it rather than reconstructed from a transcript. This is strictly
+better than the fallback wherever it applies.
 
-- **A nested Claude invocation** on every compaction, with its own credentials
-  and its own latency. On a web worker the ambient credentials are already
-  there; on the laptop this is the first hook to need any.
-- **The skill is no longer the thing that fires.** A headless pass is not the
-  session's own reasoning, so the memory prompt lives in the hook script and
-  the skill becomes its manual twin — kept invocable for when the automatic
-  path is not what is wanted. The same shape D9 gives `/godoc`, for the same
-  reason.
+Two things it needs. `Stop` fires after *every* response, so the hook must be
+guarded — write only when the transcript has grown past a threshold since the
+last save, or the session becomes an unusable nag. And a `Stop` hook that
+unconditionally continues loops forever; the reference documents a flag for
+exactly this (`stop_hook_active`, name to confirm when building), and the guard
+must honour it.
 
-**One thing to check before building**, since constraint 8 is quoted from the
-hooks reference and this is not stated there either way: whether `PostCompact`
-supports `additionalContext`. If it does,
-the common case gets a cheaper path — the pre-compaction hook drops a marker,
-the post-compaction hook injects *"memory was not saved across the last
-compaction; write it now"*, and the session's own next turn does the work with
-no nested invocation and no second set of credentials. It cannot cover
-`SessionEnd`, where no later turn exists, so it is an optimisation over the
-headless pass rather than a replacement for it.
+**A headless pass — the fallback for moments `Stop` cannot reach.** Compaction
+can arrive mid-turn, and a session can end without a final response, so neither
+`PreCompact` nor `SessionEnd` is covered above. There the hook does the work
+itself: `transcript_path` is a common input field present on every event, and
+the script spends it on a headless `claude -p` that reads the transcript and
+edits the memory files directly. Costs, accepted: a nested invocation with its
+own latency and credentials — ambient on a web worker, the first hook to need
+any on the laptop — and a memory prompt that lives in the hook script rather
+than in the skill.
+
+Either way **the skill is no longer the thing that fires**, so it stays
+invocable as its own manual twin, for when the automatic path is not what is
+wanted. The same shape D9 gives `/godoc`, for the same reason.
+
+*(`PostCompact` was considered as a cheaper route than the headless pass — drop
+a marker before, inject "memory was not saved, write it now" after. It does not
+support `additionalContext`, so it cannot. Checked, not assumed.)*
 
 `/restructure` is the same skill's other half — compaction of memory rather
 than capture — triggered by a size threshold.
