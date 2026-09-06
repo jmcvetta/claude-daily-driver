@@ -37,7 +37,8 @@ Established by reading the plugin and hooks references, not by assumption.
    they are harness configuration, not memory, and a web worker neither needs
    nor wants the laptop's allowlist.
 
-3. **The one mechanism for always-on context is a `SessionStart` hook** emitting
+3. **Always-on context in the main session comes from a `SessionStart` hook**
+   emitting
    `hookSpecificOutput.additionalContext`. The plugin ships `hooks/hooks.json`
    plus a script that reads `${CLAUDE_PLUGIN_ROOT}/context/*.md`. Being
    harness-executed, it behaves the same on CLI and web.
@@ -45,13 +46,17 @@ Established by reading the plugin and hooks references, not by assumption.
 4. **`InstructionsLoaded` and `SubagentStart` are observation-only.** Neither
    supports decision control, so neither can inject or amend instructions.
 
-5. **Subagent inheritance is undocumented and load-bearing.** The hooks
-   reference states that plugin hooks run inside subagents and names *tool*
-   events specifically — `SessionStart` is conspicuously absent, and whether
-   `additionalContext` propagates to subagents is not documented either way.
-   See Risks.
+5. **`SessionStart` `additionalContext` does not reach subagents.** The docs
+   are silent on this; it was measured (see R2). A `CLAUDE.md` reaches both the
+   main session and its subagents, so hook-delivered context is strictly weaker
+   unless paired with a second hook.
 
-6. **Repo-level installation** is `.claude/settings.json` with
+6. **`PreToolUse` can rewrite tool input** via
+   `hookSpecificOutput.updatedInput`. This is what closes the gap in
+   constraint 5: a hook matching the `Agent` tool prepends the constitution to
+   every subagent prompt. Measured, not assumed.
+
+7. **Repo-level installation** is `.claude/settings.json` with
    `extraKnownMarketplaces` + `enabledPlugins`, applied once the folder is
    trusted. This is per-project, so every repo needs the stanza — a job for a
    `bootstrap` skill.
@@ -455,7 +460,7 @@ for amendments being reviewable pull requests.
 
 ### R4 — Per-repo bootstrap friction
 
-Plugin installation on web is per-project (constraint 6). Every new repo needs
+Plugin installation on web is per-project (constraint 7). Every new repo needs
 the `extraKnownMarketplaces` / `enabledPlugins` stanza, and a repo that lacks it
 silently runs without the constitution — the same failure mode as R1, from a
 different direction. A `bootstrap` skill should write the stanza; a repo
