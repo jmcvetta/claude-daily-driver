@@ -4,3 +4,6 @@
 
 # claude plugin eval
 evals/results/
+
+# Python
+__pycache__/
