@@ -47,19 +47,39 @@ MARKETPLACES_KEY = "extraKnownMarketplaces"
 PLUGINS_KEY = "enabledPlugins"
 
 
+def owner_repo(url: str) -> str:
+    """`owner/repo` from a `repository` URL, in either form git writes it.
+
+    The marketplace source wants `owner/repo`, and a source that is anything
+    else resolves to no marketplace — the silent failure this whole file
+    exists to prevent — so an SSH-form remote must not be allowed to reach it.
+    `git@github.com:owner/repo.git` carries the path after a colon and has no
+    `//`, which is how it is told apart from `https://host/owner/repo`, whose
+    only colon belongs to the scheme.
+    """
+    cleaned = url.strip().rstrip("/").removesuffix(".git")
+    if "//" not in cleaned:
+        cleaned = cleaned.rpartition(":")[2]
+    parts = [part for part in cleaned.split("/") if part]
+    if len(parts) < 2:
+        raise SystemExit(
+            f"error: cannot read owner/repo from plugin.json repository {url!r}"
+        )
+    return "/".join(parts[-2:])
+
+
 def canonical() -> dict:
     """The stanza, built from the two manifests it has to agree with."""
     plugin = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text())
     marketplace = json.loads((ROOT / ".claude-plugin" / "marketplace.json").read_text())
 
-    # `repository` is a URL; the marketplace source wants `owner/repo`.
-    url = plugin["repository"].rstrip("/").removesuffix(".git")
-    owner, repo = url.split("/")[-2:]
-
     return {
         MARKETPLACES_KEY: {
             marketplace["name"]: {
-                "source": {"source": "github", "repo": f"{owner}/{repo}"},
+                "source": {
+                    "source": "github",
+                    "repo": owner_repo(plugin["repository"]),
+                },
             },
         },
         PLUGINS_KEY: {

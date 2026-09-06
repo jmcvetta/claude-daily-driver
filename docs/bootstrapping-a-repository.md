@@ -48,7 +48,12 @@ same silent way:
 Nobody has to hold that straight. `scripts/stanza.py` derives the stanza from
 `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`, and
 `make check` fails if any copy of it — the template, this repository's own
-settings, the block above — has drifted from the manifests:
+settings, the block above — has drifted from the manifests. Prose may quote
+half the stanza, or one entry of it, and still pass; what fails is a name or a
+value the manifests do not agree with. A block that shows a *wrong* stanza on
+purpose is exempted with `<!-- stanza-check: ignore -->` on the line above it.
+
+The stanza itself is one command away:
 
 ```sh
 python3 scripts/stanza.py
@@ -63,8 +68,15 @@ nothing else, so it can be copied wholesale into a repository that has no
 `.claude/` yet:
 
 ```sh
-cp -R /path/to/claude-daily-driver/template/.claude .
+cp -R /path/to/claude-daily-driver/template/.claude/. .claude/
 ```
+
+The trailing `/.` matters. `cp -R .../template/.claude .` writes
+`.claude/.claude/settings.json` in a repository that already has a `.claude/`,
+silently, and the plugin then loads nowhere; the form above copies the
+*contents* either way, creating `.claude/` when there is none. If the
+repository already has a `.claude/settings.json` worth keeping, use the helper
+below instead — this copy would replace it.
 
 Better still, keep the same file in whatever GitHub template repository new
 work starts from, so the question never comes up.
