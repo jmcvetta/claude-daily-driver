@@ -10,6 +10,9 @@ read it, do not go further.
 
 ## What's in it
 
+The **constitution** — `context/constitution.md`, delivered to every session by
+hook — plus skills that fire on activity:
+
 | Skill | What it does |
 | ----- | ------------ |
 | `pr`  | Opens and updates GitHub pull requests: Conventional Commits title, draft by default, and a body with a one-line summary, a salutation in verse, an executive summary, and engineering detail. |
@@ -60,11 +63,15 @@ claude-daily-driver/
 ├── .github/workflows/      CI, PR title check, infra, release automation
 ├── agents/                 the reviewer panel the `review` skill dispatches
 ├── context/
-│   └── constitution.md     the always-on layer, injected by the hooks
+│   └── constitution.md     always-on rules, one file, read by both hooks
 ├── docs/                   decisions, and the measurements behind them
 │   └── planning/           the plan, and the record of decisions made under it
+├── evals/                  the live half of the constitution's test
+├── hooks/
+│   ├── hooks.json          SessionStart, and PreToolUse on the Agent tool
+│   └── inject-constitution.py
 ├── infra/github/           the repository's own settings, as OpenTofu
-├── scripts/                the manifest checks CI runs, the stanza, the MCP tally
+├── scripts/                the checks CI runs, the stanza, the MCP tally
 ├── skills/
 │   ├── pr/SKILL.md
 │   ├── issue-deps/
@@ -76,6 +83,54 @@ claude-daily-driver/
 └── template/.claude/       copied into a repository to enable the plugin
 ```
 
+## The constitution
+
+`context/constitution.md` is the always-on layer: identity and
+non-negotiables, in force in every session. A plugin cannot ship a
+`CLAUDE.md` — plugins contribute context through skills, agents and hooks —
+so it is delivered by hook, and it takes **two** hooks rather than one:
+
+| Delivery | Main session | Subagent |
+| -------- | ------------ | -------- |
+| `CLAUDE.md` | yes | yes |
+| `SessionStart` `additionalContext` | yes | **no** |
+| `SessionStart` + `PreToolUse` on `Agent` | yes | **yes** |
+
+That middle row was measured, not assumed, and it is why shipping only the
+first hook would have been a silent regression against the `CLAUDE.md` this
+replaces — invisible, and manifesting only in the subagents doing the actual
+work. The repair is a `PreToolUse` hook that rewrites the subagent's prompt
+through `hookSpecificOutput.updatedInput`. The evidence and method are in
+[the planning doc](docs/planning/plugin-replaces-global-memory.md) under R2.
+
+Both hooks are one script reading one file by exact path — never a glob over
+`context/`, which is how two injection points come to disagree the day a
+second file lands. When the file cannot be read, the hooks say so in the
+model's context, in a `systemMessage` to the terminal, and on stderr, rather
+than handing back a session that quietly has no constitution.
+
+The last line of the file is a token. Ask a session for it: a session that
+cannot quote it did not get the constitution, whatever else it may believe.
+
+## Testing the constitution
+
+The rule *code without tests is broken* is carried by the very hooks that
+deliver it, so the delivery is tested in two halves, split where the
+credential requirement starts:
+
+- **`make check`** runs `scripts/check-constitution.py`: both hooks against
+  synthetic event JSON, asserting the constitution comes back from each — and
+  that the subagent's prompt is *exactly* the main session's context plus the
+  original prompt, which is the assertion that catches drift between the two
+  injection points. No model, no credentials.
+- **`claude plugin eval evals/`** runs the live half, which is the R2
+  experiment itself: a subagent is asked for a token nobody put in its prompt.
+  Only a real session can prove the harness honours `updatedInput`, and a
+  credentialed run is the price of asking.
+
+They fail for different reasons and deserve to fail separately: the first
+tests this plugin, the second tests an assumption about the harness that a
+future release could withdraw without telling anyone.
 ## Enabling it in a repository
 
 Plugin installation is per-project: a repository declares the plugin for
@@ -91,7 +146,6 @@ to write it into a repository, and how to tell whether it actually loaded.
 `python3 scripts/stanza.py` prints the same stanza, derived from the
 manifests, and `python3 scripts/stanza.py --write <repo>` merges it into
 another checkout.
-
 ## Portability
 
 The same tree is read by more than one harness:
@@ -120,7 +174,8 @@ skill whose frontmatter `name` disagrees with its directory, an agent whose
 `name` disagrees with its filename, two agents claiming one `name` so that only
 one of them is reachable, a `description:` that is present but empty, a `name`
 disagreeing between the two manifests, and a copy of the repository stanza that
-has drifted from the names it enables.
+has drifted from the names it enables. Then `scripts/check-constitution.py`,
+described above.
 
 `make check-infra` parses the OpenTofu stack and is deliberately not part of
 `make check`; see [infra/github/README.md](infra/github/README.md).
