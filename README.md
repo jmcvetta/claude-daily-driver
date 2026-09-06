@@ -50,9 +50,10 @@ The same tree is read by more than one harness:
 
 ## Enabling it in a repository
 
-Claude Code enables plugins per project, so a repository turns this one on for
-anyone working in it — laptop or web worker — by carrying the stanza in its own
-`.claude/settings.json`:
+Claude Code enables plugins per project, so a repository can carry its own
+enablement and turn this plugin on for anyone working in it — on a laptop, at
+least; the web-worker case is measured below and does not currently work. The
+stanza goes in the repository's `.claude/settings.json`:
 
 ```json
 {
@@ -77,17 +78,34 @@ the plugin `name` joined to it as `plugin@marketplace`. Note that the two differ
 — the marketplace is `claude-daily-driver` and the plugin inside it is
 `daily-driver` — and that a typo in either is not an error, it is silence.
 
-There is nothing else to run. Once the project folder is trusted, the next
-session adds the marketplace, clones it under `~/.claude/plugins/marketplaces/`,
-and enables the plugin, with no separate prompt.
+The stanza is not the whole job. Once the project folder is trusted, the next
+session registers the marketplace and clones it under
+`~/.claude/plugins/marketplaces/`, with no separate prompt — but on 2026-09-06,
+against Claude Code 2.1.263, that is where it stopped. The plugin itself was
+not installed: `claude plugin list` reported nothing installed,
+`~/.claude/plugins/installed_plugins.json` stayed empty, and no
+`daily-driver:pr` skill was present in the session. Installing it explicitly,
+once, is what made the skills appear:
+
+```sh
+claude plugin install daily-driver@claude-daily-driver
+```
+
+Read that the same way as the web-worker result below — a dated observation of
+one version, measured with `claude -p` sessions against an isolated
+`CLAUDE_CONFIG_DIR`, not a permanent property of the platform. If a newer
+release installs from the stanza alone, the command above is a no-op.
 
 Three things about that are worth stating plainly.
 
-**It is per-repository, not per-user.** Marketplace state is stored once per
-user, in `~/.claude/plugins/known_marketplaces.json`, but the *enablement* rides
-in each repository's `.claude/settings.json`. Adding the marketplace on the
-laptop enables the plugin nowhere by itself; every repository worked in needs
-its own copy of the stanza.
+**Marketplace and install state are per-user; the stanza is what travels.**
+`known_marketplaces.json` and `installed_plugins.json` both live under
+`~/.claude/plugins/` and are shared by every project on the machine, so the
+install above is a once-per-machine step — and at user scope, which is what
+`claude plugin install` chose, it makes the plugin available even in
+repositories carrying no stanza at all. What the stanza buys is that a fresh
+checkout on a fresh machine knows where the marketplace lives without anyone
+having to be told. Put it in every repository that expects the plugin.
 
 **It requires trusting the project folder.** Nothing above happens before trust.
 On an untrusted folder — `hasTrustDialogAccepted: false` for that path in
@@ -96,16 +114,24 @@ clone, no plugin, no complaint.
 
 **A repository without the stanza fails silently.** This is R4 in [the planning
 document](docs/planning/plugin-replaces-global-memory.md), and it is the reason
-this section exists. A session in a repository that lacks the stanza runs with
-no constitution at all and gives no sign of it — no warning, no degraded mode,
+this section exists. On a machine that has not already installed the plugin, a
+session in a repository lacking the stanza runs with no constitution at all and
+gives no sign of it — no warning, no degraded mode,
 no missing-skill error, just a Claude that has never heard of any of this. So
 when a session feels unusually unconstrained, verify before concluding it is
-being disobedient. The check has to come from outside the session:
+being disobedient. Asking the session is no use — a Claude that never loaded
+the plugin has nothing to report — so run the check in a shell:
 
 ```sh
-claude plugin list         # daily-driver@claude-daily-driver, project, enabled
-cat .claude/settings.json  # the stanza above
+claude plugin list
 ```
+
+The output is several lines per plugin; what matters is that
+`daily-driver@claude-daily-driver` is listed at all and that its `Status:` line
+reads enabled. "No plugins installed." is the failure. Note that reading
+`.claude/settings.json` is *not* this check: it proves the stanza is committed,
+which the web-worker result below shows is a different thing from the plugin
+being loaded.
 
 ### Web workers: verify, do not assume
 
@@ -126,8 +152,9 @@ the stanza.
 Read that as a dated observation of one environment and one version, not as a
 permanent property of the platform; it is exactly the sort of thing that changes
 between releases. Read it also as the reason the R4 habit is not optional: run
-the two checks at the top of a web session before relying on the constitution
-being there.
+`claude plugin list` at the top of a web session before relying on the
+constitution being there. The stanza sitting in the checkout is not evidence
+that it took effect.
 
 ## Checks
 
