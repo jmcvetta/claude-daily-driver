@@ -51,6 +51,11 @@ jobs:
       - name: Install the Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code@latest
 
+      # ShellCheck ships in the ubuntu-latest image; the guard is for the day
+      # it does not, and costs nothing on the day it does.
+      - name: Ensure ShellCheck
+        run: shellcheck --version >/dev/null 2>&1 || sudo apt-get install -y shellcheck
+
       - run: make check
 
   # The aggregating job branch protection names. `if: always()` is
