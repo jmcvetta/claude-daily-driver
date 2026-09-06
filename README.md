@@ -31,6 +31,9 @@ claude-daily-driver/
 │   ├── plugin.json         the plugin, and the version releases bump
 │   └── marketplace.json    the pointer `claude plugin install` reads
 ├── .github/workflows/      CI, PR title check, infra, release automation
+├── context/
+│   └── constitution.md     the always-on layer, injected by the hooks
+├── docs/planning/          the plan, and the record of decisions made under it
 ├── infra/github/           the repository's own settings, as OpenTofu
 ├── scripts/                the manifest checks CI runs
 └── skills/
