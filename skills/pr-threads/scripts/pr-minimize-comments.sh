@@ -17,9 +17,14 @@
 #
 # SURFACE LIMITATION
 #   A web worker's brokered GITHUB_TOKEN serves only a pinned set of GraphQL
-#   PR-review operations; `minimizeComment` is not among them (measured
-#   2026-09-06). The gate is detected below and reported as itself rather than
-#   as a mystery failure. Minimisation is a laptop capability, on a personal
+#   PR-review operations; `minimizeComment` is not among them — HTTP 403 with
+#   a bare `message`, measured 2026-09-06. That one failure is named below,
+#   because its remedy is a different machine rather than a different token.
+#   Every other failure reports its own HTTP status and GitHub's own message,
+#   which is why the gate is matched on its text rather than inferred from the
+#   absence of a `data` key: on a web worker the proxy answers *every*
+#   GraphQL request that way, a bad token included, so "no data key" does not
+#   identify anything. Minimisation is a laptop capability, on a personal
 #   token.
 #
 # Usage: pr-minimize-comments.sh [--classifier TYPE] <node-id> [<node-id> ...]
@@ -82,6 +87,7 @@ if [ -z "$TOKEN" ]; then
     exit 2
 fi
 
+# shellcheck disable=SC2016  # GraphQL variables, not shell ones
 MUTATION='mutation($subjectId: ID!, $classifier: ReportedContentClassifiers!) {
   minimizeComment(input: {subjectId: $subjectId, classifier: $classifier}) {
     minimizedComment { isMinimized }
@@ -89,7 +95,7 @@ MUTATION='mutation($subjectId: ID!, $classifier: ReportedContentClassifiers!) {
 }'
 
 minimize() {
-    local node_id="$1" payload response
+    local node_id="$1" payload response status body message
 
     payload=$(jq -n \
         --arg query "$MUTATION" \
@@ -97,31 +103,47 @@ minimize() {
         --arg classifier "$CLASSIFIER" \
         '{query: $query, variables: {subjectId: $subjectId, classifier: $classifier}}')
 
+    # Status separated from body, as in pr-find-claude-comments.sh, so a
+    # failure reports what GitHub said instead of one guess for every cause.
     response=$(curl -sS \
         -X POST \
         -H "Authorization: Bearer $TOKEN" \
         -H "Content-Type: application/json" \
+        -w $'\n%{http_code}' \
         -d "$payload" \
         https://api.github.com/graphql)
+    status=${response##*$'\n'}
+    body=${response%$'\n'*}
 
-    # A gated token answers with a bare `message` and no `data` key at all --
-    # not with GraphQL's `errors` array. Distinguished here because the
-    # remedy is different: this one is not retryable and not a bad node ID.
-    if [ "$(printf '%s' "$response" | jq 'has("data")')" != "true" ]; then
-        echo "  ✗ GraphQL unavailable on this surface:" >&2
-        printf '%s' "$response" | jq -r '.message // .' >&2
-        echo "    minimizeComment needs a personal token; a Claude Code web" >&2
-        echo "    worker's brokered token serves only pinned PR-review" >&2
-        echo "    operations. Run this from the laptop." >&2
+    # A GraphQL answer is a 200 carrying a `data` key, whatever else it says.
+    # Anything else -- 401 on a stale token, 403 from the web worker's broker,
+    # a 502 HTML page from a proxy -- failed before the mutation ran, and its
+    # status and message are the diagnosis.
+    if [ "$status" != "200" ] ||
+       [ "$(printf '%s' "$body" | jq -e 'has("data")' 2>/dev/null)" != "true" ]; then
+        echo "  ✗ POST /graphql returned HTTP $status" >&2
+        # Read into a variable rather than piping straight to stderr: the
+        # redirection order that silences jq's own complaint also silences
+        # its output.
+        message=$(printf '%s' "$body" | jq -r '.message? // .' 2>/dev/null) || message=""
+        [ -n "$message" ] || message="$body"
+        printf '    %s\n' "$message" >&2
+        # The one cause worth naming, because its remedy is a different
+        # machine rather than a different token.
+        if printf '%s' "$body" | grep -qiE 'not enabled for this session|pinned set'; then
+            echo "    minimizeComment needs a personal token; a Claude Code web" >&2
+            echo "    worker's brokered token serves only pinned PR-review" >&2
+            echo "    operations. Run this from the laptop." >&2
+        fi
         return 1
     fi
 
-    if [ "$(printf '%s' "$response" | jq 'has("errors")')" = "true" ]; then
-        echo "  ✗ $(printf '%s' "$response" | jq -r '[.errors[].message] | join("; ")')" >&2
+    if [ "$(printf '%s' "$body" | jq 'has("errors")')" = "true" ]; then
+        echo "  ✗ $(printf '%s' "$body" | jq -r '[.errors[].message] | join("; ")')" >&2
         return 1
     fi
 
-    if [ "$(printf '%s' "$response" | jq -r '.data.minimizeComment.minimizedComment.isMinimized')" != "true" ]; then
+    if [ "$(printf '%s' "$body" | jq -r '.data.minimizeComment.minimizedComment.isMinimized')" != "true" ]; then
         echo "  ✗ API reported the comment was not minimised" >&2
         return 1
     fi

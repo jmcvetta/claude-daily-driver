@@ -54,8 +54,7 @@ Reply Content
   unmistakably. A reader skimming twenty threads should never have to parse a
   paragraph to learn which.
 - **No poems.** Poetry attaches to the posted review artifact, never to a
-  finding someone has to act on. The review comment's opening and closing
-  verse are specified elsewhere; a thread reply is prose.
+  finding someone has to act on. A thread reply is prose.
 
 A rejection carries its reason and stops. "Rejected — `n` is bounded by the
 caller's `len(items)` check at `loader.go:88`" is a complete reply. Softening
@@ -103,17 +102,29 @@ type that looks plausible.
 Self-Identification
 ===================
 
-A review comment Claude posts ends with a self-identification line:
+A review comment Claude posts ends with a self-identification line, in
+italics, carrying the model id in brackets:
 
 ```
-*Claude {model version}*
+*Claude Opus 5 [claude-opus-5]*
 ```
 
-**This is not decoration.** It is the only marker by which the minimise path
-recognises Claude's own earlier comments, and the matcher in
-`scripts/pr-find-claude-comments.sh` keys on exactly this shape. Drop the line
-and superseded comments stop collapsing — silently, months later, with nothing
-to point at.
+The prose name is free — `*Claude 4.1 Opus (claude-opus-4-1-20250805)*` is
+equally good, and parentheses work as well as brackets. **The bracketed
+`claude-…` id is not.** It is the load-bearing half, and a line that omits it
+is not a self-identification line:
+
+| Written | Recognised |
+| ------- | ---------- |
+| `*Claude Opus 5 [claude-opus-5]*` | yes |
+| `*Claude 4.1 Opus (claude-opus-4-1-20250805)*` | yes |
+| `*Claude Opus 5*` | **no** — no model id |
+
+**This is not decoration.** Together with the comment's author, it is how the
+minimise path recognises Claude's own earlier comments, and the matcher in
+`scripts/pr-find-claude-comments.sh` keys on exactly the shape above. Drop the
+id and superseded comments stop collapsing — silently, months later, with
+nothing to point at.
 
 Self-identification and minimisation move together or not at all. Changing the
 line means changing that matcher in the same commit.
@@ -135,6 +146,11 @@ are for. Each one's header says why it exists and what deletes it.
 skills/pr-threads/scripts/pr-minimize-previous-claude-comments.sh <pr-number>
 ```
 
+Scoped to the token's own user by default, because the signature is *text*
+and anyone quoting one of Claude's comments carries a matching body. Pass
+`--author LOGIN` when the comments were posted under a different identity than
+the one running the script.
+
 The dependency chain behind that one line, which must not be cut in the
 middle:
 
@@ -152,10 +168,15 @@ Surface Limitation
 **Minimisation does not work from a Claude Code web worker**, and the scripts
 say so rather than failing obscurely. Measured on 2026-09-06: the session's
 ambient `GITHUB_TOKEN` is brokered, and `POST api.github.com/graphql` answers
-every operation with
+every operation with HTTP 403 and
 
 > This GraphQL query is not enabled for this session — only the pinned set of
 > PR-review operations is served.
+
+The broker answers *before* GitHub does, so a deliberately invalid token gets
+that same 403 — which is why the script matches the gate on its text and
+reports every other status and message as itself. "No `data` key" identifies
+nothing on this surface.
 
 REST is unaffected, so finding the comments works everywhere; only the
 mutation is gated. `gh` is not an escape hatch — it is not installed on a web

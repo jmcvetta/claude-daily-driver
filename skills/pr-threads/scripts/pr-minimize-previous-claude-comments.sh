@@ -18,7 +18,8 @@
 # one here would add a third MCP gap this directory has not established.
 # The caller knows the number.
 #
-# Usage: pr-minimize-previous-claude-comments.sh <pr-number> [--repo owner/name] [--classifier TYPE]
+# Usage: pr-minimize-previous-claude-comments.sh <pr-number> [--repo owner/name]
+#            [--author login] [--classifier TYPE]
 
 set -euo pipefail
 
@@ -32,6 +33,8 @@ Collapses every Claude comment on the pull request except the newest.
 
   <pr-number>       the pull request number
   --repo OWNER/NAME the repository; defaults to the `origin` remote
+  --author LOGIN    whose comments to collapse; defaults to the token's own
+                    user
   --classifier TYPE OUTDATED (default), DUPLICATE, SPAM, RESOLVED,
                     OFF_TOPIC or ABUSE
 
@@ -48,6 +51,11 @@ while [ $# -gt 0 ]; do
         --repo)
             [ $# -ge 2 ] || { echo "error: --repo needs a value" >&2; exit 2; }
             FIND_ARGS+=(--repo "$2")
+            shift 2
+            ;;
+        --author)
+            [ $# -ge 2 ] || { echo "error: --author needs a value" >&2; exit 2; }
+            FIND_ARGS+=(--author "$2")
             shift 2
             ;;
         --classifier)
@@ -82,7 +90,13 @@ fi
 
 # pr-find-claude-comments.sh returns oldest first, so dropping the tail keeps
 # the newest review visible and collapses everything it superseded.
-mapfile -t node_ids < <(printf '%s' "$comments" | jq -r '.[:-1] | .[].node_id')
+#
+# A `read` loop rather than `mapfile`, which is bash 4+: the laptop this is
+# designated to run on may be a Mac, whose stock /bin/bash is 3.2.
+node_ids=()
+while IFS= read -r node_id; do
+    [ -n "$node_id" ] && node_ids+=("$node_id")
+done < <(printf '%s' "$comments" | jq -r '.[:-1] | .[].node_id')
 
 if [ ${#node_ids[@]} -eq 0 ]; then
     echo "One Claude comment on PR #$PR_NUMBER (the newest) — nothing to minimise"

@@ -268,12 +268,19 @@ So the bar needs its second clause, and it is a narrower thing than "runs on
 both surfaces":
 
 > A survivor must **fail legibly** where it cannot run. Minimisation is a
-> laptop capability on a personal token; `skills/pr-threads/scripts/` detects
-> the gate specifically — a bare `message` with no `data` key, which is not
-> GraphQL's `errors` shape — and says so. A script that cannot be portable is
-> acceptable. A script that is silently non-portable is what this plan exists
-> to prevent, and an obscure failure on the surface nobody develops on is the
-> same defect wearing a different coat.
+> laptop capability on a personal token; `skills/pr-threads/scripts/` reports
+> the HTTP status and GitHub's own message for every failure, and names the
+> gate specifically when the message is the gate's. A script that cannot be
+> portable is acceptable. A script that is silently non-portable is what this
+> plan exists to prevent, and an obscure failure on the surface nobody
+> develops on is the same defect wearing a different coat.
+
+Detecting the gate by the *absence* of a `data` key was the first attempt and
+is wrong. Measured 2026-09-06: the broker answers ahead of GitHub, so a
+deliberately invalid token draws the same 403 and the same bare `message` as a
+valid one. The shape identifies the surface, not the fault — so a stale token
+on the laptop would have been diagnosed as "run this from the laptop". Match
+the gate's text; report everything else as what it is.
 
 **The identifier trap the MCP route replaces `pr-reply-thread.sh` with.** The
 two MCP calls want different identifiers, and only one of them is a field.
