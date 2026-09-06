@@ -395,13 +395,15 @@ What the MCP surface actually offers, checked rather than assumed:
 | Relationship | Status |
 | ------------ | ------ |
 | **Sub-issues** (parent/child) | Fully exposed. `sub_issue_write` adds, removes, reprioritises and re-parents; `issue_read` reads `get_sub_issues` and `get_parent`; `issue_write` can create an issue directly under a parent — **including cross-repo**, via `parent_owner` / `parent_repo`. |
-| **PR closes issue** | Readable. `issue_read` returns `closed_by_pull_requests` as a count plus up to five references. |
+| **PR closes issue** | Readable, and *only* here — REST has no such field. `issue_read` returns `closed_by_pull_requests` as a count plus up to five references. |
 | **Blocked-by / blocking** | **Not exposed by this MCP** — no tool, no field. |
 
-**The API does expose blocked-by / blocking programmatically.** Confirmed by the
-user, who has already documented the endpoints in another repository — that
-documentation is the starting point when this skill is built, and should be
-located and cited here rather than rediscovered.
+**The API does expose blocked-by / blocking programmatically**, and that
+documentation now has an address:
+[`jmcvetta/career`, `docs/issue-dependencies.md`](https://github.com/jmcvetta/career/blob/master/docs/issue-dependencies.md).
+It carries the endpoints, the `issue_id`-is-the-database-id trap, cross-repo
+edges, and a probe table of what the API refuses. Start there; do not
+rediscover it.
 
 So the gap is the **MCP's, not GitHub's**, and the shape follows: dependencies
 become the first new resident of `scripts/` under D3's rule — a script that
@@ -409,10 +411,48 @@ exists because the MCP demonstrably cannot do the job, with a header saying
 exactly that and a plausible expiry date for when the MCP catches up. That is
 the self-liquidating directory working as designed rather than accumulating.
 
-One thing still to confirm from that existing documentation: **whether the
-relationship covers pull requests or issues only.** If issues-only, the PR half
-of the workflow reduces to `closed_by_pull_requests` and the existing text
-convention, and the skill is an issue-graph skill that PRs merely reference.
+**Answered: issues only.** Probed 2026-09-06 and recorded in that document
+under *Pull requests are not in this graph*. Both graphs refuse a pull request
+at both ends — dependencies with "Source issue may only be an issue" and
+"Target issue may only be an issue", sub-issues with "Parent may only be an
+issue" and "Sub issue may only be an issue".
+
+So the conditional stands as written: **this is an issue-graph skill that PRs
+merely reference.** The PR half reduces to `closed_by_pull_requests` and the
+`Closes #123` convention, and a pull request that must wait on another pull
+request has nowhere structural to record it — that dependency belongs on the
+issues the two PRs implement, where it also outlives both PRs being merged or
+abandoned.
+
+Three findings from the same probe change what gets built.
+
+**A read cannot see the restriction, which promotes the verification step
+below from good practice to necessary.** A `blocked_by` read against a pull
+request answers `200` with an empty array — indistinguishable from an issue
+that genuinely has no edges. Nothing in the read path ever says *wrong
+kind of object*, so a skill that inspects relationships by reading them will
+report a clean graph for a question the API declined to answer. Only the write
+refuses, and only the write says so.
+
+**The write surface is half what was assumed, which bounds the script.**
+`POST .../dependencies/blocking` does not exist: `404` in GitHub's own error
+shape, with `blocking` listed under reads only. So the first resident of
+`scripts/` needs exactly one write route (`POST .../dependencies/blocked_by`),
+one `DELETE`, and two `GET`s. Four endpoints is small enough to make D3's
+expiry note concrete — the script goes the day the MCP exposes them.
+
+**The skill's two halves read through different clients, which is not an
+incidental detail.** `closed_by_pull_requests` is absent from REST entirely;
+the MCP is where it surfaces (GraphQL underneath, on the evidence of the field
+name — unverified, since the container it was probed from serves only a pinned
+set of GraphQL operations). REST offers `cross-referenced` on the issue
+timeline instead, which renders the PR that closed an issue and a PR that
+merely mentioned it *identically* — measured on `jmcvetta/career#177`, where
+`#178` closed it and `#176` only refers to it. So the verification this section
+already wants — *does the structured relationship match what the body claims?*
+— asks the MCP for the closes-link and `gh api` / `curl` for the dependency
+edges. One skill, two clients, for a reason that is neither arbitrary nor going
+away on its own.
 
 Two design notes, both worth fixing before the skill is written.
 
