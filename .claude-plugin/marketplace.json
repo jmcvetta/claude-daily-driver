@@ -1,0 +1,15 @@
+{
+  "name": "claude-daily-driver",
+  "description": "Jason McVetta's daily-driver skills for Claude Code. Published, not licensed.",
+  "owner": {
+    "name": "Jason McVetta",
+    "email": "jason.mcvetta@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "daily-driver",
+      "source": "./",
+      "description": "Daily-driver skills for Claude Code: the PR workflow, and whatever else earns its place."
+    }
+  ]
+}
