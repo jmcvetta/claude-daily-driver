@@ -19,7 +19,7 @@ resource "github_branch_protection" "master" {
   pattern       = "master"
 
   required_status_checks {
-    strict   = true
+    strict   = false
     contexts = ["CI Success"]
   }
 
