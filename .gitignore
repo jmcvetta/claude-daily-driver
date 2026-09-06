@@ -5,3 +5,6 @@
 # `claude plugin eval` writes its runs -- transcripts, scores, the HTML report
 # -- beside the cases it ran.
 evals/results/
+
+# Python
+__pycache__/
