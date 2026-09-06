@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+"""The repository stanza that enables this plugin, derived rather than typed.
+
+Plugin installation is per-project: a repository enables the plugin for
+everyone who works in it — a laptop CLI and a web worker alike — by carrying
+`extraKnownMarketplaces` + `enabledPlugins` in its `.claude/settings.json`. A
+repository without the stanza silently runs without the plugin, so the stanza
+is the thing that must never be subtly wrong.
+
+Two of its three values are easy to get wrong by hand, and both are read from
+the manifests here rather than written out:
+
+- The **marketplace name** is `marketplace.json`'s `name` — the repository's
+  name, `claude-daily-driver` — not the plugin's. Measured: `claude plugin
+  marketplace add jmcvetta/claude-daily-driver` registers it under exactly
+  that name.
+- The **enablement key** is `plugin@marketplace`, so it is
+  `daily-driver@claude-daily-driver`. The tempting `daily-driver@daily-driver`
+  is wrong in a way nothing reports: an `enabledPlugins` entry naming an
+  unregistered marketplace is skipped as orphaned.
+
+Modes:
+
+    python3 scripts/stanza.py                 print the stanza
+    python3 scripts/stanza.py --write REPO    merge it into REPO's settings
+
+`--write` is the laptop-side helper for a repository that predates the
+template. It deliberately lives in this repository's checkout and not in the
+plugin: a skill shipped inside the plugin could never bootstrap the one
+repository that needs it, since a missing stanza is why the plugin — and so
+the skill — did not load. Bootstrapping is an act performed from outside.
+
+No third-party imports: this runs from a Makefile on a laptop and from CI, and
+a dependency install between the two is a place for them to differ.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+
+MARKETPLACES_KEY = "extraKnownMarketplaces"
+PLUGINS_KEY = "enabledPlugins"
+
+
+def canonical() -> dict:
+    """The stanza, built from the two manifests it has to agree with."""
+    plugin = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text())
+    marketplace = json.loads((ROOT / ".claude-plugin" / "marketplace.json").read_text())
+
+    # `repository` is a URL; the marketplace source wants `owner/repo`.
+    url = plugin["repository"].rstrip("/").removesuffix(".git")
+    owner, repo = url.split("/")[-2:]
+
+    return {
+        MARKETPLACES_KEY: {
+            marketplace["name"]: {
+                "source": {"source": "github", "repo": f"{owner}/{repo}"},
+            },
+        },
+        PLUGINS_KEY: {
+            f"{plugin['name']}@{marketplace['name']}": True,
+        },
+    }
+
+
+def render(stanza: dict) -> str:
+    return json.dumps(stanza, indent=2) + "\n"
+
+
+def merge(settings: dict, stanza: dict) -> list[str]:
+    """Fold the stanza into `settings` in place. Returns what changed."""
+    changes: list[str] = []
+    for section, entries in stanza.items():
+        current = settings.setdefault(section, {})
+        if not isinstance(current, dict):
+            raise SystemExit(f"error: existing {section} is not an object")
+        for key, value in entries.items():
+            if current.get(key) == value:
+                continue
+            # An entry under the same name with a different value is the
+            # interesting case — a stale source, or a hand-edit — so say so
+            # rather than silently replacing it.
+            if key in current:
+                changes.append(f"replaced {section}.{key}")
+            else:
+                changes.append(f"added {section}.{key}")
+            current[key] = value
+    return changes
+
+
+def write(target: Path) -> int:
+    if not target.is_dir():
+        print(f"error: {target} is not a directory", file=sys.stderr)
+        return 1
+
+    path = target / ".claude" / "settings.json"
+    if path.exists():
+        try:
+            settings = json.loads(path.read_text())
+        except json.JSONDecodeError as exc:
+            print(f"error: {path} is not valid JSON: {exc}", file=sys.stderr)
+            return 1
+        if not isinstance(settings, dict):
+            print(f"error: {path} is not a JSON object", file=sys.stderr)
+            return 1
+    else:
+        settings = {}
+
+    changes = merge(settings, canonical())
+    if not changes:
+        print(f"{path}: stanza already present")
+        return 0
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(settings, indent=2) + "\n")
+    for change in changes:
+        print(f"{path}: {change}")
+    print("Commit it, and trust the folder — an untrusted folder ignores it.")
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--write",
+        metavar="REPO",
+        type=Path,
+        help="merge the stanza into REPO/.claude/settings.json",
+    )
+    args = parser.parse_args()
+
+    if args.write is not None:
+        return write(args.write)
+    print(render(canonical()), end="")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
