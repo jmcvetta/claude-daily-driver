@@ -95,6 +95,10 @@ every exported symbol you added" hangs off an event that recurs constantly. Any
 constitutional candidate for which no firing moment can be named is probably
 decorative.
 
+And a third, from D1:
+
+> **Do not legislate what the harness already says.**
+
 ### Skills, not commands
 
 The observation that drove this: of ten commands in `dot-claude`, roughly three
@@ -113,19 +117,37 @@ Two house rules follow:
 
 ## Decisions
 
-### D1 — Drop the chained-`cd` rule, and invert its sibling
+### D1 — Delete the chained-`cd` rules outright, replacing them with nothing
 
-Both motivations are gone: permission approval (auto mode) and cwd confusion
-(the harness now reports working-directory changes). The residual reason
-survives only weakly — per the Bash tool description, *"prefer absolute paths —
-`cd` in a compound command can trigger a permission prompt."*
+Both original motivations are gone: permission approval (auto mode) and cwd
+confusion (the harness now reports working-directory changes).
 
-That inverts the current guidance, which says to avoid absolute paths and `cd`
-into place instead. For a tool-calling agent with a persistent but invisible
-cwd, absolute paths are the robust form.
+The first instinct was to replace them with a constitutional line preferring
+absolute paths, since the underlying behaviour has not entirely vanished — the
+working directory does still get reset, and `cd` in a compound command can
+still trigger a prompt. But the harness **already says so itself**, in the Bash
+tool description: *"Working directory persists between calls, but prefer
+absolute paths — `cd` in a compound command can trigger a permission prompt."*
 
-- Delete the rule, delete `hooks/block_chained_cd.sh`.
-- Replace with one constitutional line preferring absolute paths.
+Legislating it again would buy nothing and cost tokens in every session, so this
+is a pure deletion:
+
+- Delete the "no chained `cd`" rule.
+- Delete the "do not use absolute paths unless necessary" rule, which was
+  backwards anyway.
+- Delete `hooks/block_chained_cd.sh`.
+- Add nothing.
+
+That yields a third admission filter, alongside the two in the architecture
+section:
+
+> **Do not legislate what the harness already says.** Duplicated guidance costs
+> tokens every session and rots silently when the harness changes underneath it.
+
+This filter deserves suspicion when the rest of the 17KB is triaged. A rule
+written years ago to compensate for a weaker harness is exactly the kind that
+survives on inertia — and the whole point of an amendment being a reviewable
+pull request is that inertia has to be argued for.
 
 ### D2 — Adopt the GitHub MCP everywhere, including locally
 
