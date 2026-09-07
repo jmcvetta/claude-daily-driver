@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/jmcvetta/claude-daily-driver/compare/v0.3.0...v0.3.1) (2026-09-07)
+
+
+### Bug Fixes
+
+* move the Terraform-shop review rules to project memory ([#55](https://github.com/jmcvetta/claude-daily-driver/issues/55)) ([8b9a41d](https://github.com/jmcvetta/claude-daily-driver/commit/8b9a41deb017c88ccdacc6b3242c1b14c3ef717c))
+
 ## [0.3.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.2.0...v0.3.0) (2026-09-07)
 
 
