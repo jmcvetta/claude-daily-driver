@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.7.0...v0.8.0) (2026-09-07)
+
+
+### Features
+
+* **constitution:** drop five sections and the delivery token ([#91](https://github.com/jmcvetta/claude-daily-driver/issues/91)) ([cf8bc8b](https://github.com/jmcvetta/claude-daily-driver/commit/cf8bc8be7c5ef33177e03ab0f69f8b857abed108))
+* **undertake:** name the branch in the claim comment ([#92](https://github.com/jmcvetta/claude-daily-driver/issues/92)) ([85e7869](https://github.com/jmcvetta/claude-daily-driver/commit/85e7869bca839dde5146fff2c5abcf0fa0365c4f))
+
 ## [0.7.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.6.0...v0.7.0) (2026-09-07)
 
 
