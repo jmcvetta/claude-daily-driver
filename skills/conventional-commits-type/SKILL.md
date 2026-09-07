@@ -83,10 +83,12 @@ nothing below it runs.
    of the silent types: `refactor` for code restructured to do the same
    thing, `perf` for the same thing done faster, `chore` for a dependency
    bump or a housekeeping change, `style` for formatting, and `docs`,
-   `test`, `build`, `ci`. Speed, formatting and internal
-   shape are not behaviour here — that is what lets `perf` and `refactor` be
-   silent at all — but an output, a decision or a side effect is, and a
-   `refactor` that moves one is not a refactor.
+   `test`, `build`, `ci`. Speed, formatting and internal shape are not
+   behaviour here — that is what lets `perf` and `refactor` be silent at
+   all — but an output, a decision or a side effect is, and a `refactor`
+   that moves one is not a refactor. Silent is about behaviour, not about
+   the changelog: `perf` is silent here and still gets a section there, as
+   the table below shows.
 
 Past both gates the behaviour changes, and the only question left is `fix` or
 `feat`. One test settles it:
