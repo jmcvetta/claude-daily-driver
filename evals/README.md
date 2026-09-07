@@ -85,17 +85,16 @@ that already exists, so "raise a pull request" is `pr`'s and not the round's —
 and a mood, which is the harder one. See "The two moods" below.
 
 `undertake/` asks the same question of a skill with two ways in. `Open the
-issue` opens one for work that has none, so an issue reference no longer has to
-be present for the skill to fire — and what fires it is now either an issue
-handed over or the skill named. Three of the four cases are the three ways that
-can go wrong. `01` is the slash command, which resolves the skill by name and
-so tests the plumbing rather than the description. `02` names the skill in
+issue` opens one for work that has none, so an issue reference no longer has
+to be present for the skill to fire — and what fires it is now either an issue
+handed over or the skill named. Three of the four cases are the three ways
+that can go wrong. `01` is the slash command, which resolves the skill by name
+and so tests the plumbing rather than the description. `02` names the skill in
 prose on work with no issue: the description is the only thing saying an issue
 is optional, so a drift back to requiring one fails here and nowhere else.
-`03` is
-`Implement #191.` — the half of the register that predates `Open the issue`,
-and the half a description rewritten around the invocation alone would silently
-drop.
+`03` is `Implement #191.` — the half of the register that predates `Open the
+issue`, and the half a description rewritten around the invocation alone would
+silently drop.
 
 Two no-fire rows, one against each way in. `04` is the same retry loop as `01`
 and `02` with neither an issue nor an invocation. `05` is the mood — `What does
