@@ -31,9 +31,9 @@ The type
 --------
 
 Follow `conventional-commits-type`. It decides the type from what the change
-**does** — the tests, their order, and the tie-break are its business, and
-they are not guessed at here from the branch name, the issue label, or the
-shape of the diff.
+**does** — the two gates and the one test that settle it are its business,
+and they are not guessed at here from the branch name, the issue label, or
+the shape of the diff.
 
 The type is not decoration. Releases are cut from it: the type in a merged
 PR's title becomes the squashed commit subject, and that subject is what

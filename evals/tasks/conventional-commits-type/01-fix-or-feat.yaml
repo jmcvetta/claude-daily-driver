@@ -5,9 +5,9 @@ description: >-
 tags: [trigger-accuracy, conventional-commits-type, fire]
 
 initial_prompt: >-
-  Is this a fix or a feat? The reviewer agent used to point at a severity
-  rubric in a file nothing loads any more, so it invented one each run. I
-  copied the four tiers into the agent itself.
+  Is this a fix or a feat? The reviewer agent was told to apply a severity
+  rubric from a file that has never once loaded, so every run invented its
+  own. I copied the four tiers into the agent itself.
 
 agent:
   # `allowed_tools` is a permission allowlist, not a tool filter: the model is

@@ -8,8 +8,8 @@ description: >-
   merging will cut, or when a Projected Releases comment on a pull request
   disagrees with what the author meant; and whenever `pr-title` needs the type
   for a title it is writing. Supplies the tests that pick the type from what
-  the change does, the order they run in, the tie-break, and what the type
-  decides about the next release. Not for writing the title itself — that is
+  the change does, the two gates and the one test that settle it, and what
+  the type decides about the next release. Not for writing the title itself — that is
   `pr-title` — and not for commit messages, which are not Conventional Commits
   in this toolkit.
 ---
@@ -22,19 +22,22 @@ into a minor version, a breaking change into a major one, and everything else
 into a patch or nothing. So the type is decided from the change's **effect**,
 never from what the diff looks like or how the work felt.
 
-Two titles this toolkit got wrong, and why:
+Two titles this toolkit reached for, and why both were too small:
 
-- *"refactor: move the Terraform-shop review rules to project memory"*
-  (#55). Moving is what the author did; what the change **does** is stop a
-  reviewer applying Terraform rules in every repository it is loaded in. A
-  reviewer that behaves differently after the merge has not been refactored.
-  That is a `fix`.
+- *"refactor: move the Terraform-shop review rules to project memory"* — the
+  title #55 was written with, and corrected to `fix:` before it merged.
+  Moving is what the author did; what the change **does** is stop a reviewer
+  applying Terraform rules in every repository it is loaded in. A reviewer
+  that behaves differently after the merge has not been refactored.
 - *"fix(agents): inline the planning severity rubric into
-  planning-fitness-reviewer"* (#54). A broken pointer prompted it, but after
-  the merge the reviewer applies a severity rubric it never carried before.
-  Capability the thing did not have is a `feat`, whatever prompted it.
+  planning-fitness-reviewer"* — the title #54 did merge with, and a `feat:`.
+  A broken pointer prompted it, but the rubric it named was unreachable on
+  every run, so no review had ever applied it. After the merge one does.
 
-Both erred downward, and downward is the direction this skill exists to stop.
+Both reached for the smaller word, and that is the direction this skill
+exists to stop. An over-typed change cuts a version one size too large; an
+under-typed one hides from the changelog section and the version where the
+people it matters to would look for it.
 
 
 The question
@@ -45,48 +48,54 @@ The question
 
 "The thing" is whatever the repository ships, seen by whoever consumes it: a
 caller of a library, a user of a CLI, CI running a workflow, a session
-loading a plugin. **In a plugin whose product is prose, prose is code.** A
-line changed in `skills/`, `agents/`, `context/` or `hooks/` changes what
-Claude does, and is never `docs`; `docs` is `README.md`, `docs/` and their
-kind.
+loading a plugin. **In a plugin whose product is prose, prose is code.** What
+Claude reads and acts on is `skills/`, `agents/`, `context/` and `hooks/`, so
+a change there goes to the tests below exactly as code would, and one that
+changes what Claude does is never `docs` however much it reads as writing. A
+typo or a rewording there that changes nothing still is. Outside those
+directories — `README.md`, `docs/` and their kind — prose is documentation.
 
 Answer the question first, from the diff, before naming a type. The answer
 decides the type; the diff's shape does not.
 
 
-The tests, in order
-===================
+The tests
+=========
 
-First match wins.
+The first two are gates: where one fires it settles the type, and nothing
+below it runs.
 
 1. **Does it break anyone?** A caller, a configuration, or a workflow that
    worked before the merge and does not after it. Then the type it would
    otherwise have carries `!` — `feat!:`, `fix!:` — and the body carries a
    `BREAKING CHANGE:` footer saying what broke. Major bump.
 
-2. **Does behaviour change at all?** If nothing a consumer can observe is
-   different, the change is one of the silent types: `refactor` for code
-   restructured to do the same thing, `perf` for the same thing done faster,
-   `style` for formatting, `docs`, `test`, `build`, `ci`, `chore`. A
-   `refactor` that changes an output, a decision or a side effect is not one.
+2. **Does anything a consumer can observe change?** If nothing does, the
+   change is one of the silent types: `refactor` for code restructured to do
+   the same thing, `perf` for the same thing done faster, `style` for
+   formatting, `docs`, `test`, `build`, `ci`, `chore`. A `refactor` that
+   changes an output, a decision or a side effect is not one.
 
-3. **Was the old behaviour wrong?** The thing did what its own spec, its
-   docs or its author's stated intent says it should not, or failed to do
-   what they say it does. Correcting that is a `fix`. The test is against
-   the intent, not the code: a rule shipping to repositories it does not
-   describe is a defect, and removing it is a fix however much the diff
-   reads as a move.
+Past both gates the behaviour changes, and the only question left is `fix` or
+`feat`. One test settles it:
 
-4. **Otherwise it is new.** Behaviour the thing did not have before is a
-   `feat`. The issue's label, the branch name and the story of how the work
-   started do not change that: a bug report that ends in a capability ends
-   in a `feat`.
+3. **Could the thing already do this, and merely do it wrong?**
 
-When two types still fit after the tests, **the one that says more wins**:
-`feat` over `fix`, `fix` over `refactor`. Both errors above hedged downward,
-and downward is the costly direction — an over-typed change cuts a version
-one size too large, while an under-typed one hides from the changelog section
-and the version where the people it matters to would look for it.
+   - **Yes — `fix`.** The behaviour was promised and delivered incorrectly.
+     The test is against the intent, not the code: a rule shipping to
+     repositories it does not describe is a defect, and removing it is a fix
+     however much the diff reads as a move.
+   - **No — `feat`.** The thing can now do something it could not do before.
+     The issue's label, the branch name and the story of how the work started
+     do not change that: a bug report that ends in a capability ends in a
+     `feat`.
+
+The trap sits between the two, and it is what got #54 wrong: **a capability
+that was specified but never once worked has not regressed.** The agent's own
+text named a rubric, which reads like a promise broken — but no run had ever
+applied it, so nothing was restored and something arrived for the first time.
+Ask what a consumer *observed*, never what a document promised. Where even
+that cannot settle it, prefer `feat`, for the reason the two examples give.
 
 A check on the answer: write the changelog line. *"Bug Fixes: reviewers no
 longer apply Terraform-shop rules in every repository"* reads true;
@@ -129,7 +138,7 @@ What the type releases
 | `fix` | patch | yes, under *Bug Fixes* |
 | `perf` | patch | yes, under *Performance Improvements* |
 | `revert` | patch | yes, under *Reverts* |
-| `docs` `style` `chore` `refactor` `test` `build` `ci` | patch at most | hidden |
+| `docs` `style` `chore` `refactor` `test` `build` `ci` | patch | hidden |
 
 The list is release-please's, checked by the *PR Title Check* workflow; a
 type outside it (`wip`, `hotfix`) is rejected there, and a miscased one
@@ -137,8 +146,8 @@ type outside it (`wip`, `hotfix`) is rejected there, and a miscased one
 accepted as a synonym for `feat`; write `feat`.
 
 What a given title will actually cut is not worth reasoning out. In this
-repository the *Projected Releases* check comments it on every pull request,
-and that comment is the test: read it against what the change warrants, and
+repository the *Projected Releases* check comments it on every pull request
+but release-please's own, and that comment is the test: read it against what the change warrants, and
 treat a bug fix that projects a minor version, or a new capability that
 projects a patch, as a title to correct. Where the check does not run, the
 table above is the best available answer.

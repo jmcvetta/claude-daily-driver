@@ -17,7 +17,7 @@ hook — plus skills that fire on activity:
 | ---------- | ------------ |
 | `pr`       | Opens the pull request for the current branch, or brings an open one up to date: branch guard, existing-PR check, draft by default, and the call on whether there is an issue to reference. Delegates the title and the body to the two below. |
 | `pr-title` | The title convention: concise, and Conventional Commits with the type the contents actually warrant — which is what release-please reads to decide the next version. Delegates the type to the one below. |
-| `conventional-commits-type` | Picks the type — `fix`, `feat`, `refactor` and the rest — from what the change *does*, never from what the diff looks like: the tests in order, the tie-break that stops a title hedging downward, and what each type releases. |
+| `conventional-commits-type` | Picks the type — `fix`, `feat`, `refactor` and the rest — from what the change *does*, never from what the diff looks like: two gates, the one test that separates a `fix` from a `feat`, and what each type releases. |
 | `pr-body`  | The body structure: a one-line summary under 85 characters, a salutation in verse, an executive summary, as much engineering detail as fits, and the `Issues` section that closes it. |
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
 | `session-title` | Names the session in the Claude web and mobile lists: a forty-character budget, chosen rather than measured, `#123 shortened issue title` while an issue is in hand, a short noun phrase otherwise. |
