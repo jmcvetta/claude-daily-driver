@@ -153,9 +153,9 @@ present. That install lands at **user** scope, so it then applies on the whole
 machine, in repositories carrying no stanza at all — which is what makes it a
 once-per-machine step rather than a per-repository one.
 
-Everything in this section was measured with headless `claude -p` sessions
-against scratch `CLAUDE_CONFIG_DIR`s; the cloud section below is real cloud
-sessions. An interactive session may behave differently, and a later release
+Those two measurements were made with headless `claude -p` sessions against
+scratch `CLAUDE_CONFIG_DIR`s; everything said here about the cloud, in the
+paragraph below and in the section after it, is real cloud sessions. An interactive session may behave differently, and a later release
 may make the install a no-op; re-run the third check below rather than
 inheriting this conclusion.
 
@@ -242,7 +242,7 @@ with no marketplace, no install and no network:
 
 | Location | Scope | Trust required | Measured |
 | -------- | ----- | -------------- | -------- |
-| `~/.claude/skills/<name>/` | user | **no** | `Status: ✓ loaded`, all six skills |
+| `~/.claude/skills/<name>/` | user | **no** | `Status: ✓ loaded`, all six skills then in the tree |
 | `.claude/skills/<name>/` in the repo | project | **yes** | skipped: *"…was skipped because this workspace was not trusted when plugins were scanned"* |
 
 The second row is the only arrangement in which a repository genuinely carries
@@ -297,7 +297,8 @@ appears with its name, cache path and version.
 **The harness `ListPlugins` tool answers a different question.** In two
 separate cloud environments it returned an empty list while the plugin was
 live — skills firing, constitution injected. It is not evidence of anything
-here, which is why every check above asks the CLI or the session itself.
+here, which is why the checks above ask the CLI and the session rather than
+the harness.
 
 **`claude plugin list` reads one route only.** It reports
 `installed_plugins.json`, so it is honest about a plugin the setup script
@@ -334,7 +335,7 @@ On 2026-09-06, on the laptop:
 | …and what that session loaded | nothing: `init` reports no plugins, no `daily-driver:pr` |
 | …after `claude plugin install` once, same repository | plugin loaded, skill present, scope `user` |
 | …and in a repository with no stanza after that install | still loaded — the install is per-machine |
-| Stanza in an **untrusted** folder | ignored entirely, silently |
+| Stanza in an **untrusted** folder, nothing cached | ignored entirely, silently |
 | Stanza in a Claude Code **cloud session** | not loaded; `hasTrustDialogAccepted: false`, nothing cached |
 | `claude plugin list` in the stanza-only repository | `No plugins installed` |
 | `claude plugin details daily-driver@claude-daily-driver` in that repository | full component inventory, though nothing had loaded |
