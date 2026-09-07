@@ -16,7 +16,8 @@ hook — plus skills that fire on activity:
 | Skill | What it does |
 | ---------- | ------------ |
 | `pr`       | Opens the pull request for the current branch, or brings an open one up to date: branch guard, existing-PR check, draft by default, and the call on whether there is an issue to reference. Delegates the title and the body to the two below. |
-| `pr-title` | The title convention: concise, and Conventional Commits with the type the contents actually warrant — which is what release-please reads to decide the next version. |
+| `pr-title` | The title convention: concise, and Conventional Commits with the type the contents actually warrant — which is what release-please reads to decide the next version. Delegates the type to the one below. |
+| `conventional-commits-type` | Picks the type — `fix`, `feat`, `refactor` and the rest — from what the change *does*, never from what the diff looks like: two gates, the one test that separates a `fix` from a `feat`, and what each type releases. |
 | `pr-body`  | The body structure: a one-line summary under 85 characters, a salutation in verse, an executive summary, as much engineering detail as fits, and the `Issues` section that closes it. |
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
 | `session-title` | Names the session in the Claude web and mobile lists: a forty-character budget, chosen rather than measured, `#123 shortened issue title` while an issue is in hand, a short noun phrase otherwise. |
@@ -24,14 +25,17 @@ hook — plus skills that fire on activity:
 | `review-cycle` | One round on a pull request: wait for CI on the head, run the built-in `/code-review` at a level it names, answer and resolve every finding, then decide from the reviewed head SHA whether a later push has earned a second round. |
 | `undertake` | Takes an issue from its description to a pull request ready for review: the order of the nine steps, the gates between them, and the ready gate the sequence ends on. Invokes the skills above, directly or through `pr` and `review-cycle`. |
 
-Three PR skills rather than one because skill names are flat within a plugin,
+Four PR skills rather than one because skill names are flat within a plugin,
 so siblings can be triggered independently: a decision to rewrite a PR body
-fires `pr-body` directly, without routing through `pr` to get there. The cost
-is two extra descriptions in context.
+fires `pr-body` directly, without routing through `pr` to get there. The type
+is split out of `pr-title` for the same reason — "is this a fix or a feat?"
+is asked with no title in hand. The cost is three extra descriptions in
+context.
 
 Each skill carries its own trigger register: the slash command where the skill
 has one, natural phrasings — "open a PR" for `pr`, "fix the PR title" for
-`pr-title`, "rewrite the PR description" for `pr-body`, "this is blocked by
+`pr-title`, "is this a fix or a feat?" for `conventional-commits-type`,
+"rewrite the PR description" for `pr-body`, "this is blocked by
 #123" for `issue-deps`, "rename this session" for `session-title`, "just
 decide" for `judgement-call`, "address the review feedback" for
 `review-cycle`, "undertake #34" or "implement #191" for `undertake` — and
@@ -118,6 +122,7 @@ claude-daily-driver/
 ├── skills/
 │   ├── pr/SKILL.md
 │   ├── pr-title/SKILL.md
+│   ├── conventional-commits-type/SKILL.md
 │   ├── pr-body/SKILL.md
 │   ├── issue-deps/
 │   │   ├── SKILL.md
