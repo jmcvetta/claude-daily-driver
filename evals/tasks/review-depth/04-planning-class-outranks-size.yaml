@@ -84,9 +84,14 @@ success_criteria:
   # through a correctness reviewer — at the `xhigh` the size row alone would
   # buy — is money spent on a document with no code in it. The failure a person
   # notices on the bill rather than in the findings.
+  #
+  # The fixture also discusses IAM roles, a rotated token and the release
+  # workflow, so this row carries the sensitive-touch half of the same claim:
+  # planning-class is decided first and is never raised to `max` either. A plan
+  # that talks about IAM is still a plan.
   - type: file_matches_regex
     description: The built-in code review was not run on a planning document
-    path: .fixture/code-review.txt
+    path: .fixture/invocations.txt
     pattern: '^(?:[A-Za-z0-9_.-]+:)?code-review\b'
     flags: 8
     must_match: false

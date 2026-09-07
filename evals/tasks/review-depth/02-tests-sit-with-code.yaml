@@ -75,10 +75,22 @@ success_criteria:
   # noticeable failure is a hundred lines of new assertions reviewed at the
   # effort a typo correction gets.
   - type: file_matches_regex
-    description: The built-in code review ran at the Standard effort level
-    path: .fixture/code-review.txt
-    pattern: '^(?:[A-Za-z0-9_.-]+:)?code-review\b.*\bmedium\b'
+    description: The built-in code review ran
+    path: .fixture/invocations.txt
+    pattern: '^(?:[A-Za-z0-9_.-]+:)?code-review\b'
     # re.MULTILINE, so `^` brackets one recorded invocation rather than the
     # whole file; the optional prefix tolerates a plugin-namespaced name.
     flags: 8
+
+  # And not at the docs skim, which is the whole claim. The level above `low` is
+  # deliberately not pinned: these assertions are about the same `parse_amount`
+  # that case 03 concedes is arguably a deserialization boundary, so `max` is as
+  # defensible here as `medium`. Grading the same ambiguity two ways in sibling
+  # cases is how a suite starts failing on wording rather than on routing.
+  - type: file_matches_regex
+    description: The test-only diff was not skimmed
+    path: .fixture/invocations.txt
+    pattern: '^(?:[A-Za-z0-9_.-]+:)?code-review\b.*\blow\b'
+    flags: 8
+    must_match: false
     weight: 2

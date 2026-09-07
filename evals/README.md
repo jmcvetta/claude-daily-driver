@@ -220,9 +220,9 @@ Seven cases, each one claim:
 | Case | The claim | What a broken routing table would do |
 | --- | --- | --- |
 | `01-readme-is-planning-not-docs` | `README.md` is planning-class *before* it is docs-only | review a rewritten README for correctness bugs |
-| `02-tests-sit-with-code` | a 104-line test-only diff gets Standard, not the skim | skim a hundred lines of new assertions |
+| `02-tests-sit-with-code` | a 104-line test-only diff is not skimmed | skim a hundred lines of new assertions |
 | `03-mixed-diff-falls-through-to-code` | one `src/` path makes the whole branch code | judge a sign-handling fix by a planning rubric |
-| `04-planning-class-outranks-size` | 904 lines of prose is still prose | bill a correctness review to a rollout schedule |
+| `04-planning-class-outranks-size` | 904 lines of prose that discusses IAM is still prose | bill a correctness review to a rollout schedule |
 | `05-named-depth-outranks-inference` | a depth the user names wins | overrule a request for a full review with a heuristic |
 | `06-sensitive-touch-on-a-tiny-diff` | 11 lines of release workflow are reviewed at `max` | leave the file holding the publishing token unverified |
 | `07-neg-opening-a-pr` | opening a PR is not a review | tax every branch and train the skimming reflex |
@@ -256,8 +256,18 @@ the third because that is how a skill invokes `/code-review` — wired through
 each task's `claude_settings` and recorded by
 `fixtures/review-depth/shared/record-dispatch.py`. It appends one
 `subagent_type` per line to `.fixture/dispatched.txt`, and one
-`<skill> <args>` per line to `.fixture/code-review.txt`, both of which
+`<skill> <args>` per line to `.fixture/invocations.txt`, both of which
 `file_matches_regex` reads.
+
+Two normalisations on that second file are part of the instrument, not tidying.
+The CLI strips a leading `/` from a skill name *after* the hook has seen the
+input — and `SKILL.md` writes `/code-review` with the slash in every mention —
+so the recorder strips it, or every `code-review` criterion misses in the
+direction that hides the failure. And `args` is arbitrary model-authored text
+in a file read with `re.MULTILINE`, so its whitespace is collapsed: without
+that, a multi-line argument to any skill writes extra lines that a criterion
+scores as records of their own, and the instrument is forgeable by the payload
+it observes. `scripts/check-eval-fixtures.sh` probes both.
 
 The hook is part of the **instrument**, not of the plugin under test: it is
 configured by the eval, it fires identically in both arms, it reads the tool
@@ -318,7 +328,7 @@ runs on the default `driver: tempdir`, where `coder_eval`'s own note is that
 "the agent under evaluation runs with the same filesystem view as the harness" —
 its anti-cheat permission window is a documented no-op outside a container. So a
 session with `Bash` can read this file, read the task YAML, and write to
-`.fixture/dispatched.txt` and `.fixture/code-review.txt` directly. What the rules above buy is that nothing
+`.fixture/dispatched.txt` and `.fixture/invocations.txt` directly. What the rules above buy is that nothing
 *puts* the answer in front of a session going about its work; they buy nothing
 at all against one that goes looking. `sandbox: {driver: docker}` is what would
 make it a boundary, and moving the recorder's output outside the sandbox needs

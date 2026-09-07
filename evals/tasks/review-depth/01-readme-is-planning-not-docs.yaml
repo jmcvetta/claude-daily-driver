@@ -95,7 +95,7 @@ success_criteria:
   # paying for one is the failure a person notices on the bill.
   - type: file_matches_regex
     description: The built-in code review was not run on a planning document
-    path: .fixture/code-review.txt
+    path: .fixture/invocations.txt
     pattern: '^(?:[A-Za-z0-9_.-]+:)?code-review\b'
     flags: 8
     must_match: false

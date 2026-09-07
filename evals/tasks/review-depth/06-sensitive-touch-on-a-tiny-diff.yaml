@@ -80,7 +80,7 @@ success_criteria:
   # exists to report.
   - type: file_matches_regex
     description: The built-in code review ran at the verified effort level
-    path: .fixture/code-review.txt
+    path: .fixture/invocations.txt
     pattern: '^(?:[A-Za-z0-9_.-]+:)?code-review\b.*\bmax\b'
     # re.MULTILINE, so `^` brackets one recorded invocation rather than the
     # whole file; the optional prefix tolerates a plugin-namespaced name.
