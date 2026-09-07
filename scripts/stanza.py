@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """The repository stanza that enables this plugin, derived rather than typed.
 
-Plugin installation is per-project: a repository enables the plugin for
-everyone who works in it — a laptop CLI and a web worker alike — by carrying
-`extraKnownMarketplaces` + `enabledPlugins` in its `.claude/settings.json`. A
-repository without the stanza silently runs without the plugin, so the stanza
-is the thing that must never be subtly wrong.
+Enablement is per-repository: a repository declares the plugin for everyone
+who works in it — a laptop CLI and a cloud session alike — by carrying
+`extraKnownMarketplaces` + `enabledPlugins` in its `.claude/settings.json`.
+Installation is the other half, and is per-machine or per-environment; see
+docs/bootstrapping-a-repository.md. A repository whose stanza is wrong
+silently runs without the plugin, so the stanza is the thing that must never
+be subtly wrong.
 
 Two of its three values are easy to get wrong by hand, and both are read from
 the manifests here rather than written out:

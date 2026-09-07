@@ -18,10 +18,9 @@ hook — plus skills that fire on activity:
 | `pr`       | Opens the pull request for the current branch, or brings an open one up to date: branch guard, existing-PR check, draft by default, and the call on whether there is an issue to reference. Delegates the title and the body to the two below. |
 | `pr-title` | The title convention: concise, and Conventional Commits with the type the contents actually warrant — which is what release-please reads to decide the next version. |
 | `pr-body`  | The body structure: a one-line summary under 85 characters, a salutation in verse, an executive summary, as much engineering detail as fits, and the `Issues` section that closes it. |
-| `pr-threads` | The review-thread lifecycle for any reviewer: reply with a verdict, resolve, re-resolve a repeat finding, never leave a thread open silently — plus the comment minimisation the GitHub MCP does not expose. |
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
-| `review` | Reviews a branch or pull request with a panel of reviewer agents, infers how deep to go from the diff itself, walks the findings through with you, and posts the result in verse. |
 | `session-title` | Names the session in the Claude web and mobile lists: a forty-character budget, chosen rather than measured, `#123 shortened issue title` while an issue is in hand, a short noun phrase otherwise. |
+| `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. What survives the gate is intent, a real trade-off, scope, and any confirmation another rule requires. |
 | `implement` | Takes an issue from its description to a pull request ready for review: the order of the nine steps, the gates between them, and the rule that stops the branch being reviewed twice. Invokes the skills above, directly or through `pr`, and holds nothing they hold. |
 
 Three PR skills rather than one because skill names are flat within a plugin,
@@ -31,23 +30,19 @@ is two extra descriptions in context.
 
 Each skill carries its own trigger register: the slash command where the skill
 has one, natural phrasings — "open a PR" for `pr`, "fix the PR title" for
-`pr-title`, "rewrite the PR description" for `pr-body`, "address the review
-feedback" for `pr-threads`, "is this ready" for `review`, "this is blocked by
-#123" for `issue-deps`, "rename this session" for `session-title`,
-"implement #191" for `implement` — and
-Claude's own tool calls. The PR skills split
+`pr-title`, "rewrite the PR description" for `pr-body`, "this is blocked by
+#123" for `issue-deps`, "rename this session" for `session-title`, "just
+decide" for `judgement-call`, "implement #191" for `implement` — and Claude's
+own tool calls. The PR skills split
 `mcp__github__create_pull_request` and `mcp__github__update_pull_request`
 between them, `pr-title` on a call that sets a `title`, `pr-body` on one that
 sets a `body`, `pr` on a create or on an update wider than either alone, with
 `gh pr create` / `gh pr edit` as a fallback on a harness that still reaches
-for them; `pr-threads` takes the reply and resolve tools and
-`get_review_comments`; `review` takes the moments before a branch is declared
-ready, marked non-draft, or sent to a reviewer; `issue-deps` takes the GitHub
-MCP's sub-issue and issue-read tools; `session-title` takes
-`mcp__Claude_Code_Remote__set_session_title`; and `implement` takes the move
-from reading an issue to writing code for it. That class of register is the
-point:
-a convention that only fires when a human types a command quietly stops
+for them; `issue-deps` takes the GitHub MCP's sub-issue and issue-read tools;
+`session-title` takes `mcp__Claude_Code_Remote__set_session_title`;
+`judgement-call` takes `AskUserQuestion`; and `implement` takes the move from
+reading an issue to writing code for it. Those registers are the
+point: a convention that only fires when a human types a command quietly stops
 applying as more of the work runs without one.
 
 Naming the MCP tools is also a stronger trigger than naming `gh pr create` is —
@@ -62,20 +57,29 @@ while the ambient token is present on both surfaces — and it exists only
 because the GitHub MCP exposes no blocked-by / blocking tool. Four endpoints
 hold it up, and it is deleted the day the MCP exposes them.
 
-`review` replaced four verbs — `/deep-review`, `/quick-review`, `/opinion`,
-and the session's own `/code-review` — which were four names for one activity,
-which is precisely why none of them was ever remembered. There is nothing left
-to choose: depth comes off the diff, and anything touching auth, crypto, IAM or
-a migration pulls in the security reviewer whatever its size. Two rules shape
-the rest of it. It never fires when a pull request is *opened*, because
-expensive skills must be pulled rather than pushed — output that always appears
-gets skimmed, and a draft PR opens the conversation rather than ending the
-work. And its poetry attaches only to the comment it posts, never to the
-findings: a finding someone has to act on is prose.
+Two skills that used to be here — `pr-threads` and `review` — no longer ship.
+They are in [`attic/skills/`](attic/), kept rather than deleted, because
+"possibly obsolete" is not the same judgement as "obsolete" and the second one
+is cheaper to make once the first has been lived with. Nothing under `attic/`
+is loaded, so retiring them costs nothing in context; bringing either back is
+a `git mv`.
 
-The panel it dispatches lives in [`agents/`](agents/) — `logic-reviewer`,
-`architecture-reviewer`, `security-reviewer`, `planning-fitness-reviewer` — and
-none of them pins a model. A pin ages into a cost decision nobody revisits.
+The reviewer panel `review` dispatched is still in [`agents/`](agents/) —
+`logic-reviewer`, `architecture-reviewer`, `security-reviewer`,
+`planning-fitness-reviewer` — dormant rather than deleted, and none of them
+pins a model. A pin ages into a cost decision nobody revisits.
+
+`judgement-call` is the odd one out: every other skill here fires on work
+about to be done, and this one fires on a question about to be asked. Its register is
+`AskUserQuestion`, the sentences that stand in for it, and your own "just
+decide", because the thing it exists to stop is a menu of one correct option
+and several hacks, which costs a round trip to answer with the standard that
+was never in doubt. The rule it applies is the constitution's own: correct
+beats quick, no workarounds. The boundary is the interesting half — intent, a
+genuine trade-off and scope still come to you, an offer to do *more* is a scope
+question and scope is yours, and no confirmation another rule requires is
+waived. Anything irreversible, destructive or outward-facing is outside the
+gate altogether, where the non-negotiables already govern it.
 
 ## Layout
 
@@ -89,7 +93,8 @@ claude-daily-driver/
 │   ├── plugin.json         the plugin, and the version releases bump
 │   └── marketplace.json    the pointer `claude plugin install` reads
 ├── .github/workflows/      CI, PR title check, infra, release automation
-├── agents/                 the reviewer panel the `review` skill dispatches
+├── agents/                 the reviewer panel, dormant while `review` is retired
+├── attic/                  kept but not shipped; nothing here is loaded
 ├── context/
 │   └── constitution.md     always-on rules, one file, read by both hooks
 ├── docs/                   decisions, and the measurements behind them
@@ -104,16 +109,11 @@ claude-daily-driver/
 │   ├── pr/SKILL.md
 │   ├── pr-title/SKILL.md
 │   ├── pr-body/SKILL.md
-│   ├── pr-threads/
-│   │   ├── SKILL.md
-│   │   └── scripts/        the comment-minimisation path the MCP lacks
 │   ├── issue-deps/
 │   │   ├── SKILL.md
 │   │   └── scripts/        plugin runtime, owned by the skill beside it
-│   ├── review/
-│   │   ├── SKILL.md
-│   │   └── references/     the review guidelines, passed to every agent
 │   ├── session-title/SKILL.md
+│   ├── judgement-call/SKILL.md
 │   └── implement/SKILL.md  the order the others run in
 └── template/.claude/       copied into a repository to enable the plugin
 ```
@@ -166,21 +166,32 @@ credential requirement starts:
 They fail for different reasons and deserve to fail separately: the first
 tests this plugin, the second tests an assumption about the harness that a
 future release could withdraw without telling anyone.
-## Enabling it in a repository
 
-Plugin installation is per-project: a repository declares the plugin for
-everyone who works in it — a web worker included — by carrying an
-`extraKnownMarketplaces` + `enabledPlugins` stanza in its
-`.claude/settings.json`. A repository without it runs without the plugin and
-gives no sign of it. Declares, not guarantees: carrying the stanza is necessary
-and, on the version measured, was not sufficient.
+## Enabling it, and installing it
+
+Two halves, and only one of them belongs to the repository. **Enablement is
+per-repository**: an `extraKnownMarketplaces` + `enabledPlugins` stanza in
+`.claude/settings.json`, declaring the plugin for everyone who works there.
+**Installation is per-machine — or, in the cloud, per-environment**: the
+marketplace registration and the plugin's bytes land in `~/.claude` even when
+the install is asked for project scope. A repository can declare a plugin; it
+can never carry one, and a repository declaring a plugin nothing has installed
+runs without it and gives no sign of that.
+
+On a laptop the second half is a once-per-machine `claude plugin install`. In
+a Claude Code cloud session it is the environment's Setup script, the only
+writer that runs before the plugin scan: a cloud container's
+`hasTrustDialogAccepted` is permanently false, and the stanza's marketplace
+half is read only when it is true.
 
 [docs/bootstrapping-a-repository.md](docs/bootstrapping-a-repository.md) has
 the stanza to copy, the two names that are easy to get wrong, the three ways
-to write it into a repository, and how to tell whether it actually loaded.
-`python3 scripts/stanza.py` prints the same stanza, derived from the
-manifests, and `python3 scripts/stanza.py --write <repo>` merges it into
-another checkout.
+to write it into a repository, the setup script with its load-bearing
+verification line, and how to tell whether it actually loaded — including the
+two readers that look like checks and are not. `python3 scripts/stanza.py`
+prints the same stanza, derived from the manifests, and `python3
+scripts/stanza.py --write <repo>` merges it into another checkout.
+
 ## Portability
 
 The same tree is read by more than one harness:
