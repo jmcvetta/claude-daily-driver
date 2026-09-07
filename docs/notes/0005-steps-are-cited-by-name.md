@@ -9,7 +9,7 @@ separate call from the author.
 
 Three skills lay out a numbered sequence — `undertake`'s eleven steps,
 `review-cycle`'s three stages, `session-title`'s four cuts — and files across
-the repository cited them by number. Seventy such citations, across twelve
+the repository cited them by number. Sixty-eight such citations, across eleven
 files, twelve of them crossing a file boundary.
 
 A number is positional. Insert a step and every citation of every later step is
@@ -55,16 +55,15 @@ cross that wrap: a citation splits as `at step` / `9 of the sequence`, and so
 does a code span, whose stray closing backtick would otherwise pair with the
 next opener and blank the prose between them. Not hypothetical either way:
 sixty-two lines in the scanned files carry an odd backtick count, and one of
-the eighty citations at the branch point — `review-cycle`'s *"against what
-stage / 1 reviewed"* — is split by the wrap and is invisible to a line-at-a-time
-scan.
+the sixty-eight citations — `review-cycle`'s *"against what stage / 1
+reviewed"* — is split by the wrap and is invisible to a line-at-a-time scan.
 
 **A code span is a quotation, not a citation**, and is skipped — as is a
 fenced block. The rule has to be written down, and the only way to say what a
 bad citation looks like is to write one; this note is the file that does it
 most. Backticks are enough of a marker because a citation somebody wrote to be
-*followed* is bare prose: all seventy of the ones this check was written for
-were, measured by running it over the branch point.
+*followed* is bare prose: all sixty-eight of the ones this check was written
+for were, measured by running it over the branch point.
 
 ## The escape hatch, and why it is per noun
 

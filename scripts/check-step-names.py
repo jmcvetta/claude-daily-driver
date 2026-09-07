@@ -27,7 +27,7 @@ WHAT IT FLAGS
     bad citation looks like is to write one; this file, the note and the
     skills that state the convention all quote the bad form in backticks, and
     a quotation is not a citation. A real citation is bare prose -- every one
-    of the eighty at the branch point was, measured.
+    of the sixty-eight at the branch point was, measured.
 
     The scan runs over the whole file rather than line by line, because the
     prose here is hard-wrapped at about 78 columns and both halves of the
