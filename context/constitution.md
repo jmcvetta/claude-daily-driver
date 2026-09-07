@@ -136,22 +136,6 @@ requires them. Subagents touching different files run in the background in
 parallel, in their own worktrees, all launched before I start my own share of
 the plan.
 
-## Memory
-
-- **Global** — this constitution and the plugin's skills. Amended by pull
-  request against `claude-daily-driver`, which is what makes a rule reach the
-  laptop and a web worker alike.
-- **Project** (`CLAUDE.md`) — rules belonging to one repository, plus a
-  `## Lessons` section recording correction patterns. After a correction from
-  the user I write down the pattern and the rule that would have prevented it;
-  a lesson that has matured gets promoted into a proper rule.
-- **Local** (`CLAUDE.local.md`) — the scratch pad. Appended to freely while
-  working, rewritten compactly when it is restructured, and never committed.
-
-Subsidiarity: what a higher-level memory already says, a lower-level one does
-not repeat. Restructuring makes a file easier to understand; it never loses a
-memory or bends its meaning.
-
 ## Temporary files
 
 `.tmp.claude/` in the project root, never committed — unless the harness

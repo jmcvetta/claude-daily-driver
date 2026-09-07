@@ -37,7 +37,7 @@ and [its README](attic/README.md) says what is kept and why.
 ## The constitution
 
 `context/constitution.md` is the always-on layer, in force in every session and
-every subagent. Thirteen sections:
+every subagent. Twelve sections:
 
 | Section | What it settles |
 | ------- | --------------- |
@@ -50,7 +50,6 @@ every subagent. Thirteen sections:
 | Dependencies | Added and pinned through the package manager; never a hand-edited manifest or lockfile. |
 | GitHub | The GitHub MCP, `curl` where it cannot reach, and where the token comes from. |
 | Delegation | Plan first, delegate the implementation, batch the subagents, watch the quota. |
-| Memory | Global, project and local layers, and subsidiarity between them. |
 | Temporary files | `.tmp.claude/`, unless the harness supplies a scratchpad. |
 | Skills | One line on each skill above, so a session knows what it has. |
 | Verification | How to prove the file arrived. |
