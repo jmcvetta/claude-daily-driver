@@ -18,6 +18,14 @@ rather than an archaeology session.
 - `skills/pr-threads/` — the review-thread lifecycle: reply with a verdict,
   resolve, re-resolve a repeat finding, plus the comment minimisation the
   GitHub MCP does not expose. Retired 2026-09 as possibly obsolete.
+
+  **Half of it came back.** The thread protocol, the reply-content rules and
+  the reply-versus-resolve identifier trap ship in `skills/review-cycle/`,
+  which is the live owner of all three. Bringing this directory back whole
+  would give the protocol two owners and one of them would rot, so a revival
+  here is the minimisation half only — the scripts, the self-identification
+  line the matcher keys on, and the surface limitation that confines them to a
+  laptop.
 - `skills/review/` — the reviewer panel, with depth inferred from the diff.
   Retired 2026-09 as possibly obsolete. The agents it dispatched are still
   live under `agents/`; they are dormant, not deleted, because whether the

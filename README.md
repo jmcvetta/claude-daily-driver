@@ -16,34 +16,42 @@ hook — plus skills that fire on activity:
 | Skill | What it does |
 | ---------- | ------------ |
 | `pr`       | Opens the pull request for the current branch, or brings an open one up to date: branch guard, existing-PR check, draft by default, and the call on whether there is an issue to reference. Delegates the title and the body to the two below. |
-| `pr-title` | The title convention: concise, and Conventional Commits with the type the contents actually warrant — which is what release-please reads to decide the next version. |
+| `pr-title` | The title convention: concise, and Conventional Commits with the type the contents actually warrant — which is what release-please reads to decide the next version. Delegates the type to the one below. |
+| `conventional-commits-type` | Picks the type — `fix`, `feat`, `refactor` and the rest — from what the change *does*, never from what the diff looks like: two gates, the one test that separates a `fix` from a `feat`, and what each type releases. |
 | `pr-body`  | The body structure: a one-line summary under 85 characters, a salutation in verse, an executive summary, as much engineering detail as fits, and the `Issues` section that closes it. |
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
 | `session-title` | Names the session in the Claude web and mobile lists: a forty-character budget, chosen rather than measured, `#123 shortened issue title` while an issue is in hand, a short noun phrase otherwise. |
 | `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. What survives the gate is intent, a real trade-off, scope, and any confirmation another rule requires. |
-| `undertake` | Takes a piece of work from its description to a pull request ready for review, opening the issue first where there is not one yet: the order of the steps, the gates between them, and the rule that stops the branch being reviewed twice. Invokes the skills above, directly or through `pr`, and leans on the built-in `/code-review` where `review` used to sit. |
+| `review-cycle` | One round on a pull request: wait for CI on the head, run the built-in `/code-review` at a level it names, answer and resolve every finding, then decide from the reviewed head SHA whether a later push has earned a second round. |
+| `undertake` | Takes a piece of work from its description to a pull request ready for review, opening the issue first where there is not one yet: the order of the steps, the gates between them, and the ready gate the sequence ends on. Invokes the skills above, directly or through `pr` and `review-cycle`. |
 
-Three PR skills rather than one because skill names are flat within a plugin,
+Four PR skills rather than one because skill names are flat within a plugin,
 so siblings can be triggered independently: a decision to rewrite a PR body
-fires `pr-body` directly, without routing through `pr` to get there. The cost
-is two extra descriptions in context.
+fires `pr-body` directly, without routing through `pr` to get there. The type
+is split out of `pr-title` for the same reason — "is this a fix or a feat?"
+is asked with no title in hand. The cost is three extra descriptions in
+context.
 
 Each skill carries its own trigger register: the slash command where the skill
 has one, natural phrasings — "open a PR" for `pr`, "fix the PR title" for
-`pr-title`, "rewrite the PR description" for `pr-body`, "this is blocked by
+`pr-title`, "is this a fix or a feat?" for `conventional-commits-type`,
+"rewrite the PR description" for `pr-body`, "this is blocked by
 #123" for `issue-deps`, "rename this session" for `session-title`, "just
-decide" for `judgement-call`, "undertake #34" or "implement #191" for
-`undertake` — and Claude's own tool calls. The PR skills split
+decide" for `judgement-call`, "address the review feedback" for
+`review-cycle`, "undertake #34" or "implement #191" for `undertake` — and
+Claude's own tool calls. The PR skills split
 `mcp__github__create_pull_request` and `mcp__github__update_pull_request`
 between them, `pr-title` on a call that sets a `title`, `pr-body` on one that
 sets a `body`, `pr` on a create or on an update wider than either alone, with
 `gh pr create` / `gh pr edit` as a fallback on a harness that still reaches
 for them; `issue-deps` takes the GitHub MCP's sub-issue and issue-read tools;
 `session-title` takes `mcp__Claude_Code_Remote__set_session_title`;
-`judgement-call` takes `AskUserQuestion`; and `undertake` takes the move from
-reading an issue to writing code for it. Those registers are the point: a
-convention that only fires when a human types a command quietly stops applying
-as more of the work runs without one.
+`judgement-call` takes `AskUserQuestion`; `review-cycle` takes the built-in
+`/code-review` and the two thread calls, `add_reply_to_pull_request_comment`
+and `resolve_review_thread`; and `undertake` takes the move from reading an
+issue to writing code for it. Those registers are the point: a convention that
+only fires when a human types a command quietly stops applying as more of the
+work runs without one.
 
 Naming the MCP tools is also a stronger trigger than naming `gh pr create` is —
 an exact tool name where the fallback is, in effect, a regex over a bash
@@ -63,6 +71,12 @@ They are in [`attic/skills/`](attic/), kept rather than deleted, because
 is cheaper to make once the first has been lived with. Nothing under `attic/`
 is loaded, so retiring them costs nothing in context; bringing either back is
 a `git mv`.
+
+`pr-threads` is the half-exception. Its thread protocol — reply with a verdict,
+resolve, re-resolve a repeat finding — ships again inside `review-cycle`, which
+is where a protocol with a live caller belongs. What is still in the attic is
+the comment minimisation the GitHub MCP does not expose, and that is all a
+revival should bring back.
 
 The reviewer panel `review` dispatched is still in [`agents/`](agents/) —
 `logic-reviewer`, `architecture-reviewer`, `security-reviewer`,
@@ -108,12 +122,14 @@ claude-daily-driver/
 ├── skills/
 │   ├── pr/SKILL.md
 │   ├── pr-title/SKILL.md
+│   ├── conventional-commits-type/SKILL.md
 │   ├── pr-body/SKILL.md
 │   ├── issue-deps/
 │   │   ├── SKILL.md
 │   │   └── scripts/        plugin runtime, owned by the skill beside it
 │   ├── session-title/SKILL.md
 │   ├── judgement-call/SKILL.md
+│   ├── review-cycle/SKILL.md
 │   └── undertake/SKILL.md
 └── template/.claude/       copied into a repository to enable the plugin
 ```
@@ -168,30 +184,107 @@ They fail for different reasons and deserve to fail separately: the first
 tests this plugin, the second tests an assumption about the harness that a
 future release could withdraw without telling anyone.
 
-## Enabling it, and installing it
+## Installing it
 
-Two halves, and only one of them belongs to the repository. **Enablement is
-per-repository**: an `extraKnownMarketplaces` + `enabledPlugins` stanza in
-`.claude/settings.json`, declaring the plugin for everyone who works there.
-**Installation is per-machine — or, in the cloud, per-environment**: the
-marketplace registration and the plugin's bytes land in `~/.claude` even when
-the install is asked for project scope. A repository can declare a plugin; it
-can never carry one, and a repository declaring a plugin nothing has installed
-runs without it and gives no sign of that.
+Installation is **per-machine — or, in the cloud, per-environment**. The
+plugin's bytes land in `~/.claude` and are read from there; a repository can
+point at a plugin, it can never carry one.
 
-On a laptop the second half is a once-per-machine `claude plugin install`. In
-a Claude Code cloud session it is the environment's Setup script, the only
-writer that runs before the plugin scan: a cloud container's
-`hasTrustDialogAccepted` is permanently false, and the stanza's marketplace
-half is read only when it is true.
+On a laptop that is two commands, once per machine:
+
+```sh
+claude plugin marketplace add jmcvetta/claude-daily-driver
+claude plugin install daily-driver@claude-daily-driver
+```
+
+In the cloud there is no interactive `/plugin` to reach for and no shell of
+your own to run the commands from, so they go in the environment's **Setup
+script**, which is the one writer that beats the plugin scan.
+
+### A cloud environment, in five steps
+
+All of it in the Claude Code web UI at [claude.ai/code][web]. The environment
+dialog is behind the cloud icon above the message box: hover an environment,
+then the gear. There is no settings page and no direct URL.
+
+[web]: https://claude.ai/code
+
+1. **Create the environment.** Point it at the repository you want the plugin
+   in. The install lands in a `~/.claude` the environment keeps, so it is done
+   once per environment rather than once per repository — measured on a
+   laptop, and *not* repeated in the cloud, so if you open a second repository
+   in the same environment, run step 4 there too before relying on it.
+
+2. **Give it this Setup script.**
+
+   ```bash
+   #!/bin/bash
+   # CACHEBUST: 1
+   #
+   # The environment snapshots itself when this script succeeds, keyed on the
+   # script's text, and later sessions skip it. Bump the number above to bust
+   # that cache and reinstall the plugin at its current release.
+   claude plugin marketplace add jmcvetta/claude-daily-driver
+   claude plugin install --yes daily-driver@claude-daily-driver
+
+   # Both commands can return 0 while leaving the plugin uncached, so check
+   # what the loader actually reads.
+   grep -qF '"daily-driver@claude-daily-driver"' ~/.claude/plugins/installed_plugins.json &&
+     compgen -G ~/.claude/plugins/cache/claude-daily-driver/daily-driver/*/.claude-plugin/plugin.json >/dev/null
+   ```
+
+   No `|| true`. A script that exits zero on a failed install snapshots the
+   failure, and every later session then starts with no plugin and no sign of
+   it; exiting non-zero fails the session, builds no snapshot, and the next
+   attempt tries again.
+
+3. **Start a web session on that environment.**
+
+4. **Ask it what it got.** Nothing announces a plugin that failed to load, so
+   this step is the whole point of the other four. Ask for three things, in
+   this order:
+
+   > Quote the last line of `context/constitution.md`. Then list the skills
+   > available to you whose names begin `daily-driver:`. Then run `ls
+   > ~/.claude/plugins/cache/claude-daily-driver/daily-driver/`.
+
+   The constitution arrives by hook rather than as a skill, so its last line
+   is the one answer no other check reaches; a session that cannot quote it
+   did not get it, whatever else it believes. The skills should be the ones in
+   the table above. The directory name is the installed version — which is
+   what step 5 turns on.
+
+   Do **not** ask what plugins are installed. A session answers that from the
+   harness, which — measured, in two separate cloud environments — reported an
+   empty list while the plugin was live and its skills were firing. It is the
+   one question here with a known wrong answer.
+
+5. **After a release, bump the `CACHEBUST` number.** An existing environment
+   does not pick up a new release on its own, and this is the only way to make
+   it. The environment snapshots itself the first time the Setup script
+   succeeds and every later session boots from that snapshot with the script
+   skipped — so the install line runs once, pins whatever release was current
+   that day, and never runs again. The snapshot is keyed on the script's
+   *text*, so changing any byte of it invalidates the key and the install runs
+   again at the current release; the comment exists to be that byte. Asking a
+   session inside the environment to update the plugin does not work: the
+   session is downstream of the snapshot, not the thing that builds it.
+
+   Then repeat step 4 and read the version off the cache directory. The
+   script's verification line cannot do this for you — it greps for the plugin
+   key and globs the cache for *any* version, so a bump that failed to fetch
+   anything new satisfies it, exits 0, and snapshots itself looking exactly
+   like a bump that worked.
 
 [docs/bootstrapping-a-repository.md](docs/bootstrapping-a-repository.md) has
-the stanza to copy, the two names that are easy to get wrong, the three ways
-to write it into a repository, the setup script with its load-bearing
-verification line, and how to tell whether it actually loaded — including the
-two readers that look like checks and are not. `python3 scripts/stanza.py`
-prints the same stanza, derived from the manifests, and `python3
-scripts/stanza.py --write <repo>` merges it into another checkout.
+the mechanism under all of this — where an install puts its state, the three
+ways to check whether the plugin loaded, and the two readers that look like
+checks and are not. It also has *the stanza*: the `extraKnownMarketplaces` +
+`enabledPlugins` block a repository can carry in `.claude/settings.json` to
+declare that it wants the plugin, what it is worth (less than it looks, and
+nothing at all in the cloud), and the two writers for it — `template/.claude/`
+to copy into a repository that has none, and `python3 scripts/stanza.py
+--write <repo>` to merge it into one that already has settings.
 
 ## Portability
 

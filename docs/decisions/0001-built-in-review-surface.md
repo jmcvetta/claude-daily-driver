@@ -207,6 +207,21 @@ in that payload, and its three-value severity is not the plugin's four-tier
 rubric. But "no built-in provides it" should be narrowed to "no built-in
 provides *this shape* of it", and the overlap is worth a look before phase 5.
 
+#### `--comment` posts resolvable review threads — measured 2026-09-07
+
+Recorded here because the flag was previously known only from `--help`, and a
+skill that answers findings has to know whether they can be resolved at all.
+
+`/code-review 72 max --comment` on a live pull request submits a **`COMMENT`
+review** carrying inline comments anchored to the diff. `pull_request_read`
+with `get_review_comments` returns them as review threads with `PRRT_…` node
+ids, and `resolve_review_thread` closes them. So the reply-then-resolve
+protocol applies unchanged; there is no degradation to plain issue comments on
+2.1.263.
+
+Each comment also arrives with the Claude Code attribution footer appended, and
+a `suggestion` block where the fix is a single-line edit.
+
 ### 5. Claude Approvals and PR Steward were not verifiable here
 
 Both are described in this session's harness prompt — Approvals as a

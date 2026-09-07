@@ -1,0 +1,45 @@
+task_id: review-cycle-06-neg-what-did-the-reviewer-say
+description: >-
+  Reading a review instead of answering one. A review comment reads the same
+  either way, and the mood is what separates them — so the row carries the
+  distractor alone, with `none` as its ground truth. See "The two moods" in
+  evals/README.md.
+tags: [trigger-accuracy, review-cycle, no-fire]
+
+initial_prompt: >-
+  What did the reviewer say about the retry loop?
+
+agent:
+  # `allowed_tools` is a permission allowlist, not a tool filter: the model is
+  # still offered `Read` and friends and merely denied at the permission check.
+  # That is not enough here. Telemetry records a `tool_use` block when it is
+  # generated, before any result, and `skill_triggered` counts a `skills/<name>/`
+  # path in ANY tool parameter as engaging that skill — so a *denied* read of
+  # `skills/review-cycle/SKILL.md`, which is exactly what a model weighing two
+  # sibling skills reaches for, would fail a no-fire row. `disallowed_tools` is
+  # the one that actually removes a tool, so the path can never be typed.
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  # `turn_timeout` is the agent's budget; `task_timeout` is the watchdog around
+  # the whole evaluation, armed before the turn starts and still running while
+  # the criteria are checked. Equal values mean a turn that uses its budget is
+  # killed as a TIMEOUT before it can be graded, so `task_timeout` carries
+  # headroom on top. `plan` warns that the larger number cannot extend the
+  # turn; that is the point — it is not meant to.
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`review-cycle` does not fire on a question about a review"
+    # `none` is the ground truth for a row where the right behaviour is that
+    # nothing fires. Against a mood rather than a sibling skill there is no
+    # positive counterpart to name, so this row carries the distractor alone.
+    expected_skill: none
+    skill_name: review-cycle
+    # Armed. A misfire has already lost the row, so there is nothing left to
+    # pay for; and with no pass-capable criterion beside it there is nothing
+    # whose decision a fail-stop could pre-empt.
+    stop_early: {}

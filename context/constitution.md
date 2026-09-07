@@ -159,8 +159,11 @@ supplies a scratchpad directory of its own, which wins.
 - `pr` — opening a pull request, or bringing an open one up to date as a
   whole: branch guard, existing-PR check, draft state. Delegates the title and
   the body.
-- `pr-title` — the title: concise, Conventional Commits, with the type the
-  contents warrant.
+- `pr-title` — the title: concise, Conventional Commits, the type from
+  `conventional-commits-type`.
+- `conventional-commits-type` — the type a change warrants — `fix`, `feat`,
+  `refactor` and the rest — decided from what the change does, never from
+  what the diff looks like.
 - `pr-body` — the body: one-line summary, salutation in verse, executive
   summary, engineering detail, issue references.
 - `issue-deps` — GitHub issue relationships: blocked-by, sub-issue, and which
@@ -169,9 +172,12 @@ supplies a scratchpad directory of its own, which wins.
   characters, `#123 shortened issue title` when there is an issue.
 - `judgement-call` — the gate before a choice is put to the user: the call is
   mine wherever the correct, standard way already answers it.
+- `review-cycle` — one round on a pull request: the built-in `/code-review` at
+  a level named rather than inherited, a verdict on every finding, and the
+  test for whether a later push has earned a second round.
 - `undertake` — an issue to a pull request ready for review, opening the issue
-  first where the work has none: the order the skills above, this constitution
-  and the built-in `/code-review` run in, and the gates between them.
+  first where the work has none: the order the skills above and this
+  constitution run in, and the gates between them.
 
 ## Verification
 

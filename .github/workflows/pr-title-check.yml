@@ -25,13 +25,14 @@
 # `Feat:` renders a correct-looking "Features" entry and bumps a **patch** — a
 # feature shipped as a patch release, with no error anywhere.
 #
-# This is a check rather than a required check. Branch protection requires
-# `CI Success` and nothing else, for the reason infra/github/README.md gives:
-# the release job authenticates with the default token, GitHub suppresses
-# workflow events for everything it pushes, so nothing reports on the release
-# pull request. Adding a second required context would put a second stuck
-# check on the one merge that cuts a tag. Requiring this one becomes worth
-# discussing on the same day the release job authenticates as an App.
+# This check is permanent. The pull request title is the only input
+# release-please reads, and the failure modes above are silent, so there is no
+# version of this repository that stops wanting it guarded.
+#
+# It is nonetheless a check rather than a *required* context: branch
+# protection requires `CI Success` and nothing else. Which contexts are
+# required is a branch-protection decision, made in
+# infra/github/branch_protection.tf, not here.
 name: PR Title Check
 
 on:
