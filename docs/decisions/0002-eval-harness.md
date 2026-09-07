@@ -200,8 +200,9 @@ that as reported-not-preserved.
 
 ## Corrected by the port
 
-The port (issue #37) contradicted this page twice. Both corrections are in
-`coder_eval` 0.11.6, read off the source rather than inferred from the docs.
+The port (issue #37) contradicted this page three times. All three corrections
+are in `coder_eval` 0.11.6, read off the source rather than inferred from the
+docs.
 
 **`command_executed` is the generic tool-call criterion.** This page says it
 "matches shell commands off command telemetry, so it cannot see a `Skill` call
@@ -209,17 +210,28 @@ at all", and concludes that `tool_used` on `Agent` has no equivalent. It filters
 on `tool_name` for **any** tool and, off `Bash`, matches `command_pattern`
 against the JSON-serialised tool parameters; the Claude Code adapter records one
 telemetry row per `tool_use` block, `Agent` included. So `tool_used` on `Agent` —
-`input_match` and all — ports directly, and
-the constitution suite lost **one** grader to redesign, not
-three. The narrow claim that survives is that `skill_triggered` is the
-only criterion that reads the `Skill` tool — and it is narrower than it sounds.
-`skill_triggered` *also* scans every string parameter of every tool for the
+`input_match` and all — ports directly, and the constitution suite lost **one**
+grader to redesign, not three. Nor is the `Skill` tool an exception to "any
+tool": `command_executed` filters on `tool_name: Skill` like any other.
+
+**`skill_triggered` is not `Skill`-only.** This page describes it as counting
+`Skill` invocations. It also scans every string parameter of every tool for the
 substring `skills/<name>/`, so a `Read` of `skills/pr/SKILL.md` scores as
-engaging `pr` whether or not the read succeeded: telemetry records a `tool_use`
-block when it is generated, before any result. Any row expecting a skill NOT to
-fire has to remove the file tools with `disallowed_tools` — `allowed_tools` is
-a permission allowlist and leaves them offered — which is why every
-trigger-accuracy task under `evals/` carries one.
+engaging `pr` — and scores whether or not the read succeeded, because telemetry
+records a `tool_use` block when it is generated, before any result. What
+survives is narrower than "reads the `Skill` tool": `skill_triggered` is the
+only **skill-aware** criterion, the only one that treats a `Skill` call or a
+`skills/<name>/` path as engaging a *named skill*. `command_executed` can match
+a `Skill` call like any other; what it cannot do is know what a skill is.
+
+The consequence is a build rule, not a curiosity. A row expecting a named skill
+NOT to fire, and holding file tools, can be failed by a path it never read
+successfully — so the trigger-accuracy suites remove those tools with
+`disallowed_tools`, which is the field that actually removes one
+(`allowed_tools` is a permission allowlist and leaves them offered). Where a row
+needs the file tools, as `review-depth`'s no-fire case does, the answer is a
+second criterion that does not read paths at all: there, an empty dispatch
+roster.
 
 That correction is also what makes the rebuilt `review-depth` suite possible on
 this harness: a criterion matching `"subagent_type": "security-reviewer"` inside
