@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.2.0...v0.3.0) (2026-09-07)
+
+
+### Features
+
+* add the undertake skill, taking an issue to a ready pull request ([#49](https://github.com/jmcvetta/claude-daily-driver/issues/49)) ([72c631d](https://github.com/jmcvetta/claude-daily-driver/commit/72c631d0e4cbae31382259767c822524a172ee2b))
+
+
+### Bug Fixes
+
+* **agents:** inline the planning severity rubric into planning-fitness-reviewer ([#54](https://github.com/jmcvetta/claude-daily-driver/issues/54)) ([f166c87](https://github.com/jmcvetta/claude-daily-driver/commit/f166c87b7211c56a1c0c05c3430e56fc175a3088))
+* **review:** correct the depth table's precedence and its worked example ([#39](https://github.com/jmcvetta/claude-daily-driver/issues/39)) ([ce65c0c](https://github.com/jmcvetta/claude-daily-driver/commit/ce65c0cbafe31aa278c239a7be9e0eb3c66b662b))
+
 ## [0.2.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.1.0...v0.2.0) (2026-09-07)
 
 
