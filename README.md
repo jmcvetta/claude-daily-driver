@@ -186,6 +186,7 @@ verification line, and how to tell whether it actually loaded — including the
 two readers that look like checks and are not. `python3 scripts/stanza.py`
 prints the same stanza, derived from the manifests, and `python3
 scripts/stanza.py --write <repo>` merges it into another checkout.
+
 ## Portability
 
 The same tree is read by more than one harness:
