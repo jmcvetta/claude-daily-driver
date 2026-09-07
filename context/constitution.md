@@ -172,9 +172,11 @@ supplies a scratchpad directory of its own, which wins.
   characters, `#123 shortened issue title` when there is an issue.
 - `judgement-call` — the gate before a choice is put to the user: the call is
   mine wherever the correct, standard way already answers it.
+- `review-cycle` — one round on a pull request: the built-in `/code-review` at
+  a level named rather than inherited, a verdict on every finding, and the
+  test for whether a later push has earned a second round.
 - `undertake` — an issue to a pull request ready for review: the order the
-  skills above, this constitution and the built-in `/code-review` run in, and
-  the gates between them.
+  skills above and this constitution run in, and the gates between them.
 
 ## Verification
 

@@ -22,7 +22,8 @@ hook — plus skills that fire on activity:
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
 | `session-title` | Names the session in the Claude web and mobile lists: a forty-character budget, chosen rather than measured, `#123 shortened issue title` while an issue is in hand, a short noun phrase otherwise. |
 | `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. What survives the gate is intent, a real trade-off, scope, and any confirmation another rule requires. |
-| `undertake` | Takes an issue from its description to a pull request ready for review: the order of the nine steps, the gates between them, and the rule that stops the branch being reviewed twice. Invokes the skills above, directly or through `pr`, and leans on the built-in `/code-review` where `review` used to sit. |
+| `review-cycle` | One round on a pull request: wait for CI on the head, run the built-in `/code-review` at a level it names, answer and resolve every finding, then decide from the reviewed head SHA whether a later push has earned a second round. |
+| `undertake` | Takes an issue from its description to a pull request ready for review: the order of the nine steps, the gates between them, and the ready gate the sequence ends on. Invokes the skills above, directly or through `pr` and `review-cycle`. |
 
 Four PR skills rather than one because skill names are flat within a plugin,
 so siblings can be triggered independently: a decision to rewrite a PR body
@@ -36,18 +37,21 @@ has one, natural phrasings — "open a PR" for `pr`, "fix the PR title" for
 `pr-title`, "is this a fix or a feat?" for `conventional-commits-type`,
 "rewrite the PR description" for `pr-body`, "this is blocked by
 #123" for `issue-deps`, "rename this session" for `session-title`, "just
-decide" for `judgement-call`, "undertake #34" or "implement #191" for
-`undertake` — and Claude's own tool calls. The PR skills split
+decide" for `judgement-call`, "address the review feedback" for
+`review-cycle`, "undertake #34" or "implement #191" for `undertake` — and
+Claude's own tool calls. The PR skills split
 `mcp__github__create_pull_request` and `mcp__github__update_pull_request`
 between them, `pr-title` on a call that sets a `title`, `pr-body` on one that
 sets a `body`, `pr` on a create or on an update wider than either alone, with
 `gh pr create` / `gh pr edit` as a fallback on a harness that still reaches
 for them; `issue-deps` takes the GitHub MCP's sub-issue and issue-read tools;
 `session-title` takes `mcp__Claude_Code_Remote__set_session_title`;
-`judgement-call` takes `AskUserQuestion`; and `undertake` takes the move from
-reading an issue to writing code for it. Those registers are the point: a
-convention that only fires when a human types a command quietly stops applying
-as more of the work runs without one.
+`judgement-call` takes `AskUserQuestion`; `review-cycle` takes the built-in
+`/code-review` and the two thread calls, `add_reply_to_pull_request_comment`
+and `resolve_review_thread`; and `undertake` takes the move from reading an
+issue to writing code for it. Those registers are the point: a convention that
+only fires when a human types a command quietly stops applying as more of the
+work runs without one.
 
 Naming the MCP tools is also a stronger trigger than naming `gh pr create` is —
 an exact tool name where the fallback is, in effect, a regex over a bash
@@ -67,6 +71,12 @@ They are in [`attic/skills/`](attic/), kept rather than deleted, because
 is cheaper to make once the first has been lived with. Nothing under `attic/`
 is loaded, so retiring them costs nothing in context; bringing either back is
 a `git mv`.
+
+`pr-threads` is the half-exception. Its thread protocol — reply with a verdict,
+resolve, re-resolve a repeat finding — ships again inside `review-cycle`, which
+is where a protocol with a live caller belongs. What is still in the attic is
+the comment minimisation the GitHub MCP does not expose, and that is all a
+revival should bring back.
 
 The reviewer panel `review` dispatched is still in [`agents/`](agents/) —
 `logic-reviewer`, `architecture-reviewer`, `security-reviewer`,
@@ -119,6 +129,7 @@ claude-daily-driver/
 │   │   └── scripts/        plugin runtime, owned by the skill beside it
 │   ├── session-title/SKILL.md
 │   ├── judgement-call/SKILL.md
+│   ├── review-cycle/SKILL.md
 │   └── undertake/SKILL.md
 └── template/.claude/       copied into a repository to enable the plugin
 ```

@@ -1,6 +1,6 @@
 # Evals
 
-Six suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
+Seven suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
 than by `claude plugin eval`. The reasoning for the harness is
 [`docs/decisions/0002-eval-harness.md`](../docs/decisions/0002-eval-harness.md);
 the short version is that the built-in cannot be run on this account, is
@@ -16,6 +16,7 @@ evals/
 │   ├── conventional-commits-type/
 │   │                    … when a type is chosen, and never for a commit message?
 │   ├── pr-body/         … when a body is written, and only then?
+│   ├── review-cycle/    … when a review is to be run and answered, and only then?
 │   ├── constitution/    does the constitution reach a subagent?
 │   └── review-depth/    does `review` send the right panel at the diff?
 └── fixtures/review-depth/
@@ -58,9 +59,10 @@ Three things the Makefile does that a hand-typed `coder-eval` will not:
 
 ## What the suites are for
 
-The trigger-accuracy suites exist because `pr`, `pr-title` and `pr-body`
-are siblings with overlapping vocabulary — every one of them has "PR" in its
-description — so the thing that can actually break is *which* one fires.
+The trigger-accuracy suites exist because these skills are siblings with
+overlapping vocabulary — `pr`, `pr-title` and `pr-body` every one of them with
+"PR" in its description, and `review-cycle` sharing the pull request with all
+three — so the thing that can actually break is *which* one fires.
 `conventional-commits-type` sits behind `pr-title` and is asked for without
 a title in hand, so its suite adds the delegation route — a title correction
 that must reach the type skill rather than decide the type in place — and
@@ -77,6 +79,10 @@ halves, and the second is the one that earns its keep:
   the three does. A suite that only proved a skill fires would be green with
   all three descriptions collapsed into one.
 
+`review-cycle/`'s siblings are `pr` — the round starts from a pull request
+that already exists, so "raise a pull request" is `pr`'s and not the round's —
+and a mood, which is the harder one. See "The two moods" below.
+
 `constitution/` is not a trigger-accuracy suite: it is the live half of the
 constitution's own test, described under "Testing the constitution" in the
 repository README. Its credential-free half is
@@ -90,6 +96,29 @@ every pull request opened — rather than on a restated line from
 `skills/review/SKILL.md`. A suite that restates the spec catches
 drift away from the depth table and can never catch the depth table being
 wrong.
+
+## The two moods, and `expected_skill: none`
+
+`pr`, `pr-title` and `pr-body` are separated from each other, so every one of
+their no-fire rows can name the sibling that *should* have fired. Some skills
+are not separated from a sibling at all. They are separated from a **mood** —
+the same subject matter, arriving as a question rather than as an assignment:
+
+- *"What did the reviewer say about the retry loop?"* is a question. The
+  review comments `review-cycle` exists to answer are the very thing being
+  asked about, and nothing should fire.
+- *"What does #191 say?"* is the same shape for `undertake`, whose register is
+  a verb plus an issue reference and never the verb alone.
+
+Against a mood there is no positive counterpart to assert, so those rows use
+`expected_skill: none` as their ground truth and carry the distractor alone.
+That is a departure from the three PR suites, and it is deliberate: naming an
+innocent sibling on a row where the correct behaviour is silence would assert
+something the row does not mean.
+
+Such a row also has nothing pass-capable beside it, so its `stop_early: {}` is
+armed for the other reason — a misfire has already lost the row, and there is
+no recall decision left for a fail-stop to pre-empt.
 
 ## Both arms, every criterion
 
@@ -424,7 +453,7 @@ criteria are checked, so equal values mean a turn that uses its budget is killed
 as a TIMEOUT before it can be graded. The headroom is the difference.
 
 `run_limits` caps turns and wall clock per task, but nothing caps the bill. The
-24 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
+30 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
 and the fire half stops the moment the skill fires. `review-depth` is not: its six fire
 cases each dispatch a real reviewer panel over a real diff, five times, in the
 `with-plugin` arm. The `bare` arm is cheaper but not free: it has no `review`
