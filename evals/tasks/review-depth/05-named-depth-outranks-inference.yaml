@@ -30,18 +30,19 @@ agent:
   type: claude-code
   allowed_tools: [Bash, Read, Grep, Glob, Skill, Agent, Task]
 
-  # `review-depth` grades which agents were dispatched, and on `coder_eval`
-  # 0.11.6 no criterion can see that: `command_executed` truncates its haystack
-  # to 2000 characters and the `Agent` schema puts `subagent_type` last, after
-  # the prompt carrying the diff, while the judge criteria render an `Agent`
-  # call as its model-written `description`. So the observation is taken by a
+  # `review-depth` grades where the diff was routed — which agent, or
+  # `/code-review` at which effort level — and on `coder_eval` 0.11.6 no
+  # criterion can see either: `command_executed` truncates its haystack to 2000
+  # characters and the `Agent` schema puts `subagent_type` last, after the
+  # prompt carrying the diff, while the judge criteria render an `Agent` call as
+  # its model-written `description`. So the observation is taken by a
   # `PreToolUse` hook instead — part of the instrument, wired here rather than
   # in the plugin, firing in both arms, reading the tool input verbatim. See
   # `../../fixtures/review-depth/shared/record-dispatch.py`.
   claude_settings:
     hooks:
       PreToolUse:
-        - matcher: "^(Agent|Task)$"
+        - matcher: "^(Agent|Task|Skill)$"
           hooks:
             - type: command
               # Absolute, via the variable Claude Code puts in every hook's
@@ -72,13 +73,16 @@ initial_prompt: "Give this branch a full review before I merge it."
 
 success_criteria:
   # A user who asks for a full review and gets a skim has been overruled by a
-  # heuristic. `security-reviewer` is the member only Full adds, so its presence
-  # is what separates the named depth from the inferred one.
+  # heuristic. This diff is one word in one docs file — `low` by every size
+  # signal there is — so any level above the skim is the named depth winning.
+  # `xhigh` is what the Full row selects and `max` is a defensible read of
+  # "full"; either shows the inference was overruled, and pinning one would fail
+  # the case on wording rather than on routing.
   - type: file_matches_regex
-    description: The security reviewer was dispatched
-    path: .fixture/dispatched.txt
-    pattern: '^(?:[A-Za-z0-9_.-]+:)?security-reviewer$'
-    # re.MULTILINE, so `^`/`$` bracket one roster line rather than the
+    description: The named depth overruled the inferred skim
+    path: .fixture/code-review.txt
+    pattern: '^(?:[A-Za-z0-9_.-]+:)?code-review\b.*\b(?:xhigh|max)\b'
+    # re.MULTILINE, so `^` brackets one recorded invocation rather than the
     # whole file; the optional prefix tolerates a plugin-namespaced name.
     flags: 8
     weight: 2

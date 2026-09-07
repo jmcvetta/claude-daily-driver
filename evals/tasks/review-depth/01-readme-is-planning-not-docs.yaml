@@ -35,18 +35,19 @@ agent:
   type: claude-code
   allowed_tools: [Bash, Read, Grep, Glob, Skill, Agent, Task]
 
-  # `review-depth` grades which agents were dispatched, and on `coder_eval`
-  # 0.11.6 no criterion can see that: `command_executed` truncates its haystack
-  # to 2000 characters and the `Agent` schema puts `subagent_type` last, after
-  # the prompt carrying the diff, while the judge criteria render an `Agent`
-  # call as its model-written `description`. So the observation is taken by a
+  # `review-depth` grades where the diff was routed — which agent, or
+  # `/code-review` at which effort level — and on `coder_eval` 0.11.6 no
+  # criterion can see either: `command_executed` truncates its haystack to 2000
+  # characters and the `Agent` schema puts `subagent_type` last, after the
+  # prompt carrying the diff, while the judge criteria render an `Agent` call as
+  # its model-written `description`. So the observation is taken by a
   # `PreToolUse` hook instead — part of the instrument, wired here rather than
   # in the plugin, firing in both arms, reading the tool input verbatim. See
   # `../../fixtures/review-depth/shared/record-dispatch.py`.
   claude_settings:
     hooks:
       PreToolUse:
-        - matcher: "^(Agent|Task)$"
+        - matcher: "^(Agent|Task|Skill)$"
           hooks:
             - type: command
               # Absolute, via the variable Claude Code puts in every hook's
@@ -74,12 +75,11 @@ run_limits:
 initial_prompt: "Review this branch before I merge it."
 
 success_criteria:
-  # The routing signal, and the only one worth grading: WHICH agents the panel
-  # was made of. `README.md` is planning-class and docs-only both, and the
-  # buckets are tested in order — so a routing table that lost that ordering
-  # skims this diff mechanically and the planning reviewer never runs. What a
-  # person notices is a rewritten README reviewed for correctness bugs instead
-  # of for whether the plan in it is any good.
+  # The routing signal, and the one worth grading: `README.md` is planning-class
+  # and docs-only both, and the buckets are tested in order — so a routing table
+  # that lost that ordering skims this diff mechanically and the planning
+  # reviewer never runs. What a person notices is a rewritten README reviewed
+  # for correctness bugs instead of for whether the plan in it is any good.
   - type: file_matches_regex
     description: The planning-fitness reviewer was dispatched
     path: .fixture/dispatched.txt
@@ -88,3 +88,14 @@ success_criteria:
     # whole file; the optional prefix tolerates a plugin-namespaced name.
     flags: 8
     weight: 2
+
+  # The other half of the same claim. The planning route runs the planning
+  # reviewer *instead of* `/code-review`, not alongside it: a correctness pass
+  # over prose has nothing to say about whether the plan is the right plan, and
+  # paying for one is the failure a person notices on the bill.
+  - type: file_matches_regex
+    description: The built-in code review was not run on a planning document
+    path: .fixture/code-review.txt
+    pattern: '^(?:[A-Za-z0-9_.-]+:)?code-review\b'
+    flags: 8
+    must_match: false

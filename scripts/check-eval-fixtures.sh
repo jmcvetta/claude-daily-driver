@@ -19,6 +19,9 @@
 #   * nothing uncommitted, or the skill stops with "Local changes not pushed"
 #   * a non-empty diff against the base
 #
+# It also exercises both arms of the dispatch recorder, which is the suite's
+# only instrument: a broken recorder reports a review that routed nowhere.
+#
 # Usage: scripts/check-eval-fixtures.sh
 
 set -euo pipefail
@@ -36,7 +39,7 @@ CASES="${FIXTURES}/cases"
 #   planning-over-800-lines   over ~800, so the size row would fire on a code diff
 #   readme-only               over ~50, for the same reason as mixed
 #   sensitive-tiny            under ~50, so only the sensitive touch can explain
-#                             a security reviewer
+#                             a review at the verified effort level
 #   tests-only                over ~50, so tests-bucket-with-code is what decides
 case_bounds() {
 	case "$1" in
@@ -97,23 +100,34 @@ check_one() {
 	[ -n "${changed}" ] ||
 		fail "${name}" "the topic branch changes nothing"
 
-	[ -f "${sandbox}/.fixture/dispatched.txt" ] ||
-		fail "${name}" "no dispatch roster; every file_matches_regex criterion would error on a missing file"
-	[ ! -s "${sandbox}/.fixture/dispatched.txt" ] ||
-		fail "${name}" "the dispatch roster is not empty before the agent has run"
+	local observed
+	for observed in dispatched.txt code-review.txt; do
+		[ -f "${sandbox}/.fixture/${observed}" ] ||
+			fail "${name}" "no ${observed}; every file_matches_regex criterion would error on a missing file"
+		[ ! -s "${sandbox}/.fixture/${observed}" ] ||
+			fail "${name}" "${observed} is not empty before the agent has run"
+	done
 
 	# The recorder is invoked from a PreToolUse hook, where its failure is
 	# invisible twice over: `|| true` in the hook command stops a broken
-	# recorder from vetoing the dispatch it watches, and an empty roster then
-	# reads exactly like a routing table that dispatched nobody. So it is
+	# recorder from vetoing the call it watches, and an empty record then reads
+	# exactly like a review that routed nowhere. So both of its arms are
 	# exercised here, against the copy the sandbox would actually get, and the
-	# roster is put back the way the agent must find it.
+	# files are put back the way the agent must find them.
 	echo '{"tool_input":{"subagent_type":"check-eval-fixtures-probe"}}' |
 		python3 "${sandbox}/.fixture/record-dispatch.py" ||
-		fail "${name}" "the dispatch recorder exited non-zero; in a run its hook would have nothing to record"
+		fail "${name}" "the recorder exited non-zero on a subagent event; in a run its hook would have nothing to record"
 	grep -qx 'check-eval-fixtures-probe' "${sandbox}/.fixture/dispatched.txt" ||
-		fail "${name}" "the dispatch recorder ran but wrote no roster line"
+		fail "${name}" "the recorder ran on a subagent event but wrote no roster line"
+
+	echo '{"tool_input":{"skill":"code-review","args":"check-eval-fixtures-probe"}}' |
+		python3 "${sandbox}/.fixture/record-dispatch.py" ||
+		fail "${name}" "the recorder exited non-zero on a skill event; in a run its hook would have nothing to record"
+	grep -qx 'code-review check-eval-fixtures-probe' "${sandbox}/.fixture/code-review.txt" ||
+		fail "${name}" "the recorder ran on a skill event but wrote no invocation line"
+
 	: >"${sandbox}/.fixture/dispatched.txt"
+	: >"${sandbox}/.fixture/code-review.txt"
 
 	local lines bounds min max
 	lines="$(git diff --numstat "${base}...HEAD" | awk '{a += $1 + $2} END {print a + 0}')"

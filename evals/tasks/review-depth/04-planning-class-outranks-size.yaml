@@ -30,18 +30,19 @@ agent:
   type: claude-code
   allowed_tools: [Bash, Read, Grep, Glob, Skill, Agent, Task]
 
-  # `review-depth` grades which agents were dispatched, and on `coder_eval`
-  # 0.11.6 no criterion can see that: `command_executed` truncates its haystack
-  # to 2000 characters and the `Agent` schema puts `subagent_type` last, after
-  # the prompt carrying the diff, while the judge criteria render an `Agent`
-  # call as its model-written `description`. So the observation is taken by a
+  # `review-depth` grades where the diff was routed — which agent, or
+  # `/code-review` at which effort level — and on `coder_eval` 0.11.6 no
+  # criterion can see either: `command_executed` truncates its haystack to 2000
+  # characters and the `Agent` schema puts `subagent_type` last, after the
+  # prompt carrying the diff, while the judge criteria render an `Agent` call as
+  # its model-written `description`. So the observation is taken by a
   # `PreToolUse` hook instead — part of the instrument, wired here rather than
   # in the plugin, firing in both arms, reading the tool input verbatim. See
   # `../../fixtures/review-depth/shared/record-dispatch.py`.
   claude_settings:
     hooks:
       PreToolUse:
-        - matcher: "^(Agent|Task)$"
+        - matcher: "^(Agent|Task|Skill)$"
           hooks:
             - type: command
               # Absolute, via the variable Claude Code puts in every hook's
@@ -79,14 +80,13 @@ success_criteria:
     weight: 2
 
   # The size threshold reading kind off the wrong axis is what this catches. A
-  # rollout schedule is prose at any length, and a security reviewer reading
-  # nine hundred lines of it is money spent on a document with no code in it —
-  # the failure a person notices on the bill rather than in the findings.
+  # rollout schedule is prose at any length, and nine hundred lines of it run
+  # through a correctness reviewer — at the `xhigh` the size row alone would
+  # buy — is money spent on a document with no code in it. The failure a person
+  # notices on the bill rather than in the findings.
   - type: file_matches_regex
-    description: The security reviewer was not dispatched
-    path: .fixture/dispatched.txt
-    pattern: '^(?:[A-Za-z0-9_.-]+:)?security-reviewer$'
-    # re.MULTILINE, so `^`/`$` bracket one roster line rather than the
-    # whole file; the optional prefix tolerates a plugin-namespaced name.
+    description: The built-in code review was not run on a planning document
+    path: .fixture/code-review.txt
+    pattern: '^(?:[A-Za-z0-9_.-]+:)?code-review\b'
     flags: 8
     must_match: false

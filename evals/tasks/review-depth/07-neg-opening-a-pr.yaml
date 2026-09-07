@@ -32,14 +32,15 @@ agent:
   type: claude-code
   allowed_tools: [Bash, Read, Grep, Glob, Skill, Agent, Task]
 
-  # The same dispatch recorder the fire cases use. Here it backs the no-fire
-  # claim from the other side: `skill_triggered` also counts a `skills/<name>/`
-  # path appearing in any tool parameter, so a stray `review` path would read as
-  # a misfire; an empty roster cannot be faked that way.
+  # The same recorder the fire cases use. Here it backs the no-fire claim from
+  # the other side: `skill_triggered` also counts a `skills/<name>/` path
+  # appearing in any tool parameter, so a stray `review` path would read as a
+  # misfire; an empty roster, and an empty record of `/code-review`
+  # invocations, cannot be faked that way.
   claude_settings:
     hooks:
       PreToolUse:
-        - matcher: "^(Agent|Task)$"
+        - matcher: "^(Agent|Task|Skill)$"
           hooks:
             - type: command
               # Absolute, via the variable Claude Code puts in every hook's
@@ -76,7 +77,7 @@ success_criteria:
     # its default `continue`, so this never truncates a run itself.
     stop_early: {}
 
-  # Expensive skills are pulled, never pushed. A panel that fires on every pull
+  # Expensive skills are pulled, never pushed. A review that fires on every pull
   # request open taxes every trivial branch to catch the occasional serious one,
   # which trains the reflex of skimming output that always appears — the failure
   # that makes review worthless, and the one a person notices as review fatigue
@@ -91,19 +92,26 @@ success_criteria:
     # undecided, and the `pr` criterion above is pass-capable — so on the
     # trajectory this row exists to catch (`review` fires, `pr` never does)
     # nothing ever decides it, the stop never comes, and the run pays for a
-    # full reviewer panel up to the turn cap. Recall is worth that: unarmed,
-    # the first misfire would truncate the run before `pr` could fire and the
-    # row would record a false negative a full run would not have produced.
+    # full review up to the turn cap. Recall is worth that: unarmed, the first
+    # misfire would truncate the run before `pr` could fire and the row would
+    # record a false negative a full run would not have produced.
     # `max_turns: 12` is what bounds the bill here, not the early stop.
     stop_early: {}
 
-  # And no reviewer ran. This is the criterion that would catch a `review` that
-  # fired without ever calling itself `review` — the panel is the expensive
-  # part, and an empty roster is the direct evidence that none of it was paid
-  # for.
+  # And nothing was reviewed. These two catch a `review` that fired without ever
+  # calling itself `review` — the analysis is the expensive part, and an empty
+  # roster with an empty invocation record is the direct evidence that none of
+  # it was paid for.
   - type: file_matches_regex
     description: No reviewer was dispatched
     path: .fixture/dispatched.txt
     pattern: '^(?:[A-Za-z0-9_.-]+:)?[a-z-]+-reviewer$'
+    flags: 8
+    must_match: false
+
+  - type: file_matches_regex
+    description: The built-in code review was not run
+    path: .fixture/code-review.txt
+    pattern: '^(?:[A-Za-z0-9_.-]+:)?code-review\b'
     flags: 8
     must_match: false

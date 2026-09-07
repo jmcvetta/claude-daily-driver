@@ -15,7 +15,7 @@ evals/
 │   ├── pr-title/        … when a title is written, and only then?
 │   ├── pr-body/         … when a body is written, and only then?
 │   ├── constitution/    does the constitution reach a subagent?
-│   └── review-depth/    does `review` send the right panel at the diff?
+│   └── review-depth/    does `review` route the diff to the right review?
 └── fixtures/review-depth/
     ├── shared/          builds the git repository every case starts from
     └── cases/<name>/    one `case.sh`, mounted alone beside `shared/`
@@ -75,14 +75,14 @@ constitution's own test, described under "Testing the constitution" in the
 repository README. Its credential-free half is
 `scripts/check-constitution.py`.
 
-`review-depth/` asks whether `review` sends the *right panel* at the right
-diff. Every case is anchored on something a person would notice if routing
-broke — a security reviewer that never ran on the file holding the publishing
-token, a rewritten README judged for correctness bugs, a full panel billed to
-every pull request opened — rather than on a restated line from
-`skills/review/SKILL.md`. A suite that restates the spec catches
-drift away from the depth table and can never catch the depth table being
-wrong.
+`review-depth/` asks whether `review` sends the diff to the *right review*:
+the planning reviewer, or `/code-review` at the right effort level. Every case
+is anchored on something a person would notice if routing broke — an unverified
+review of the file holding the publishing token, a rewritten README judged for
+correctness bugs, a correctness pass billed to nine hundred lines of prose —
+rather than on a restated line from `skills/review/SKILL.md`. A suite that
+restates the spec catches drift away from the routing table and can never catch
+the routing table being wrong.
 
 ## Both arms, every criterion
 
@@ -134,7 +134,7 @@ disagreement is load-bearing:
 One hazard `skill_triggered` carries, which the criterion's name hides: besides
 the `Skill` tool call, it scans **every string parameter of every tool** for the
 substring `skills/<name>/`, so a `Read` of
-`skills/review/references/review-guidelines.md` counts as engaging `review`.
+`skills/review/references/planning-review.md` counts as engaging `review`.
 That is deliberate — it is how the criterion scores agents with no `Skill` tool
 — but it means a row that grants file tools and expects a skill *not* to fire is
 only as sound as the paths that row can plausibly touch. `allowed_tools` is not
@@ -145,8 +145,8 @@ which is what a model weighing two sibling skills reaches for, still scores as
 engaging `pr`. The trigger rows therefore carry an explicit `disallowed_tools`,
 which is the field that actually removes a tool. `review-depth`'s no-fire row
 needs file tools and keeps them, and relies instead on the `pr` skill having no
-reason to name a path under `skills/review/` — which it does not — with the
-empty-roster criterion beside it as the check that does not depend on paths at
+reason to name a path under `skills/review/` — which it does not — with the two
+empty-record criteria beside it as the checks that do not depend on paths at
 all.
 
 `skill_triggered` also improved a detail. The old graders matched the skill
@@ -156,7 +156,7 @@ engaged skills, plugin namespace stripped, so that class of near-miss is gone.
 
 Each `skill_triggered` row carries an `expected_skill`: the ground truth for
 that row, repeated on every criterion of that type. (`review-depth` 01–06 have
-none — they are graded entirely on the dispatch roster.) What it does today is
+none — they are graded entirely on what the recorder saw.) What it does today is
 set the polarity — a criterion passes
 when the skill's engagement matches whether `expected_skill` names it — and
 `none` is a legitimate value, which is what the "neither of these should fire"
@@ -180,7 +180,7 @@ On the trigger suites this is free. On `review-depth`'s no-fire row it is not,
 and that row says so: the fail-stop is deferred while the pass-capable `pr`
 criterion is undecided, so on the very trajectory the row exists to catch —
 `review` fires, `pr` never does — nothing decides it, the stop never comes, and
-the run pays for a full reviewer panel up to its turn cap. Recall is worth that
+the run pays for a full review up to its turn cap. Recall is worth that
 there; `max_turns` is what bounds the bill.
 
 Arming the positive cannot truncate anything: a bare `stop_early: {}` leaves
@@ -220,19 +220,25 @@ Seven cases, each one claim:
 | Case | The claim | What a broken routing table would do |
 | --- | --- | --- |
 | `01-readme-is-planning-not-docs` | `README.md` is planning-class *before* it is docs-only | review a rewritten README for correctness bugs |
-| `02-tests-sit-with-code` | a 104-line test-only diff gets the judgment tier | skim a hundred lines of new assertions |
+| `02-tests-sit-with-code` | a 104-line test-only diff gets Standard, not the skim | skim a hundred lines of new assertions |
 | `03-mixed-diff-falls-through-to-code` | one `src/` path makes the whole branch code | judge a sign-handling fix by a planning rubric |
-| `04-planning-class-outranks-size` | 904 lines of prose is still prose | bill a security review to a rollout schedule |
+| `04-planning-class-outranks-size` | 904 lines of prose is still prose | bill a correctness review to a rollout schedule |
 | `05-named-depth-outranks-inference` | a depth the user names wins | overrule a request for a full review with a heuristic |
-| `06-sensitive-touch-on-a-tiny-diff` | 11 lines of release workflow still get security | miss the file holding the publishing token |
+| `06-sensitive-touch-on-a-tiny-diff` | 11 lines of release workflow are reviewed at `max` | leave the file holding the publishing token unverified |
 | `07-neg-opening-a-pr` | opening a PR is not a review | tax every branch and train the skimming reflex |
 
-### Grading dispatch
+### Grading the route
 
-Every one of them grades which agents were dispatched. The draft in PR #36 was
-dropped for grading the mode line the skill *announces*, which is a self-report:
-a skill announcing "Standard" and then dispatching the Full panel would have
-passed it.
+Every one of them grades what the skill *passed to a tool*, never what it said.
+The draft in PR #36 was dropped for grading the mode line the skill announces,
+which is a self-report: a skill announcing "Standard" and then reviewing at
+`low` would have passed it.
+
+There are two routes and they are observed separately. The planning route ends
+in an `Agent` dispatch, so it is graded on `subagent_type`. Every other route
+ends in the built-in `/code-review` at a named effort level, so it is graded on
+the `Skill` call's arguments — the level *is* the routing decision, and the
+level is the whole of what the table above decides.
 
 **No criterion in `coder_eval` 0.11.6 can see `subagent_type`.**
 `command_executed` matches against `json.dumps(parameters)` truncated to 2000
@@ -244,12 +250,14 @@ dispatched" for a dispatch that happened. That silently zeroes a positive and
 tool-call summariser renders an `Agent` call as its `description`, a three-word
 label the model writes.
 
-So the observation is taken with a `PreToolUse` hook matching `^(Agent|Task)$`
-— both names, because the harness has used both — wired through
+So the observation is taken with a `PreToolUse` hook matching
+`^(Agent|Task|Skill)$` — the first two because the harness has used both names,
+the third because that is how a skill invokes `/code-review` — wired through
 each task's `claude_settings` and recorded by
 `fixtures/review-depth/shared/record-dispatch.py`. It appends one
-`subagent_type` per
-line to `.fixture/dispatched.txt`, which `file_matches_regex` reads.
+`subagent_type` per line to `.fixture/dispatched.txt`, and one
+`<skill> <args>` per line to `.fixture/code-review.txt`, both of which
+`file_matches_regex` reads.
 
 The hook is part of the **instrument**, not of the plugin under test: it is
 configured by the eval, it fires identically in both arms, it reads the tool
@@ -258,27 +266,28 @@ with the plugin's own `PreToolUse` hook on the same event. And it is still not
 the mode line: the mode line is what the skill says it decided; the roster is
 the argument it passed to the tool.
 
-The roster is created empty by the fixture, so a `must_match: false` criterion
+Both files are created empty by the fixture, so a `must_match: false` criterion
 reads "nothing was dispatched" instead of erroring on a missing file — which is
 the entire `bare` arm.
 
-**What it proves, exactly.** `PreToolUse` fires before the tool resolves
-`subagent_type`, so a roster line is a dispatch *requested*, not a subagent
-confirmed to have run. A `review` that asks for `security-reviewer` under a name
-the session cannot resolve records the line anyway. That is the routing decision
-— which is what these cases grade — but it is not proof the reviewer ran, and no
-criterion here claims otherwise. The old `command_executed`-on-`Agent` shape had
-the same property, for the same reason.
+**What it proves, exactly.** `PreToolUse` fires before the tool resolves what it
+was handed, so a recorded line is a review *requested*, not one confirmed to
+have run. A `review` that asks for `planning-fitness-reviewer` under a name the
+session cannot resolve, or for a `/code-review` level the built-in rejects,
+records the line anyway. That is the routing decision — which is what these
+cases grade — but it is not proof the review ran, and no criterion here claims
+otherwise. The old `command_executed`-on-`Agent` shape had the same property,
+for the same reason.
 
 **Two things the hook must never do**, both guarded rather than asserted in
 prose. A `PreToolUse` hook that exits non-zero *blocks* the tool call, so a
-recorder that failed would not merely lose the roster — it would veto every
-dispatch, in both arms, and report a routing table that dispatched nobody. The
+recorder that failed would not merely lose the record — it would veto every
+dispatch, in both arms, and report a routing table that routed nowhere. The
 hook command is therefore absolute (via `$CLAUDE_PROJECT_DIR`, which Claude Code
 puts in every hook's environment) and ends in `|| true`. And because `|| true`
-would then hide a genuinely broken recorder behind an empty roster,
-`scripts/check-eval-fixtures.sh` runs the recorder against the copy the sandbox
-would get and fails `make check` if it does not record.
+would then hide a genuinely broken recorder behind an empty record,
+`scripts/check-eval-fixtures.sh` runs both of the recorder's arms against the
+copy the sandbox would get and fails `make check` if either does not record.
 
 The hook also writes nothing to stdout, so it cannot contest the `updatedInput`
 returned by the plugin's own `PreToolUse` hook on the same event.
@@ -309,11 +318,11 @@ runs on the default `driver: tempdir`, where `coder_eval`'s own note is that
 "the agent under evaluation runs with the same filesystem view as the harness" —
 its anti-cheat permission window is a documented no-op outside a container. So a
 session with `Bash` can read this file, read the task YAML, and write to
-`.fixture/dispatched.txt` directly. What the rules above buy is that nothing
+`.fixture/dispatched.txt` and `.fixture/code-review.txt` directly. What the rules above buy is that nothing
 *puts* the answer in front of a session going about its work; they buy nothing
 at all against one that goes looking. `sandbox: {driver: docker}` is what would
-make it a boundary, and moving the roster outside the sandbox needs the same
-upstream fix as everything else here.
+make it a boundary, and moving the recorder's output outside the sandbox needs
+the same upstream fix as everything else here.
 
 The upstream fixes that would retire this: make the truncation bound
 configurable, or render `subagent_type` in the judge's tool-call summary.
@@ -324,12 +333,12 @@ every row — the final message has no deterministic matcher — which would put
 scored model judgment, and its cost, on seven cases whose whole point is that
 they are deterministic. Dispatch is the outcome; the mode line is the narration
 of it, and the narration is what PR #36's draft was dropped for grading. If the
-announced depth is ever worth asserting on its own, the way in is the roster's:
+announced depth is ever worth asserting on its own, the way in is the recorder's:
 observe it where it is complete, not through a judge.
 
 **Every case size is load-bearing and none should be "tidied".** The depth table
 turns on ~50 and ~800 changed lines, so a case that drifts across a threshold
-does not fail — it re-routes, and then measures a depth it was not written for.
+does not fail — it re-routes, and then measures a level it was not written for.
 `01`, `02` and `03` are over ~50 on purpose (under it they route to Skim on size
 alone, whatever bucket their paths land in); `04` is over ~800; `05` and `06`
 are deliberately under ~50, because "tiny and still reviewed" is the whole
@@ -402,12 +411,13 @@ as a TIMEOUT before it can be graded. The headroom is the difference.
 `run_limits` caps turns and wall clock per task, but nothing caps the bill. The
 18 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
 and the fire half stops the moment the skill fires. `review-depth` is not: its six fire
-cases each dispatch a real reviewer panel over a real diff, five times, in the
-`with-plugin` arm. The `bare` arm is cheaper but not free: it has no `review`
-skill and none of the plugin's reviewer agents, but it keeps the `Agent` tool
-and thirty turns, so a session that decides to review the diff by hand can
-still spend. Its no-fire case pays for a panel too, on exactly the trajectory
-it is trying to catch. Run one suite at a time with
+cases each run a real review over a real diff, five times, in the `with-plugin`
+arm — and `06` runs one at `max`, the most expensive cell the built-in has. The
+`bare` arm is cheaper but not free: it has no `review` skill and none of the
+plugin's reviewer agents, but it keeps `Skill`, the `Agent` tool and thirty
+turns, so a session that decides to review the diff by hand can still spend.
+Its no-fire case pays for a review too, on exactly the trajectory it is trying
+to catch. Run one suite at a time with
 `TASKS=` while iterating, and keep `make evals-plan` between edits, where the
 mistakes are free.
 

@@ -26,6 +26,7 @@ fixture_init() {
 
 	# Created empty rather than left absent; see evals/README.md.
 	: >"${FIXTURE_DIR}/dispatched.txt"
+	: >"${FIXTURE_DIR}/code-review.txt"
 }
 
 # Commit whatever the case laid down as the base branch, publish it to a local
