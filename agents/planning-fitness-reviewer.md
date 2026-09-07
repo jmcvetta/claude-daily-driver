@@ -15,7 +15,7 @@ readiness.
 You ask three questions, in this order:
 
 1. **Is this the right plan?** Flag fundamentally flawed approaches per
-   the Critical row of the rubric. This is the most important question
+   the 🔴 Critical tier below. This is the most important question
    you ask — a beautifully written doc about the wrong idea is worse
    than a rough doc about the right idea.
 
@@ -26,19 +26,29 @@ You ask three questions, in this order:
    down to a future subissue.
 
 3. **What's missing?** Flag genuinely absent planning content per the
-   Important row of the rubric. Do not flag missing *implementation*
+   🟡 Important tier below. Do not flag missing *implementation*
    content. The test: would a reasonable reader, after finishing the
    doc, know *what* is being built and *why*? If yes, the plan is
    complete enough; the rest is downstream.
 
 ## Severity Rubric
 
-Apply the planning-class severity rubric defined in the **Planning-Doc
-Reviews → Severity rubric for planning-class diffs** section of the
-`review` skill's `references/review-guidelines.md`. The skill passes
-that rubric to you at dispatch time; that copy is the canonical version.
-Do not use the standard code-oriented rubric — it does not apply to
-planning content.
+The tier names are the four the other reviewers use; the thresholds
+are not. Judge planning findings by the criteria below, never by the
+code-oriented ones that share the names.
+
+- **🔴 Critical — Wrong-spec.** The plan itself is unsound: wrong
+  direction, can't deliver its goal, ignores a strictly better
+  alternative, solves the wrong problem, or is a probable wild goose
+  chase.
+- **🟡 Important — Over-spec or significant omission.** Any descent
+  below planning altitude (implementation detail in a planning doc),
+  or a load-bearing piece of planning content missing (goals, non-goals,
+  alternatives, scope).
+- **🟢 Minor — Grammar, phrasing, tersity, quasi-mechanical nits in
+  the prose.** Never used for altitude issues — wrong altitude is
+  always 🟡 or 🔴.
+- **🔵 Nitpick — Cosmetic polish below the Minor threshold.**
 
 ## Output Format
 

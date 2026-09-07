@@ -51,7 +51,9 @@ Mode and base branch
    number given explicitly by the user overrides the lookup.
 3. State the detected mode and the inferred depth on one line before
    dispatching, so it is visible which path was taken and why — e.g.
-   `Full review, PR mode #123 — 640 changed lines, touches .github/workflows/`.
+   `Standard review + security-reviewer, PR mode #123 — 640 changed lines,
+   touches .github/workflows/`. Note the shape: 640 lines is Standard, and the
+   sensitive touch adds a reviewer to that tier rather than promoting it.
 
 Never shell out to `gh`. It is a laptop-only convenience, absent from web
 workers entirely, so a `gh` call passes every test on the machine it was
@@ -125,14 +127,22 @@ make is now made from the diff.
 - dependency manifests and lockfiles
 
 The table below reads the *kind* and the *size*; the override is orthogonal to
-it and is applied afterwards, never by promoting a row.
+it and is applied afterwards, never by promoting a row. **Read the rows in
+order and take the first that matches**: a small code change is Skim rather
+than Standard, because both rows describe it and only the order says which
+wins. That settles ties between rows, nothing more. The size feeding the rows
+is still a prior and not a rule — where the changed lines understate the work,
+as in that thirty-line lock ordering, take the deeper row deliberately and say
+so in the mode line. That is a judgment about what the size means, not a
+licence the override grants: a sensitive touch adds `security-reviewer` without
+promoting the tier.
 
 | Depth | When | Panel |
 | ----- | ---- | ----- |
 | **Planning** | planning-class | `planning-fitness-reviewer` + `architecture-reviewer`, under the planning rubric |
 | **Skim** | docs-only, or under ~50 changed lines | mechanical tier only |
-| **Standard** | the default: code or tests, under ~800 changed lines | mechanical tier + `logic-reviewer` + `architecture-reviewer` |
-| **Full** | over ~800 changed lines, or the user asked for depth | Standard + `security-reviewer` |
+| **Standard** | code or tests, from ~50 to ~800 changed lines | mechanical tier + `logic-reviewer` + `architecture-reviewer` |
+| **Full** | over ~800 changed lines | Standard + `security-reviewer` |
 
 Tests sit with code rather than with docs: a test that asserts the bug passes,
 and the mechanical tier alone will not notice.
@@ -140,8 +150,11 @@ and the mechanical tier alone will not notice.
 A sensitive touch adds `security-reviewer` to whatever tier the table chose; it
 does not promote a fifteen-line diff to a full panel in every other respect.
 
-The user may still name a depth, and a named depth wins. Inference is the
-default, not a refusal.
+The user may still name a depth, and a named depth wins — deeper or shallower,
+whatever the table would have chosen, and whichever row matched first.
+Inference is the default, not a refusal. It does not switch off the override,
+though: a named Skim over a diff that touches the sensitive list is a Skim with
+`security-reviewer`, and the mode line says so.
 
 
 The panel
@@ -173,7 +186,7 @@ the same `medium` is a different reviewer on different models:
 
 Two consequences worth knowing before trusting this tier. On Opus 5 the
 Standard/Full split above buys nothing here, because both map to that one cell.
-**Override the mapping and name `max` when a diff genuinely needs a verified
+**Depart from the mapping and name `max` when a diff genuinely needs a verified
 panel on Opus 5** — no depth in the table selects it, so it only happens if you
 ask. And the
 precision argument for preferring the built-in over narrow agents only holds
