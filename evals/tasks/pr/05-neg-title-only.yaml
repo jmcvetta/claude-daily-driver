@@ -1,0 +1,50 @@
+task_id: pr-05-neg-title-only
+description: >-
+  Title work, drawn from the adjacent skill rather than from unrelated work:
+  `pr-title` is the right answer and `pr` is the wrong one.
+tags: [trigger-accuracy, pr, no-fire]
+
+initial_prompt: >-
+  The PR title says "stuff". Fix just the title — leave the description alone.
+
+agent:
+  # `allowed_tools` is a permission allowlist, not a tool filter: the model is
+  # still offered `Read` and friends and merely denied at the permission check.
+  # That is not enough here. Telemetry records a `tool_use` block when it is
+  # generated, before any result, and `skill_triggered` counts a `skills/<name>/`
+  # path in ANY tool parameter as engaging that skill — so a *denied* read of
+  # `skills/pr/SKILL.md`, which is exactly what a model weighing two sibling
+  # skills reaches for, would fail a no-fire row. `disallowed_tools` is the one
+  # that actually removes a tool, so the path can never be typed.
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  # `turn_timeout` is the agent's budget; `task_timeout` is the watchdog around
+  # the whole evaluation, armed before the turn starts and still running while
+  # the criteria are checked. Equal values mean a turn that uses its budget is
+  # killed as a TIMEOUT before it can be graded, so `task_timeout` carries
+  # headroom on top. `plan` warns that the larger number cannot extend the
+  # turn; that is the point — it is not meant to.
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`pr-title` fires"
+    expected_skill: pr-title
+    skill_name: pr-title
+    # Armed. `stop_early: {}` leaves `on_pass` at its default `continue`, so
+    # this cannot cut the run short on a pass — what it does is put this
+    # criterion in the watcher's pass-capable set, which defers the distractor's
+    # fail-stop until recall has been decided. Left unarmed, a misfire would
+    # end the run before `pr-title` had a chance to fire, and the row would
+    # record a false negative the full run would not have produced.
+    stop_early: {}
+  - type: skill_triggered
+    description: "`pr` does not fire"
+    expected_skill: pr-title
+    skill_name: pr
+    # Armed. A misfire has already lost the row, so there is nothing left to
+    # pay for.
+    stop_early: {}

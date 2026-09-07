@@ -6,9 +6,15 @@
 *.tfstate.backup
 *.log.txt
 
-# `claude plugin eval` writes its runs -- transcripts, scores, the HTML report
-# -- beside the cases it ran.
-evals/results/
+# `coder-eval` writes its runs -- transcripts, per-replicate scores, costs, the
+# preserved sandboxes and the HTML report -- into `runs/` under the directory it
+# was invoked from, which for `make evals-run` is `evals/`.
+evals/runs/
+
+# `coder_eval` reads a `.env` from the working directory with
+# `load_dotenv(override=True)`, so it beats the shell environment --
+# `ANTHROPIC_API_KEY` included. Never commit one.
+.env
 
 # Python
 __pycache__/

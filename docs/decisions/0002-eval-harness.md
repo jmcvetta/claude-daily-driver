@@ -1,9 +1,17 @@
 # The eval harness: `coder_eval`, not `claude plugin eval`
 
-**Status:** decided, 2026-09-07. Nothing ported yet.
+**Status:** decided, 2026-09-07; ported, 2026-09-07.
 **Supersedes:** the harness assumptions in
 [`0001`](0001-built-in-review-surface.md) and in `evals/README.md`, both of
 which take `claude plugin eval` as given.
+
+> **Read ["Corrected by the port"](#corrected-by-the-port) first.** Three claims
+> below about what `coder_eval` can and cannot do are wrong — two about
+> `command_executed` and `skill_triggered`, one about what a sandbox can be
+> given — and the corrections changed how much of the old suite had to be
+> redesigned. They are left in place rather than edited away: the decision was
+> made on them, and what a decision was made on is the thing a decision record
+> is for.
 
 `evals/` currently holds four suites written for `claude plugin eval`
 (`pr`, `pr-title`, `pr-body`, `constitution-reaches-subagent`). **None of them
@@ -188,3 +196,72 @@ that as reported-not-preserved.
 - CI gating stays out of scope for now, but is no longer foreclosed: it was only
   ever blocked by CI having no credentials, which is a separate decision from
   which harness runs the cases.
+
+
+## Corrected by the port
+
+The port (issue #37) contradicted this page three times. All three corrections
+are in `coder_eval` 0.11.6, read off the source rather than inferred from the
+docs.
+
+**`command_executed` is the generic tool-call criterion.** This page says it
+"matches shell commands off command telemetry, so it cannot see a `Skill` call
+at all", and concludes that `tool_used` on `Agent` has no equivalent. It filters
+on `tool_name` for **any** tool and, off `Bash`, matches `command_pattern`
+against the JSON-serialised tool parameters; the Claude Code adapter records one
+telemetry row per `tool_use` block, `Agent` included. So `tool_used` on `Agent` —
+`input_match` and all — ports directly, and the constitution suite lost **one**
+grader to redesign, not three. Nor is the `Skill` tool an exception to "any
+tool": `command_executed` filters on `tool_name: Skill` like any other.
+
+**`skill_triggered` is not `Skill`-only.** This page describes it as counting
+`Skill` invocations. It also scans every string parameter of every tool for the
+substring `skills/<name>/`, so a `Read` of `skills/pr/SKILL.md` scores as
+engaging `pr` — and scores whether or not the read succeeded, because telemetry
+records a `tool_use` block when it is generated, before any result. What
+survives is narrower than "reads the `Skill` tool": `skill_triggered` is the
+only **skill-aware** criterion, the only one that treats a `Skill` call or a
+`skills/<name>/` path as engaging a *named skill*. `command_executed` can match
+a `Skill` call like any other; what it cannot do is know what a skill is.
+
+The consequence is a build rule, not a curiosity. A row expecting a named skill
+NOT to fire, and holding file tools, can be failed by a path it never read
+successfully — so the trigger-accuracy suites remove those tools with
+`disallowed_tools`, which is the field that actually removes one
+(`allowed_tools` is a permission allowlist and leaves them offered). Where a row
+needs the file tools, as `review-depth`'s no-fire case does, the answer is a
+second criterion that does not depend on paths in tool parameters at all:
+there, an empty dispatch roster.
+
+The `command_executed` correction is also what makes the rebuilt `review-depth`
+suite possible on this harness: a criterion matching `"subagent_type": "security-reviewer"` inside
+an `Agent` call grades the dispatch itself, which is precisely the thing the
+dropped draft failed to grade.
+
+That last sentence is how it was planned and not how it shipped, for a reason
+worth recording. `command_executed` matches against
+`json.dumps(parameters)[:2000]`, and the `Agent` tool's schema orders its keys
+`description, prompt, subagent_type` — so on any diff of consequence the
+`prompt` pushes `subagent_type` past the window, and the criterion reports "not
+dispatched" for a dispatch that happened. `llm_judge` and `agent_judge` cannot
+see it either: their tool-call summariser renders an `Agent` call as its
+`description`, a three-word label the model writes. **`subagent_type` is not
+observable through any criterion in 0.11.6.** The suite therefore takes the
+observation with a `PreToolUse` hook wired through the task's
+`claude_settings` — instrument, not plugin — which sees the tool input verbatim
+and writes a roster a `file_matches_regex` criterion reads. The fix upstream
+would be to make that truncation bound configurable, or to render
+`subagent_type` in the judge summary.
+
+**A sandbox can be given a git repository.** This page records a `tempdir` with
+no repository as the reason the verification task scored 0 in both arms, and
+issue #37 carries the shape of the repository as its main unknown.
+`TaskDefinition.pre_run` answers it: a shell command run inside the sandbox
+after setup and before the agent, which aborts the evaluation on a non-zero
+exit. `git init`, a bare `origin` on local disk, a base branch and a pushed
+topic branch are all reachable from there, and a fixture that fails to build
+stops the run instead of scoring a misleading 0.
+
+**Unchanged:** `regex` on `last_message` still has no deterministic equivalent,
+and that is what forced the one genuine redesign — the subagent now writes its
+answer to a file, read by `file_matches_regex`.
