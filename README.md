@@ -162,21 +162,32 @@ credential requirement starts:
 They fail for different reasons and deserve to fail separately: the first
 tests this plugin, the second tests an assumption about the harness that a
 future release could withdraw without telling anyone.
-## Enabling it in a repository
 
-Plugin installation is per-project: a repository declares the plugin for
-everyone who works in it — a web worker included — by carrying an
-`extraKnownMarketplaces` + `enabledPlugins` stanza in its
-`.claude/settings.json`. A repository without it runs without the plugin and
-gives no sign of it. Declares, not guarantees: carrying the stanza is necessary
-and, on the version measured, was not sufficient.
+## Enabling it, and installing it
+
+Two halves, and only one of them belongs to the repository. **Enablement is
+per-repository**: an `extraKnownMarketplaces` + `enabledPlugins` stanza in
+`.claude/settings.json`, declaring the plugin for everyone who works there.
+**Installation is per-machine — or, in the cloud, per-environment**: the
+marketplace registration and the plugin's bytes land in `~/.claude` even when
+the install is asked for project scope. A repository can declare a plugin; it
+can never carry one, and a repository declaring a plugin nothing has installed
+runs without it and gives no sign of that.
+
+On a laptop the second half is a once-per-machine `claude plugin install`. In
+a Claude Code cloud session it is the environment's Setup script, the only
+writer that runs before the plugin scan: a cloud container's
+`hasTrustDialogAccepted` is permanently false, and the stanza's marketplace
+half is read only when it is true.
 
 [docs/bootstrapping-a-repository.md](docs/bootstrapping-a-repository.md) has
 the stanza to copy, the two names that are easy to get wrong, the three ways
-to write it into a repository, and how to tell whether it actually loaded.
-`python3 scripts/stanza.py` prints the same stanza, derived from the
-manifests, and `python3 scripts/stanza.py --write <repo>` merges it into
-another checkout.
+to write it into a repository, the setup script with its load-bearing
+verification line, and how to tell whether it actually loaded — including the
+two readers that look like checks and are not. `python3 scripts/stanza.py`
+prints the same stanza, derived from the manifests, and `python3
+scripts/stanza.py --write <repo>` merges it into another checkout.
+
 ## Portability
 
 The same tree is read by more than one harness:
