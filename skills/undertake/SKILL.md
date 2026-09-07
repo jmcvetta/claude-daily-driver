@@ -1,9 +1,10 @@
 ---
 name: undertake
 description: >-
-  This skill should be used whenever a piece of work is being taken from its
-  description to a pull request ready for review — including when the user says
-  "/undertake", "undertake #34", "take #7", "work on issue 12", "start on
+  This skill should be used whenever a GitHub issue, or a task this skill is
+  explicitly invoked on, is being taken from its description to a pull request
+  ready for review — including when the user says "/undertake", "undertake #34",
+  "undertake adding a retry loop", "take #7", "work on issue 12", "start on
   that issue", "let's build #4", or "implement #191" — and on Claude's own
   move from reading an issue to writing code for it. Two things fire it: an
   issue handed over to be worked on, or an explicit invocation of this skill.
@@ -55,8 +56,9 @@ The sequence
 0 — An issue, where there is none
 ---------------------------------
 
-Skipped where the invocation names an issue, which is the common case. Where
-it does not, this step is what supplies one, and the nine after it are
+Skipped where an issue is already in hand — handed over in the request, which
+is the common case, whether or not this skill was named. Where there is none,
+this step is what supplies one, and the nine after it are
 unchanged: what would otherwise happen is a branch, a review and a merge with
 no record of why any of it was wanted, and a pull request body with nothing to
 close.
@@ -196,10 +198,10 @@ not true.
 Where it stops and waits
 ========================
 
-Autonomy is the point, so each pause has to earn itself. Three stop the
-sequence; the ones that stop it to *ask* are the ambiguous issue, the request
-too vague to write one for, and the failing approach. A blocked issue and a
-running check stop it to report, and wait on something other than an answer.
+Autonomy is the point, so each pause has to earn itself. Five stop the
+sequence. Three stop it to *ask* — the ambiguous issue, the request too vague
+to write one for, and the failing approach. A blocked issue and a running check
+stop it to report, and wait on something other than an answer.
 
 - **A blocked issue, an issue whose intent is genuinely ambiguous, or a
   request too vague to write an issue for.** The constitution forbids guessing

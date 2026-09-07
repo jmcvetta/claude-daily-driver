@@ -93,9 +93,13 @@ tests the plumbing rather than the description. `02` names the skill in prose
 on work with no issue: the description is the only thing saying an issue is
 optional, so a drift back to requiring one fails here and nowhere else. `03` is
 `Implement #191.` — the half of the register that predates step 0, and the half
-a description rewritten around the invocation alone would silently drop. `04`
-is the no-fire row, the same retry loop as `01` and `02` with neither an issue
-nor an invocation.
+a description rewritten around the invocation alone would silently drop.
+
+Two no-fire rows, one against each way in. `04` is the same retry loop as `01`
+and `02` with neither an issue nor an invocation. `05` is the mood — `What does
+#191 say?`, an issue named and nothing assigned — which is the row that matters
+most here, because step 0 is what widened the description and a widened
+description is answered by asking what it now sweeps in.
 
 `constitution/` is not a trigger-accuracy suite: it is the live half of the
 constitution's own test, described under "Testing the constitution" in the
@@ -121,8 +125,9 @@ the same subject matter, arriving as a question rather than as an assignment:
 - *"What did the reviewer say about the retry loop?"* is a question. The
   review comments `review-cycle` exists to answer are the very thing being
   asked about, and nothing should fire.
-- *"What does #191 say?"* is the same shape for `undertake`, whose register is
-  a verb plus an issue reference and never the verb alone.
+- *"What does #191 say?"* is the same shape for `undertake`, which fires on an
+  issue handed over to be worked on or on being named for a task — and on
+  neither when the issue is only being asked about.
 
 Against a mood there is no positive counterpart to assert, so those rows use
 `expected_skill: none` as their ground truth and carry the distractor alone.
@@ -467,7 +472,7 @@ criteria are checked, so equal values mean a turn that uses its budget is killed
 as a TIMEOUT before it can be graded. The headroom is the difference.
 
 `run_limits` caps turns and wall clock per task, but nothing caps the bill. The
-34 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
+35 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
 and the fire half stops the moment the skill fires. `review-depth` is not: its six fire
 cases each dispatch a real reviewer panel over a real diff, five times, in the
 `with-plugin` arm. The `bare` arm is cheaper but not free: it has no `review`
