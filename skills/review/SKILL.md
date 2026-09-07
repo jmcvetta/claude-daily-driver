@@ -110,16 +110,11 @@ first that matches:
    if it lives under `docs/planning/` or `docs/proposals/`, or its basename is
    `README.md` or `CLAUDE.md` anywhere.
 2. **Docs-only** — every path ends in `.md`, `.txt` or `.rst`, or is `LICENSE`.
-   A dependency manifest is never docs-only however it is spelled:
-   `requirements.txt` and `constraints.txt` are manifests wearing a `.txt`,
-   and they belong in Code.
 3. **Code** — anything else.
 
-Test paths get no bucket of their own. They would fall through to Code in any
-case, and a bucket that changes no answer is a rule to maintain for nothing —
-but the intent is worth stating: tests sit with code rather than with docs. A
-test that asserts the bug passes, and nothing about it being a test file makes
-that cheaper to miss.
+Tests sit with code rather than with docs, and get no bucket of their own
+because they fall through to Code already: a test that asserts the bug passes,
+and nothing about it being a test file makes that cheaper to miss.
 
 **Size.** Changed lines across non-generated files, ignoring lockfiles and
 vendored trees. The thresholds below are a prior, not a rule: a thirty-line
@@ -127,49 +122,53 @@ change to a lock ordering earns the verified level, and an eight-hundred-line
 rename does not.
 
 **The sensitive touch.** If any changed path or hunk touches the list below,
-the review runs at `max`. It is a **floor on the level**, applied after the
-table and on every non-planning route — so size cannot lower it and the
-docs-only row cannot dodge it. This is the judgement a human forgets to make,
-made from the diff instead.
+the diff takes the Verified route whatever its size. This is the judgement a
+human forgets to make, made from the diff instead. The five marked **§** are
+the security-shaped half, which the analysis treats differently.
 
-- authentication, authorization, sessions, tokens, passwords, OAuth, SAML, JWT
-- cryptography — ciphers, hashing, TLS, certificates, key material, randomness
-- IAM and access policy, in any form: `*.tf` policy or role documents,
+- **§** authentication, authorization, sessions, tokens, passwords, OAuth,
+  SAML, JWT
+- **§** cryptography — ciphers, hashing, TLS, certificates, key material,
+  randomness
+- **§** IAM and access policy, in any form: `*.tf` policy or role documents,
   security groups, Kubernetes RBAC, bucket policies
-- database migrations and schema changes
-- CI and release configuration under `.github/workflows/` — those files hold
-  tokens and permissions
-- request boundaries: handlers, routes, controllers, deserialization,
+- **§** CI and release configuration under `.github/workflows/` — those files
+  hold tokens and permissions
+- **§** request boundaries: handlers, routes, controllers, deserialization,
   file-path and URL handling
-- dependency **manifests** — a dependency added, removed, or a constraint
-  changed. A lockfile that moved because a manifest moved is covered by the
-  manifest; a lockfile-only refresh is not a sensitive touch and routes on size
-  like anything else. There is no decision in a regenerated lockfile, and `max`
-  over one is the most expensive cell the built-in has, spent on nothing.
+- database migrations and schema changes
+- dependency manifests, and any lockfile change that moves a dependency's
+  version — a `--upgrade-package` bump with no manifest movement is a
+  supply-chain decision wearing a lockfile. A lockfile regenerated without
+  moving a version carries no decision at all, and Size ignores lockfiles, so
+  it is a Skim.
 
-**Take the first row that matches**, the way the kind buckets are read, then
-apply the sensitive touch as a floor on top of it.
+**Take the first row that matches**, the way the kind buckets are read.
 
 | Route | When | The analysis |
 | ----- | ---- | ------------ |
 | **Planning** | planning-class | `planning-fitness-reviewer`, under `references/planning-review.md`. No `/code-review`. |
-| **Verified** | a sensitive touch, on any non-planning route, at any size | `/code-review max` |
+| **Verified** | a sensitive touch | `/code-review max`, plus `/security-review` on the **§** half |
 | **Skim** | docs-only, or under ~50 changed lines | `/code-review low` |
 | **Standard** | code, under ~800 changed lines | `/code-review medium` |
-| **Full** | over ~800 changed lines | `/code-review xhigh` |
+| **Full** | over ~800 changed lines, or the user asked for depth | `/code-review xhigh` |
 
-Skim is `low` deliberately, and `low` caps findings hard — around four on most
-families. That is proportionate to fifty lines, or to prose. A small diff whose
-stakes exceed its size is exactly what the *prior, not a rule* clause above is
-for: name a higher level by hand rather than widening the row.
+Skim is `low` deliberately: `low` caps findings hard — around four on most
+families — which is proportionate to fifty lines, or to prose. Where the row
+the table picks is wrong for the diff in front of you, **raise the level
+yourself and say so on the pre-flight line, with the reason.** The case that
+needs it most is nine hundred lines of `.rst`, which Skim catches before Full
+ever sees it. That judgement is the *prior, not a rule* clause being used, not
+overridden.
 
 Planning-class is decided first and is never raised. A rollout plan that
 discusses IAM is still prose, and `max` over nine hundred lines of it buys
 findings about a document with no code in it.
 
-The user may still name a depth, and a named depth wins — but it changes the
-**level**, not the route. "Give this plan a full review" is still a planning
-review.
+A depth the user names wins over the size rows, and cannot go under the
+Verified route. "Just skim it" on a diff that widens a workflow token is
+precisely the judgement this skill is here to make on their behalf; say that
+the sensitive touch is holding the level, and review it at `max`.
 
 
 The analysis
@@ -184,26 +183,22 @@ target:
 - **PR mode** — `/code-review <level> <PR number>`
 - **Local mode** — `/code-review <level> <$BASE_BRANCH>`
 
-Name the level, because `/code-review` "reuses the level you typed last" by its
-own description, so an unnamed level makes the review depend on what happened
-earlier in the session. Name the target, because unnamed it reviews the
-*working* diff — which on a branch whose work is committed is empty, and an
-empty diff comes back clean. That is the same failure as a missing reviewer,
-reached by a different route.
+Name the level, because `/code-review` reuses the last one typed in the session
+by its own description. Name the target, because unnamed it reviews the
+*working* diff — empty on a branch whose work is committed, and an empty diff
+comes back clean.
 
 Inside this skill `/code-review` is the analysis, not a trigger. The
 description fires this skill when someone reaches for the built-in *instead of*
 reviewing properly; it does not fire on this line.
 
-**What a level buys depends on the session's model family, and the difference
-is large.** `/code-review` resolves a model-family × effort cell — on Sonnet 5
-`medium` is eight angles with an adversarial verification vote, on Opus 5 it is
-a single careful diff pass with neither. `high` is deliberately absent from the
-table above: on `claude-opus-5` it resolves to *the same cell* as `medium`, so
-a tier that selected it would be indistinguishable from Standard on this
-repository's own model. `low`, `medium`, `xhigh` and `max` are distinct on
-every family, and `max` is the only one that verifies on all of them — which is
-why the sensitive touch selects it and nothing else does.
+**What a level buys depends on the session's model family**, because
+`/code-review` resolves a model-family × effort cell: on Sonnet 5 `medium` is
+eight angles with an adversarial verification vote, on Opus 5 a single careful
+diff pass with neither. `high` is absent from the table above because on
+`claude-opus-5` it resolves to the same cell as `medium`. `low`, `medium`,
+`xhigh` and `max` are distinct on every family, and `max` is the only one that
+verifies on all of them — which is why the sensitive touch selects it.
 
 One known gap at Standard, worth carrying while #35 is open: per `0001` the
 built-in's language-pitfall angle — the nearest thing it has to a
@@ -212,14 +207,27 @@ yourself for discarded returns, bare `except: pass` and errors logged in place
 of being handled. Whether that deserves an agent is #35's question, not this
 skill's.
 
-**On the security-shaped half of the sensitive list** — auth, crypto, IAM,
-`.github/workflows/`, request boundaries — also run the built-in
-**`/security-review`**. `max` buys verification, not a threat model, and those
-are different purchases. The rule that used to forbid this was an argument
-about duplicating `security-reviewer`, which no longer runs; with the panel
-dormant there is nothing left to duplicate. Migrations and dependency manifests
-get `max` alone — their risk is data loss and supply chain, which a threat-model
-pass does not address.
+On the **§** half of the sensitive list, also run the built-in
+**`/security-review`**. The two do not overlap: per `0001` the angle bundles
+`/code-review` runs are correctness, cleanup, altitude and conventions, with no
+security angle at any level, while `/security-review` hunts injection, authz
+bypass, crypto, deserialization and data exposure. `max` buys verification, not
+a threat model. Migrations and dependency manifests get `max` alone — data loss
+and supply chain are outside every category it hunts.
+
+Two constraints, because it is not parameterised the way `/code-review` is.
+**It takes no target**: it diffs the checked-out branch against `origin/HEAD`
+and nothing else. So run it only where the diff under review *is* the checked-
+out branch — not when a pull request number was supplied for some other branch,
+and not where `origin/HEAD` was unresolvable in Pre-flight, since there it
+reads an empty diff and reports clean. Skip it in a stated line rather than
+silently.
+
+**Merge its findings into the one list.** It returns its own report, graded
+HIGH / MEDIUM / LOW: map those onto 🔴 / 🟡 / 🟢, de-duplicate against
+`/code-review`'s findings rather than appending, and tag the survivors
+`[obvious]` / `[judgment]` like any other. Two reports handed over whole is a
+longer list that dilutes the real finding.
 
 See [`docs/decisions/0001-built-in-review-surface.md`](../../docs/decisions/0001-built-in-review-surface.md)
 for the full matrix and the CLI version it was read from. Re-confirm it when
@@ -248,7 +256,8 @@ correctness reviewer reading prose has nothing to say about the first.
 Severity
 ========
 
-Classify every finding — the built-in reports its findings ranked, not graded.
+Classify every finding. `/code-review` ranks rather than grades, and
+`/security-review` grades on a scale of its own; both land here.
 Calibrate to the file type: an unhandled error in runtime code is more severe
 than an imprecise instruction in a prompt, because the agent executing the
 prompt has judgement.

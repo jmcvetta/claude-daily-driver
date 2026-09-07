@@ -76,8 +76,10 @@ or none, does not have. The routing table names `low`, `medium`, `xhigh` and
 `max` and never `high`, because on `claude-opus-5` `high` and `medium` resolve
 to the same cell; a sensitive touch — auth, crypto, IAM, migrations,
 `.github/workflows/`, request boundaries, dependency manifests — selects `max`
-at any diff size, which is the only cell that verifies on every model family.
-See [`docs/decisions/0001-built-in-review-surface.md`](docs/decisions/0001-built-in-review-surface.md)
+at any diff size, the only cell that verifies on every model family, and adds
+the built-in `/security-review` on the security-shaped half of that list, since
+`/code-review` runs no security angle at any level. See
+[`docs/decisions/0001-built-in-review-surface.md`](docs/decisions/0001-built-in-review-surface.md)
 for where those cells come from.
 
 Of the reviewer panel `review` used to dispatch, only
