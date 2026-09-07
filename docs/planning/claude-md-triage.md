@@ -118,9 +118,17 @@ says so.
 - **#18, `pr-threads`** — inherits lines 238–277: the review-tool workflow,
   the thread-reply and minimise recipes, and the node-ID formats
   (`IC_kwDO…`, `PRRT_…`) those recipes depend on.
-- **#19, `review`** — inherits the Terraform review checklist (331–336), and
-  should expect the language-style references to be its lookup tables rather
-  than duplicating them.
+- **#19, `review`** — **amended in part by
+  [`decisions/0003`](../decisions/0003-repo-local-review-rules.md).** The
+  Terraform review checklist (331–336) still goes where the
+  `Terraform/OpenTofu` row above sends it — a language-style reference, loaded
+  when Terraform is open and costing nothing when it is not. What 0003 forbids
+  is the other reading of "inherits": it must not land in `review`'s own
+  guidelines, which every agent receives on every review whatever the diff is
+  written in. That is the always-on placement the Yor and Checkov rules were
+  removed from. The rest of the entry stands — `review` should expect the
+  language-style references to be its lookup tables rather than duplicating
+  them.
 - **#20, issue dependencies** — nothing from `CLAUDE.md`. It is new
   capability.
 - **#21, bootstrap** — nothing from `CLAUDE.md`.
