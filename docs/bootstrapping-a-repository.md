@@ -323,10 +323,11 @@ a position to ask it.
 ## Measurements
 
 Established against Claude Code 2.1.263 by running the CLI, rather than by
-reading the documentation: with a scratch `HOME` and, for the rows about what a
-session loads, headless `claude -p` against a scratch `CLAUDE_CONFIG_DIR`.
+reading the documentation: on the laptop with a scratch `HOME` and, for the
+rows about what a session loads, headless `claude -p` against a scratch
+`CLAUDE_CONFIG_DIR`. The cloud rows are real cloud sessions, and are marked.
 
-On 2026-09-06, on the laptop:
+On 2026-09-06:
 
 | Question | Answer |
 | -------- | ------ |
@@ -336,7 +337,7 @@ On 2026-09-06, on the laptop:
 | …after `claude plugin install` once, same repository | plugin loaded, skill present, scope `user` |
 | …and in a repository with no stanza after that install | still loaded — the install is per-machine |
 | Stanza in an **untrusted** folder, nothing cached | ignored entirely, silently |
-| Stanza in a Claude Code **cloud session** | not loaded; `hasTrustDialogAccepted: false`, nothing cached |
+| Stanza in a real Claude Code **cloud session** | not loaded; `hasTrustDialogAccepted: false`, nothing cached |
 | `claude plugin list` in the stanza-only repository | `No plugins installed` |
 | `claude plugin details daily-driver@claude-daily-driver` in that repository | full component inventory, though nothing had loaded |
 | The same command outside it | `not found` |
