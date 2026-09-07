@@ -21,7 +21,7 @@ hook — plus skills that fire on activity:
 | `pr-threads` | The review-thread lifecycle for any reviewer: reply with a verdict, resolve, re-resolve a repeat finding, never leave a thread open silently — plus the comment minimisation the GitHub MCP does not expose. |
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
 | `review` | Reviews a branch or pull request with a panel of reviewer agents, infers how deep to go from the diff itself, walks the findings through with you, and posts the result in verse. |
-| `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. What survives the gate is intent, a real trade-off, scope, and any confirmation another skill requires. |
+| `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. What survives the gate is intent, a real trade-off, scope, and any confirmation another rule requires. |
 
 Three PR skills rather than one because skill names are flat within a plugin,
 so siblings can be triggered independently: a decision to rewrite a PR body
@@ -80,9 +80,9 @@ and several hacks, which costs a round trip to answer with the standard that
 was never in doubt. The rule it applies is the constitution's own: correct
 beats quick, no workarounds. The boundary is the interesting half — intent, a
 genuine trade-off and scope still come to you, an offer to do *more* is a scope
-question and scope is yours, and no confirmation another skill requires is
-waived. Anything irreversible or destructive is outside the gate altogether,
-where the non-negotiables already govern it.
+question and scope is yours, and no confirmation another rule requires is
+waived. Anything irreversible, destructive or outward-facing is outside the
+gate altogether, where the non-negotiables already govern it.
 
 ## Layout
 

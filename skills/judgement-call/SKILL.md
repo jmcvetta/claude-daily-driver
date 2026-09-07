@@ -31,8 +31,9 @@ Before asking the user to choose, answer one question first:
 
 > **Can I make this judgement myself?**
 
-Where the answer is yes, make it, say which way it went in a line, and carry
-on. There was no question — only a decision waiting to be taken.
+The rule below answers it in most cases. Where the answer is yes, make the
+call, say which way it went in a line, and carry on. There was no question —
+only a decision waiting to be taken.
 
 The moment arrives from either direction: a menu about to be offered, or one
 the user has already offered — "properly, or a TODO?" is the same choice, and
@@ -50,7 +51,7 @@ in advance is what makes most of these questions answerable without asking:
 
 Where that rule picks a winner, there is nothing to ask. It is the constitution
 restated at the moment of choosing — *correct beats quick*, *I abjure
-workarounds*, *simplicity is beautiful* — and those rules are not a menu item.
+workarounds*, *simplicity is beautiful* — and those rules are not menu items.
 
 
 The tell
@@ -66,10 +67,11 @@ answer:
 | "leave a TODO" | the work, deferred onto whoever reads it next |
 | "skip the test" | the constitution's non-negotiable, put to a vote |
 | "keep the existing pattern (it's wrong)" | a bug, offered as a style choice |
-| "or I can do it properly" | the answer |
 
-Offering that list is not deference. It asks the user to defend the standard,
-and buys nothing the first turn could not have settled.
+Where such a menu ends "…or I can do it properly", that last item is the
+answer and the rest was never a question. Offering the list is not deference:
+it asks the user to defend the standard, and buys nothing the first turn could
+not have settled.
 
 
 What still goes to the user
@@ -95,10 +97,10 @@ Irreversible, destructive and outward-facing actions sit outside this gate
 entirely. The rules governing them — the constitution's non-negotiables among
 them — are untouched by it.
 
-Its failure mode is the mirror of the one it exists to fix: deciding something
-that was the user's to decide, quietly, and reporting it as done. When the
-gate is genuinely close, ask — the cost of a needless question is one exchange,
-and the cost of a silently wrong assumption is the work.
+This skill's failure mode is the mirror of the one it exists to fix: deciding
+something that was the user's to decide, quietly, and reporting it as done.
+When the gate is genuinely close, ask — the cost of a needless question is one
+exchange, and the cost of a silently wrong assumption is the work.
 
 
 After deciding
@@ -109,6 +111,7 @@ in the reply or the commit message where it belongs, and then continue. The
 options not taken are not interesting; the decision is, and it is reviewable
 precisely because it was written down rather than negotiated.
 
-`review` already splits its findings `[obvious]` / `[judgment]` for the same
-reason: an obvious finding is applied, a judgement call is discussed. This is
-that taxonomy one level up, applied to the question before it is asked.
+`review` already splits its 🔴 and 🟡 findings `[obvious]` / `[judgment]` for
+the same reason: an obvious finding goes straight into the fix plan, a
+judgement call is discussed first. This is that taxonomy one level up, applied
+to the question before it is asked.
