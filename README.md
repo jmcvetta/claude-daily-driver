@@ -23,7 +23,7 @@ hook — plus skills that fire on activity:
 | `session-title` | Names the session in the Claude web and mobile lists: a forty-character budget, chosen rather than measured, `#123 shortened issue title` while an issue is in hand, a short noun phrase otherwise. |
 | `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. What survives the gate is intent, a real trade-off, scope, and any confirmation another rule requires. |
 | `review-cycle` | One round on a pull request: wait for CI on the head, run the built-in `/code-review` at a level it names, answer and resolve every finding, then decide from the reviewed head SHA whether a later push has earned a second round. |
-| `undertake` | Takes an issue from its description to a pull request ready for review: the order of the nine steps, the gates between them, and the ready gate the sequence ends on. Invokes the skills above, directly or through `pr` and `review-cycle`. |
+| `undertake` | Takes a piece of work from its description to a pull request ready for review, opening the issue first where there is not one yet: the order of the steps, the gates between them, and the ready gate the sequence ends on. Invokes the skills above, directly or through `pr` and `review-cycle`. |
 
 Four PR skills rather than one because skill names are flat within a plugin,
 so siblings can be triggered independently: a decision to rewrite a PR body

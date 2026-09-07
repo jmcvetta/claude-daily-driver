@@ -1,0 +1,27 @@
+task_id: undertake-05-neg-what-does-the-issue-say
+description: >-
+  The mood row. An issue, named, with no assignment attached — the same subject
+  matter as `03` arriving as a question rather than as work handed over. See
+  "The two moods" in the README: there is no sibling that should have fired
+  here, so the distractor carries the row alone.
+tags: [trigger-accuracy, undertake, no-fire]
+
+initial_prompt: "What does #191 say?"
+
+agent:
+  # See 01: `disallowed_tools`, not `allowed_tools`, is what stops a denied read
+  # of `skills/undertake/SKILL.md` scoring as a fire.
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`undertake` does not fire on an issue merely being asked about"
+    expected_skill: none
+    skill_name: undertake
+    # A misfire has already lost the row, so there is nothing left to pay for.
+    stop_early: {}
