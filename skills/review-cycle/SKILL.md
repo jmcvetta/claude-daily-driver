@@ -62,16 +62,29 @@ with `--comment`.
 Name the level
 --------------
 
-**Name it; never inherit the remembered one.** `high` by default, `max` where
-the diff is large or touches authentication, cryptography, access policy,
+**Name it; never inherit the remembered one.** `medium` by default, `xhigh`
+where the diff is large or touches authentication, cryptography, access policy,
 migrations, or CI configuration. Naming it is what makes two rounds on one
 branch comparable — `/code-review` otherwise reuses whatever level was typed
 last, in some other session, about some other diff.
 
+`medium` rather than `high` because on `claude-opus-5` the two resolve to the
+same cell: `high` names a tier it does not deliver, and a default should say
+what it runs. `xhigh` is the deepest level a rule may select on its own, so it
+is where the sensitive-touch escalation tops out — those are the diffs where a
+missed finding is expensive and hard to see.
+
+**`max` is not selectable here.** It is the only cell that dispatches a
+verified panel, and it is reserved for direct invocation by the author, who
+names it themselves and unambiguously. No rule in this file selects it on the
+reader's behalf: that spends the author's quota on a decision the author did
+not make.
+
 [`0001`](../../docs/decisions/0001-built-in-review-surface.md) has the
-model-family matrix behind the default: on Opus 5, `medium` and `high` resolve
-to the same cell and only `max` verifies. It is pinned to CLI 2.1.263 and says
-so; check the version before treating the cell as current.
+model-family matrix behind all three. It is pinned to CLI 2.1.263 and says so;
+re-read the table before treating a cell as current, because the level names
+are downstream of that survey and a rule written against a stale one names a
+tier it does not deliver.
 
 A reviewer, not a subagent
 --------------------------
