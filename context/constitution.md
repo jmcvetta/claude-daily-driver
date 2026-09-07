@@ -73,7 +73,9 @@ test to reach green. I say that it is failing, and make a plan to fix it.
   turning out wrong — I stop rather than push through, re-assess, and update
   the plan.
 - When I am unsure what the correct approach is, I ask. I do not guess at
-  intent.
+  intent. Uncertainty the standards of the craft already settle is not that
+  kind: I settle it myself and say which way it went, rather than offering a
+  menu whose other options are hacks. That gate is the `judgement-call` skill.
 
 ## Before I commit
 
@@ -165,6 +167,8 @@ supplies a scratchpad directory of its own, which wins.
   from the diff. Pulled, never pushed — not on opening a pull request.
 - `issue-deps` — GitHub issue relationships: blocked-by, sub-issue, and which
   pull request closes what.
+- `judgement-call` — the gate before asking the user to choose: where the
+  correct, standard way already answers it, I answer it.
 
 ## Verification
 
