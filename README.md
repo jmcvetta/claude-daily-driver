@@ -20,6 +20,7 @@ hook — plus skills that fire on activity:
 | `pr-body`  | The body structure: a one-line summary under 85 characters, a salutation in verse, an executive summary, as much engineering detail as fits, and the `Issues` section that closes it. |
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
 | `session-title` | Names the session in the Claude web and mobile lists: a forty-character budget, chosen rather than measured, `#123 shortened issue title` while an issue is in hand, a short noun phrase otherwise. |
+| `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. What survives the gate is intent, a real trade-off, scope, and any confirmation another rule requires. |
 
 Three PR skills rather than one because skill names are flat within a plugin,
 so siblings can be triggered independently: a decision to rewrite a PR body
@@ -29,16 +30,16 @@ is two extra descriptions in context.
 Each skill carries its own trigger register: the slash command where the skill
 has one, natural phrasings — "open a PR" for `pr`, "fix the PR title" for
 `pr-title`, "rewrite the PR description" for `pr-body`, "this is blocked by
-#123" for `issue-deps`, "rename this session" for `session-title` — and
-Claude's own tool calls. The PR skills split
+#123" for `issue-deps`, "rename this session" for `session-title`, "just
+decide" for `judgement-call` — and Claude's own tool calls. The PR skills split
 `mcp__github__create_pull_request` and `mcp__github__update_pull_request`
 between them, `pr-title` on a call that sets a `title`, `pr-body` on one that
 sets a `body`, `pr` on a create or on an update wider than either alone, with
 `gh pr create` / `gh pr edit` as a fallback on a harness that still reaches
 for them; `issue-deps` takes the GitHub MCP's sub-issue and issue-read tools;
-`session-title` takes
-`mcp__Claude_Code_Remote__set_session_title`. That last register is the point:
-a convention that only fires when a human types a command quietly stops
+`session-title` takes `mcp__Claude_Code_Remote__set_session_title`; and
+`judgement-call` takes `AskUserQuestion`. Those tool-call registers are the
+point: a convention that only fires when a human types a command quietly stops
 applying as more of the work runs without one.
 
 Naming the MCP tools is also a stronger trigger than naming `gh pr create` is —
@@ -64,6 +65,18 @@ The reviewer panel `review` dispatched is still in [`agents/`](agents/) —
 `logic-reviewer`, `architecture-reviewer`, `security-reviewer`,
 `planning-fitness-reviewer` — dormant rather than deleted, and none of them
 pins a model. A pin ages into a cost decision nobody revisits.
+
+`judgement-call` is the odd one out: every other skill here fires on work
+about to be done, and this one fires on a question about to be asked. Its register is
+`AskUserQuestion`, the sentences that stand in for it, and your own "just
+decide", because the thing it exists to stop is a menu of one correct option
+and several hacks, which costs a round trip to answer with the standard that
+was never in doubt. The rule it applies is the constitution's own: correct
+beats quick, no workarounds. The boundary is the interesting half — intent, a
+genuine trade-off and scope still come to you, an offer to do *more* is a scope
+question and scope is yours, and no confirmation another rule requires is
+waived. Anything irreversible, destructive or outward-facing is outside the
+gate altogether, where the non-negotiables already govern it.
 
 ## Layout
 
@@ -96,7 +109,8 @@ claude-daily-driver/
 │   ├── issue-deps/
 │   │   ├── SKILL.md
 │   │   └── scripts/        plugin runtime, owned by the skill beside it
-│   └── session-title/SKILL.md
+│   ├── session-title/SKILL.md
+│   └── judgement-call/SKILL.md
 └── template/.claude/       copied into a repository to enable the plugin
 ```
 
