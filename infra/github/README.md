@@ -28,9 +28,8 @@ exclusion below.
 - **`github_workflow_repository_permissions`** — the default workflow token
   scope, and whether Actions may open a pull request (the release job's
   default-token fallback needs the latter)
-- **`github_branch_protection`** on `master` — required `CI Success` check
-  (strict), linear history, conversation resolution, no force pushes or
-  deletions
+- **`github_branch_protection`** on `master` — required `CI Success` check,
+  linear history, conversation resolution, no force pushes or deletions
 
 ## The `CI Success` Check
 
@@ -46,19 +45,24 @@ touching `branch_protection.tf`.
 Three consequences worth knowing:
 
 - A pull request whose branch predates the workflow will not report the check
-  and cannot merge until it picks up `master`. `strict = true` already
-  requires that.
+  at all, and must pick up `master` before it can merge. Nothing forces that:
+  `strict = false`, for the reason `branch_protection.tf` gives — requiring
+  every branch to be up to date re-invalidates every open pull request each
+  time another merges.
 - `enforce_admins = false` leaves an escape hatch for the case where CI
   itself is what is broken.
 - **The release pull request no longer needs that escape hatch.**
   `release-please.yml` authenticates as a GitHub App, which is a distinct
   identity, so `CI Success` reports on the release pull request like any
-  other. It did need it while the release job ran on the default token, in
-  both of that arrangement's eras: until 2026-06-11 GitHub created no
-  workflow runs at all for `github-actions[bot]` pull requests, and since
-  then it creates them but holds them in `action_required` until someone with
-  write access clicks **Approve workflows to run**. Either way `CI Success`
-  sat "expected" on the one pull request whose merge cuts a permanent tag.
+  other. It did need the hatch while the release job ran on the default
+  token: before 2026-06-11 GitHub created no workflow runs at all for
+  `github-actions[bot]` pull requests, so `CI Success` sat "expected"
+  indefinitely on the one pull request whose merge cuts a permanent tag, and
+  `enforce_admins = false` was what let it merge. Since that date the runs
+  are created but held in `action_required` until someone with write access
+  clicks **Approve workflows to run** — which is how #56 merged green without
+  the hatch, and why #59 was filed about the clicking rather than about a
+  stuck check.
 
 `ci.yml` carries no `paths:` filter, and must not grow one. A path-filtered
 workflow does not report a *skipped* check, it reports nothing at all, so a
@@ -70,9 +74,10 @@ enforces that.
 ## The Release Job's Fallback Depends on a Workflow Permission
 
 The release job authenticates as an App and does not take this path. Its
-fallback to `github.token`, which is what runs if the App variables are ever
-cleared, works only while **Settings -> Actions -> General -> Allow GitHub
-Actions to create and approve pull requests** is on. With it off,
+fallback to `github.token` — reached by clearing `RELEASE_BOT_APP_ID`, which
+is the one setting the App step is gated on — works only while **Settings ->
+Actions -> General -> Allow GitHub Actions to create and approve pull
+requests** is on. With it off,
 release-please does all its work, pushes its release branch, and then fails on
 the last call:
 
