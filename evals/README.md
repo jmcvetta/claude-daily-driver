@@ -30,7 +30,7 @@ make evals-plan       # validate every case. Costs ZERO tokens. Do this first.
 make evals-run        # the whole suite, both arms. Costs real money.
 
 make evals-run TASKS='tasks/pr/*.yaml'     # one suite
-make evals-run TASKS='tasks/*/0[56]*.yaml' # just the no-fire half
+make evals-run TASKS='tasks/*/*-neg-*.yaml' # just the no-fire half
 ```
 
 Not part of `make check`. The cases need a live model and this repository's CI
@@ -71,15 +71,18 @@ has two halves, and the second is the one that earns its keep:
   the three does. A suite that only proved a skill fires would be green with
   all three descriptions collapsed into one.
 
-`undertake/` is a trigger-accuracy suite of a different shape: two cases over
-one request, differing only in whether the skill was invoked. Step 0 opens an
-issue for work that has none, which removes the issue reference as the thing
-that distinguishes an undertaking from ordinary work and leaves the invocation
-carrying that weight alone. The pair is what asserts it carries it — the fire
-case and the no-fire case describe the same retry loop, so a description that
-drifts in either direction fails one of them. Its numbering leaves a gap at
-02–04: the `0[56]` in the no-fire glob above is the convention, so a no-fire
-case is numbered into that range rather than after the case before it.
+`undertake/` asks the same question of a skill with two ways in. Step 0 opens
+an issue for work that has none, so an issue reference no longer has to be
+present for the skill to fire — and what fires it is now either an issue handed
+over or the skill named. Three of the four cases are the three ways that can
+go wrong. `01` is the slash command, which resolves the skill by name and so
+tests the plumbing rather than the description. `02` names the skill in prose
+on work with no issue: the description is the only thing saying an issue is
+optional, so a drift back to requiring one fails here and nowhere else. `03` is
+`Implement #191.` — the half of the register that predates step 0, and the half
+a description rewritten around the invocation alone would silently drop. `04`
+is the no-fire row, the same retry loop as `01` and `02` with neither an issue
+nor an invocation.
 
 `constitution/` is not a trigger-accuracy suite: it is the live half of the
 constitution's own test, described under "Testing the constitution" in the
@@ -428,7 +431,7 @@ criteria are checked, so equal values mean a turn that uses its budget is killed
 as a TIMEOUT before it can be graded. The headroom is the difference.
 
 `run_limits` caps turns and wall clock per task, but nothing caps the bill. The
-18 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
+22 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
 and the fire half stops the moment the skill fires. `review-depth` is not: its six fire
 cases each dispatch a real reviewer panel over a real diff, five times, in the
 `with-plugin` arm. The `bare` arm is cheaper but not free: it has no `review`

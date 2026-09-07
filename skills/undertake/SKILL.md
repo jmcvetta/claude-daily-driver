@@ -5,11 +5,12 @@ description: >-
   description to a pull request ready for review — including when the user says
   "/undertake", "undertake #34", "take #7", "work on issue 12", "start on
   that issue", "let's build #4", or "implement #191" — and on Claude's own
-  move from reading an issue to writing code for it. An issue reference is
-  welcome but not required: invoked for work that has no issue yet, the skill
-  opens one at step 0, because tracked work is the point. What is required is
-  the invocation — "implement a retry loop", "build the parser" and "fix this
-  function", said on their own, are ordinary work and must NOT fire it.
+  move from reading an issue to writing code for it. Two things fire it: an
+  issue handed over to be worked on, or an explicit invocation of this skill.
+  The issue is no longer required — an invocation carrying none opens one at
+  step 0 — but one of the two still is. "Implement a retry loop", "build the
+  parser" and "fix this function", with neither an issue nor an invocation,
+  are ordinary work and must NOT fire it.
   Supplies the order of the steps, the gates between them, and the rule that
   keeps the branch from being reviewed twice. Not for merely reading,
   summarising or discussing an issue, since "what does #191 say" is a question
@@ -18,10 +19,11 @@ description: >-
 
 # Undertake
 
-An issue in, a pull request ready for review out. Nine steps, and this skill
-is the order they run in. Where the work arrives with no issue, a step 0 opens
-one first — an issue is what this skill takes in, and untracked work is what
-running without one leaves behind.
+An issue in, a pull request ready for review out. Ten steps, and this skill is
+the order they run in — the first of them, step 0, skipped in the common case
+where the work already has an issue. Where it does not, step 0 opens one: an
+issue is what this skill takes in, and untracked work is what running without
+one leaves behind.
 
 It is an orchestrator, in the same shape as `pr`: **it invokes, it does not
 restate**. The title convention lives in `pr-title`, the pull request itself in
@@ -302,9 +304,10 @@ Where it stops and waits
 ========================
 
 Autonomy is the point, so each pause has to earn itself. Four stop the
-sequence; the ones that stop it to *ask* are the ambiguous issue, the
-trade-off, and the failing approach. A blocked issue and a running check stop
-it to report, and wait on something other than an answer.
+sequence; the ones that stop it to *ask* are the ambiguous issue, the request
+too vague to write one for, the trade-off, and the failing approach. A blocked
+issue and a running check stop it to report, and wait on something other than
+an answer.
 
 - **A blocked issue, an issue whose intent is genuinely ambiguous, or a
   request too vague to write an issue for.** The constitution forbids guessing
@@ -334,11 +337,11 @@ Non-goals
   it. "What does #191 say", "summarise #191", "is #191 still relevant" are
   questions; answer them, and do not cut a branch.
 - **Does not fire on work it was not asked to undertake.** "Implement a retry
-  loop", said on its own, is ordinary work, and running ten steps and a review
-  panel over it would be the heaviest possible way to write ten lines. What
-  separates the two is the invocation, not the issue reference: invoked, the
-  skill tracks the work at step 0 and runs; not invoked, it stays out of the
-  way.
+  loop", with neither an issue nor an invocation, is ordinary work, and running
+  ten steps and a review panel over it would be the heaviest possible way to
+  write ten lines. Step 0 makes the issue reference optional; it does not make
+  it the only thing that was ever doing the separating. An issue handed over,
+  or this skill named — either fires it, and neither is ordinary work.
 - **Does not open an issue for anything but the work in hand.** Step 0 tracks
   what was asked for. A bug noticed in passing is worth reporting to the user;
   it is not this run's second issue.

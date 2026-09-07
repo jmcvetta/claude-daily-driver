@@ -1,8 +1,9 @@
-task_id: undertake-05-neg-untracked-ordinary-work
+task_id: undertake-04-neg-untracked-ordinary-work
 description: >-
-  The same work as 01, said without the invocation. Step 0 makes an issue
-  optional; it does not make the skill fire on every request. This is the half
-  of the pair that keeps ten steps and a review panel off a ten-line change.
+  The same work as 01 and 02, with neither an issue nor an invocation. Step 0
+  makes the issue optional; it does not make the skill fire on every request.
+  This is the row that keeps ten steps and a review panel off a ten-line
+  change.
 tags: [trigger-accuracy, undertake, no-fire]
 
 initial_prompt: "Add a retry loop to the release script."
