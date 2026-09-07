@@ -173,30 +173,87 @@ They fail for different reasons and deserve to fail separately: the first
 tests this plugin, the second tests an assumption about the harness that a
 future release could withdraw without telling anyone.
 
-## Enabling it, and installing it
+## Installing it
 
-Two halves, and only one of them belongs to the repository. **Enablement is
-per-repository**: an `extraKnownMarketplaces` + `enabledPlugins` stanza in
-`.claude/settings.json`, declaring the plugin for everyone who works there.
-**Installation is per-machine — or, in the cloud, per-environment**: the
-marketplace registration and the plugin's bytes land in `~/.claude` even when
-the install is asked for project scope. A repository can declare a plugin; it
-can never carry one, and a repository declaring a plugin nothing has installed
-runs without it and gives no sign of that.
+Installation is **per-machine — or, in the cloud, per-environment**. The
+plugin's bytes land in `~/.claude` and are read from there; a repository can
+point at a plugin, it can never carry one.
 
-On a laptop the second half is a once-per-machine `claude plugin install`. In
-a Claude Code cloud session it is the environment's Setup script, the only
-writer that runs before the plugin scan: a cloud container's
-`hasTrustDialogAccepted` is permanently false, and the stanza's marketplace
-half is read only when it is true.
+On a laptop that is two commands, once per machine:
+
+```sh
+claude plugin marketplace add jmcvetta/claude-daily-driver
+claude plugin install daily-driver@claude-daily-driver
+```
+
+In the cloud there is no interactive `/plugin` to reach for and no shell that
+runs before the session does, so the same two commands go in the
+environment's **Setup script**, which is the one writer that beats the plugin
+scan.
+
+### A cloud environment, in five steps
+
+All of it in the Claude Code web UI at [claude.ai/code][web]. The environment
+dialog is behind the cloud icon above the message box: hover an environment,
+then the gear. There is no settings page and no direct URL.
+
+[web]: https://claude.ai/code
+
+1. **Create the environment.** Point it at whichever repository you want the
+   plugin available in — it is bootstrapped once, for every repository it
+   later opens, so the choice is not load-bearing.
+
+2. **Give it this Setup script.**
+
+   ```bash
+   #!/bin/bash
+   # CACHEBUST: 1
+   #
+   # The environment snapshots itself when this script succeeds, keyed on the
+   # script's text, and later sessions skip it. Bump the number above to bust
+   # that cache and reinstall the plugin at its current release.
+   claude plugin marketplace add jmcvetta/claude-daily-driver
+   claude plugin install --yes daily-driver@claude-daily-driver
+
+   # Both commands can return 0 while leaving the plugin uncached, so check
+   # what the loader actually reads.
+   grep -qF '"daily-driver@claude-daily-driver"' ~/.claude/plugins/installed_plugins.json &&
+     compgen -G ~/.claude/plugins/cache/claude-daily-driver/daily-driver/*/.claude-plugin/plugin.json >/dev/null
+   ```
+
+   No `|| true`. A script that exits zero on a failed install snapshots the
+   failure, and every later session then starts with no plugin and no sign of
+   it; exiting non-zero fails the session, builds no snapshot, and the next
+   attempt tries again.
+
+3. **Start a web session on that environment.**
+
+4. **Ask it what it got.** Nothing announces a plugin that failed to load, so
+   this step is the whole point of the other four:
+
+   > What plugins are installed, and what skills do they provide?
+
+   Expect `daily-driver` and the skills in the table above. Then ask for the
+   last line of `context/constitution.md` — the constitution arrives by hook
+   rather than as a skill, and a session that cannot quote that line did not
+   get it, whatever else it believes.
+
+5. **After a release, bump the `CACHEBUST` number.** An existing environment
+   does not pick up a new release on its own, and this is the only way to make
+   it. The environment snapshots itself the first time the Setup script
+   succeeds and every later session boots from that snapshot with the script
+   skipped — so the install line runs once, pins whatever release was current
+   that day, and never runs again. The snapshot is keyed on the script's
+   *text*, so changing any byte of it invalidates the key and the install runs
+   again at the current release; the comment exists to be that byte. Asking a
+   session inside the environment to update the plugin does not work: the
+   session is downstream of the snapshot, not the thing that builds it.
 
 [docs/bootstrapping-a-repository.md](docs/bootstrapping-a-repository.md) has
-the stanza to copy, the two names that are easy to get wrong, the three ways
-to write it into a repository, the setup script with its load-bearing
-verification line, and how to tell whether it actually loaded — including the
-two readers that look like checks and are not. `python3 scripts/stanza.py`
-prints the same stanza, derived from the manifests, and `python3
-scripts/stanza.py --write <repo>` merges it into another checkout.
+the mechanism under all of this — where an install puts its state, what the
+per-repository stanza is worth (less than it looks), the three ways to check
+whether the plugin loaded, and the two readers that look like checks and are
+not.
 
 ## Portability
 
