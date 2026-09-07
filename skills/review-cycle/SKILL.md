@@ -41,9 +41,11 @@ The round
 | 3 | `Does it go again?` | this skill |
 
 **Every stage has a name, and the name is how it is cited** — here and in
-`undertake`, whose last two steps are the first two of these and carry the same
-names for that reason. The numbers order the round and do nothing else, because
-a number moves when a stage is inserted and a name does not.
+`undertake`, whose `Review the head` and `Fix, answer, resolve, push` steps are
+the first two of these and carry the same names for that reason. Its
+`Ready for review` is its own, not a third stage of this round. The numbers
+order the round and do nothing else, because a number moves when a stage is
+inserted and a name does not.
 [`0005`](../../docs/notes/0005-steps-are-cited-by-name.md) is the decision.
 
 **A round entered on findings that already exist starts at `Fix, answer,

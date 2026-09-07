@@ -37,10 +37,12 @@ in the sequence table and in the `4 — Cut the branch` prefix on a heading, and
 nowhere else. Neither form is a citation, so neither is affected by the rule,
 and both go on giving a reader the shape of the sequence at a glance.
 
-**`undertake`'s last two steps carry `review-cycle`'s first two names.** They
-are the same work seen from two skills. One name for it is what lets either
-cite it without reaching into the other's numbering — which is what the two
-stale citations in 8354f33 were doing.
+**`undertake`'s `Review the head` and `Fix, answer, resolve, push` carry
+`review-cycle`'s first two stage names.** They are the same work seen from two
+skills. One name for it is what lets either cite it without reaching into the
+other's numbering — which is what the two stale citations in 8354f33 were
+doing. `undertake`'s `Ready for review` is not part of that overlap: the ready
+gate is the caller's, and `review-cycle` disclaims it.
 
 **`scripts/check-step-names.py` enforces it**, as a leg of `make check`. It
 flags a sequence noun followed by a number — `step 7`, `stage 2`, `phases 2–4`,
@@ -72,7 +74,9 @@ A numbering this repository does not own cannot be renamed here. `docs/notes/`
 [#35](https://github.com/jmcvetta/claude-daily-driver/issues/35), which are
 named in that issue and not in this repository. Those files waive the noun:
 
-    <!-- step-names: external phase — the phases are issue #35's. -->
+```
+<!-- step-names: external phase — the phases are issue #35's. -->
+```
 
 **Per noun, not per file**, and the reason is the case that made the rule.
 `0001` cites #35's phases nine times *and* carried one stale `stage 2` aimed at

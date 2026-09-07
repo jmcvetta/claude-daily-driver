@@ -62,9 +62,11 @@ The sequence
 | 9 | `Fix, answer, resolve, push` | `review-cycle` |
 | 10 | `Ready for review` | `mcp__github__update_pull_request` |
 
-The last two are `review-cycle`'s own first two stages, named identically on
-purpose: they are the same work, and one name for it is what lets either skill
-cite it without reaching into the other's numbering.
+`Review the head` and `Fix, answer, resolve, push` are `review-cycle`'s own
+first two stages, named identically on purpose: they are the same work, and one
+name for it is what lets either skill cite it without reaching into the other's
+numbering. `Ready for review` is not among them — that gate is this skill's,
+and `review-cycle` says so.
 
 0 — Open the issue
 ------------------

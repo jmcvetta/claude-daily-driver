@@ -29,6 +29,12 @@ WHAT IT FLAGS
     a quotation is not a citation. A real citation is bare prose -- every one
     of the sixty-eight at the branch point was, measured.
 
+    A *fenced* block, specifically. An indented code block is not recognised,
+    because telling one from an ordinary list continuation needs the list
+    context, and a parser guessing at that would blind the check in the silent
+    direction. Fence an example instead, or write it in backticks -- which is
+    what every example here does.
+
     The scan runs over the whole file rather than line by line, because the
     prose here is hard-wrapped at about 78 columns and both halves of the
     thing being looked for cross that wrap. A citation can be split -- "at
@@ -93,9 +99,11 @@ SUFFIXES = (".md", ".yaml", ".yml")
 # the record, and nothing reads it as an instruction.
 SKIP = ("CHANGELOG.md",)
 
-# `\s+` rather than a space: the noun and its number are routinely split by
-# the 78-column wrap these files are written to.
-CITATION = re.compile(rf"\b({'|'.join(NOUNS)})s?\s+\d", re.IGNORECASE)
+# Not a plain `\s+`: the noun and its number are routinely split by the
+# 78-column wrap, so the gap must cross a newline -- but not a blank line, or a
+# heading ending in `The rule` above a numbered list reads as a citation.
+GAP = r"(?:[^\S\n]|\n(?!\s*\n))+"
+CITATION = re.compile(rf"\b({'|'.join(NOUNS)})s?{GAP}\d", re.IGNORECASE)
 
 # A code span, which may itself be wrapped. A blank line ends one in Markdown,
 # and refusing to cross one is what keeps an unbalanced backtick from
@@ -136,6 +144,9 @@ CLEAN = (
     "1. **Tracker prefix.** Drop a leading prefix",
     "eleven steps, and this skill is the order they run in",
     "step by step, without stopping",
+    # A blank line ends the reach: a heading above a numbered list is not one.
+    "## The rule\n\n1. First",
+    "the whole of the rule\n\n2. Second",
     # Quotations of the bad form, which the rule has to be able to write down.
     "flags a sequence noun followed by a number -- `step 7`, `stage 2`",
     "carried a `stage 2` aimed at `review-cycle`",
@@ -273,7 +284,9 @@ def main() -> int:
     selftest()
 
     errors: list[str] = []
-    files = scannable()
+    # A file can be in the index and gone from the tree -- deleted, or halfway
+    # through a rename -- and a traceback is a worse answer than skipping it.
+    files = [path for path in scannable() if path.is_file()]
     for path in files:
         where = path.relative_to(ROOT)
         for line, said in citations(path.read_text(encoding="utf-8")):
