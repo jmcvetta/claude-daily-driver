@@ -25,9 +25,10 @@ by hook — plus nine skills:
 | `review-cycle` | One round on a pull request: the built-in `/code-review`, a verdict on every finding, and the test for whether a later push has earned a second round. |
 | `undertake` | Takes a piece of work from its description to a pull request ready for review, opening the issue first where there is none. |
 
-A skill fires on its slash command, on natural phrasings of the work, and on
-Claude's own tool calls — `mcp__github__create_pull_request` for `pr`,
-`AskUserQuestion` for `judgement-call`. Each `description` carries its register.
+A skill fires on its slash command where it has one, on natural phrasings of
+the work, and on Claude's own tool calls — `mcp__github__create_pull_request`
+for `pr`, `AskUserQuestion` for `judgement-call`. Each `description` carries its
+own register.
 
 [`agents/`](agents/) holds a reviewer panel, dormant while the `review` skill is
 retired. [`attic/`](attic/) holds what no longer ships; nothing there is loaded,
@@ -154,12 +155,13 @@ needs no separate port; a checkout loads with `omp --plugin-dir <path>`.
 
 `make check` is what CI runs — the same target, not a restatement of it. It
 runs `claude plugin validate --strict` over the manifests, the skills and the
-agents; `scripts/check-manifests.py` for what `validate` lets through, such as
-a skill whose frontmatter `name` disagrees with its directory; and
-`scripts/check-constitution.py`, which drives both hooks against synthetic
-event JSON and asserts the constitution comes back from each.
+agents; `shellcheck` over every shell script; `scripts/check-manifests.py` for
+what `validate` lets through, such as a skill whose frontmatter `name`
+disagrees with its directory; `scripts/check-constitution.py`, which drives
+both hooks against synthetic event JSON and asserts the constitution comes back
+from each; and `scripts/check-eval-fixtures.sh`.
 
-Two targets are deliberately outside it. `make check-infra` parses the OpenTofu
+Two more checks are deliberately outside it. `make check-infra` parses the OpenTofu
 stack — see [infra/github/README.md](infra/github/README.md). `make evals-run`
 needs a live model, and CI here is credential-free — see
 [evals/README.md](evals/README.md); `TASKS='tasks/constitution/*.yaml'` is the
