@@ -102,8 +102,7 @@ most here, because step 0 is what widened the description and a widened
 description is answered by asking what it now sweeps in.
 
 `constitution/` is not a trigger-accuracy suite: it is the live half of the
-constitution's own test, described under "Testing the constitution" in the
-repository README. Its credential-free half is
+constitution's own test, described under "Checks" in the repository README. Its credential-free half is
 `scripts/check-constitution.py`.
 
 `review-depth/` asks whether `review` sends the *right panel* at the right
