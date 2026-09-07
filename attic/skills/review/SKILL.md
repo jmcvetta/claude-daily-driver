@@ -325,16 +325,16 @@ comment, and this is the analysis.
 Walkthrough
 ===========
 
-Runs only if step 5 emitted an offer line. Emit it, then **stop and wait**. An
-affirmative reply starts the walkthrough; anything else does not, and the
-conversation simply continues.
+Runs only if **Next step** emitted an offer line. Emit it, then **stop and
+wait**. An affirmative reply starts the walkthrough; anything else does not,
+and the conversation simply continues.
 
-Routing: `[obvious]` items skip Phase 1 entirely and enter the Phase 2 plan as
-`Fix` rows. Phase 1 runs over the `[judgment]` items only, and is skipped when
-there are none.
+Routing: `[obvious]` items skip **Discuss** entirely and enter the **Execute**
+plan as `Fix` rows. **Discuss** runs over the `[judgment]` items only, and is
+skipped when there are none.
 
-Phase 1 — Discuss
------------------
+1 — Discuss
+-----------
 
 🔴 first, then 🟡, in the order they appeared. Per issue:
 
@@ -358,10 +358,10 @@ Phase 1 — Discuss
    the whole walkthrough by saying yes. Announce the transition in one line and
    continue. Never ask "shall I continue?"
 
-The only pause is step 3. The user can interrupt at any time.
+The only pause is **Wait**. The user can interrupt at any time.
 
-Phase 2 — Execute
------------------
+2 — Execute
+-----------
 
 1. **Print the plan** as a compact table: action (Fix / Defer / Skip),
    `file:line`, one-line summary — obvious items auto-routed as `Fix`, judgment
@@ -444,8 +444,8 @@ Boundaries
   is done. Commits made since to answer findings, threads or a red check do not
   make it a new diff, and neither does a merge from the base branch that leaves
   the pull request's own diff untouched — only a commit that changes what the
-  code does. `undertake` states the same rule at its step 10, so that a branch
-  it drove is not reviewed twice on the day this skill comes back from the
-  attic.
+  code does. `undertake` states the same rule at its `Ready for review` step,
+  so that a branch it drove is not reviewed twice on the day this skill comes
+  back from the attic.
 - Never post to GitHub during the analysis and display phases.
 - Reading project files, and read-only commands over them, need no permission.

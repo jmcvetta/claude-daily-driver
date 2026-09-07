@@ -1,8 +1,8 @@
 task_id: undertake-01-slash-undertake-no-issue
 description: >-
-  The skill invoked on work that has no issue yet. Before step 0 this was the
-  case the skill was told to stay out of; it is now the case step 0 exists for,
-  so this row is the boundary having moved.
+  The skill invoked on work that has no issue yet. Before `Open the issue` this
+  was the case the skill was told to stay out of; it is now the case that step
+  exists for, so this row is the boundary having moved.
 tags: [trigger-accuracy, undertake, fire]
 
 initial_prompt: "/undertake add a retry loop to the release script"

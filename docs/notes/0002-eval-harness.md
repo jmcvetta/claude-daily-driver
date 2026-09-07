@@ -1,3 +1,6 @@
+<!-- step-names: external phase — the numbered phases named below are issue
+     #35's, and are named there rather than here. -->
+
 # The eval harness: `coder_eval`, not `claude plugin eval`
 
 **Status:** decided, 2026-09-07; ported, 2026-09-07.

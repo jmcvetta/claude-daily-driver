@@ -26,9 +26,9 @@ is the three things around it — the level, the thread protocol, and the
 re-review test — none of which the built-in has an opinion about, and all three
 of which are the ones that go wrong.
 
-Callers keep their own gates. `undertake` runs this round between its step 7
-and its step 10 and owns whether the pull request then goes ready; nothing here
-marks a draft ready or merges anything.
+Callers keep their own gates. `undertake` runs this round between its `Open the
+draft` and `Ready for review` steps and owns whether the pull request then goes
+ready; nothing here marks a draft ready or merges anything.
 
 
 The round
@@ -36,21 +36,30 @@ The round
 
 | # | Stage | Owner |
 | - | ----- | ----- |
-| 1 | Review the head | the built-in `/code-review` |
-| 2 | Fix, answer, resolve, push | this skill |
-| 3 | Does it go again? | this skill |
+| 1 | `Review the head` | the built-in `/code-review` |
+| 2 | `Fix, answer, resolve, push` | this skill |
+| 3 | `Does it go again?` | this skill |
 
-**A round entered on findings that already exist starts at stage 2.** Half the
-register arrives that way — *"address the review feedback"*, *"reply to the
-review comments"*, *"resolve those threads"* — and the findings are then a
-human's, a bot's, or an earlier `/code-review`'s. Running stage 1 over them
-would post a fresh set on top of the ones somebody asked to have answered,
-which is worse than not firing at all. Stage 1 is for a head nobody has
-reviewed yet; stage 3 still decides what happens after.
+**Every stage has a name, and the name is how it is cited** — here and in
+`undertake`, whose `Review the head` and `Fix, answer, resolve, push` steps are
+the first two of these and carry the same names for that reason. Its
+`Ready for review` is its own, not a third stage of this round. The numbers
+order the round and do nothing else, because a number moves when a stage is
+inserted and a name does not.
+[`0005`](../../docs/notes/0005-steps-are-cited-by-name.md) is the decision.
+
+**A round entered on findings that already exist starts at `Fix, answer,
+resolve, push`.** Half the register arrives that way — *"address the review
+feedback"*, *"reply to the review comments"*, *"resolve those threads"* — and
+the findings are then a human's, a bot's, or an earlier `/code-review`'s.
+Running `Review the head` over them would post a fresh set on top of the ones
+somebody asked to have answered, which is worse than not firing at all.
+`Review the head` is for a head nobody has reviewed yet; `Does it go again?`
+still decides what happens after.
 
 
-1 — Review
-==========
+1 — Review the head
+===================
 
 **Wait for CI to report on the pushed head first.** A pull request opened
 seconds ago has its checks queued, and a queued check is not a passing one — a
@@ -98,8 +107,9 @@ A reviewer, not a subagent
 
 Not "dispatch a subagent to code review the branch". A bare subagent inherits
 no rubric, has no level anybody chose, and posts nothing — its findings die in
-the transcript, and stage 2 has nothing to answer. The built-in is the
-reviewer, and `--comment` is what makes its findings survive the session.
+the transcript, and `Fix, answer, resolve, push` has nothing to answer. The
+built-in is the reviewer, and `--comment` is what makes its findings survive
+the session.
 
 `--comment` is also what carries the findings out of the terminal and onto the
 pull request, where they remain the record of why the branch was judged ready.
@@ -109,22 +119,23 @@ at `medium`, CLI 2.1.263, 2026-09-07, and recorded in `0001` §4. The level is
 part of that claim rather than incidental to it: `medium` and `high` dispatch
 `o5-bmin`, the one cell `0001` records as ignoring the output-contract selector
 every other cell threads through, so the default named above is measured rather
-than inherited from a deeper level's result. Stage 2's reply-and-resolve is
-therefore the ordinary path rather than a hoped-for one.
+than inherited from a deeper level's result. The reply-and-resolve of `Fix,
+answer, resolve, push` is therefore the ordinary path rather than a hoped-for
+one.
 
-Should a later CLI post plain issue comments instead, stage 2 degrades to
-reply-only: read them with `get_comments` rather than `get_review_comments`,
-answer with `mcp__github__add_issue_comment`, and read *resolve* as *answered
-in a comment* — in this file **and in the caller's gate**, where a bullet
-asking for no unresolved thread would otherwise be a condition the round can
-never satisfy. Say so once, and re-measure into `0001` rather than leaving the
-next round to rediscover it.
+Should a later CLI post plain issue comments instead, `Fix, answer, resolve,
+push` degrades to reply-only: read them with `get_comments` rather than
+`get_review_comments`, answer with `mcp__github__add_issue_comment`, and read
+*resolve* as *answered in a comment* — in this file **and in the caller's
+gate**, where a bullet asking for no unresolved thread would otherwise be a
+condition the round can never satisfy. Say so once, and re-measure into `0001`
+rather than leaving the next round to rediscover it.
 
 Record the head SHA
 -------------------
 
-**Record the head SHA you reviewed.** Stage 3's test is measured from it, and
-nothing else records it.
+**Record the head SHA you reviewed.** `Does it go again?` measures its test
+from it, and nothing else records it.
 
 
 2 — Fix, answer, resolve, push
@@ -143,8 +154,8 @@ Every finding gets a verdict, on its thread, and the thread is closed:
 4. **A repeat finding** — a reviewer opening a new thread for something already
    rejected in an earlier round — is resolved with the same message as before.
    A fresh variation invites a fresh argument over a question that was already
-   answered. This one is live precisely because stage 1 can run again and
-   re-raise what stage 2 rejected.
+   answered. This one is live precisely because `Review the head` can run again
+   and re-raise what this stage rejected.
 5. **Never left open silently.** The rule the other four exist to serve.
 
 Every reviewer is the same protocol — Claude's own findings, a human's, a
@@ -190,12 +201,13 @@ is not in it.
 3 — Does it go again?
 =====================
 
-**Review once per diff.** Stage 2 usually puts commits on the branch, so by the
-end of a round the head is usually not the one stage 1 read — and a rule that
-keyed on sameness would re-review on every round that had anything to fix.
+**Review once per diff.** `Fix, answer, resolve, push` usually puts commits on
+the branch, so by the end of a round the head is usually not the one `Review
+the head` read — and a rule that keyed on sameness would re-review on every
+round that had anything to fix.
 
 The test is therefore **provenance, not sameness**: take the head SHA recorded
-at stage 1, and classify every commit made after it.
+at `Review the head`, and classify every commit made after it.
 
 - **Answering** — a review finding, a review thread, a lint bot, a red check.
   These do not start a new round, however many of them there are. Answering a
@@ -203,13 +215,15 @@ at stage 1, and classify every commit made after it.
   exists to cut.
 - **Changing what the code does** — new feature work, a scope addition, a
   conflict resolution that rewrites the branch's own files. This is a new diff.
-  Stage 1 runs again over it, once, and its head SHA becomes the new mark.
+  `Review the head` runs again over it, once, and its head SHA becomes the new
+  mark.
 - **Neither** — a comment reflow, a changelog line, a merge from the base
   branch that leaves the pull request's own diff untouched. **Not a new diff.**
-  The default is not to go again, because stage 1 reads the pull request, whose
-  diff is three-dot: a clean base merge changes the head and changes nothing
-  stage 1 would read. Reviewing it again would review byte-identical content,
-  and on a base branch that moves often it would do so without end.
+  The default is not to go again, because `Review the head` reads the pull
+  request, whose diff is three-dot: a clean base merge changes the head and
+  changes nothing it would read. Reviewing it again would review
+  byte-identical content, and on a base branch that moves often it would do so
+  without end.
 
 The classification is per commit and the categories do not compound: a round
 that only ever answers ends with one review behind it, which is the point.
@@ -220,15 +234,15 @@ When the mark is void
 Where the branch's history is rewritten — a rebase, an amend, a squash — the
 recorded SHA stops being an ancestor of the head and the mark is void. There
 are then no commits "after it" to read, which is not the same as there being
-none. Fall back to content: compare the pull request's diff against what stage
-1 reviewed, and go again only if it has changed.
+none. Fall back to content: compare the pull request's diff against what
+`Review the head` reviewed, and go again only if it has changed.
 
 
 Where it stops and waits
 ========================
 
-- **CI still running**, before stage 1. A wait, not a question — nothing is
-  asked, and nothing proceeds on a check that has not reported.
+- **CI still running**, before `Review the head`. A wait, not a question —
+  nothing is asked, and nothing proceeds on a check that has not reported.
 - **A finding whose fix is a real trade-off**, in the sense `judgement-call`
   gives that phrase: two defensible approaches differing in something the user
   owns. That skill owns the gate, and it is the gate for every question this

@@ -8,8 +8,8 @@ SHELL := /bin/bash
 .SHELLFLAGS := -o pipefail -c
 
 .PHONY: git_sync check check-plugin check-skills check-agents check-scripts \
-	check-manifests check-constitution check-eval-fixtures check-infra \
-	evals-install evals-plan evals-run mcp-usage
+	check-manifests check-constitution check-eval-fixtures check-step-names \
+	check-infra evals-install evals-plan evals-run mcp-usage
 
 # The `coder_eval` release the eval suites are written against. Pinned on
 # purpose: being able to hold a version back is the whole reason the suites are
@@ -41,7 +41,7 @@ git_sync:
 # than restating its legs, so a leg added here is a leg CI gains — and there
 # is no second command line to fall behind this one.
 check: check-plugin check-skills check-agents check-scripts check-manifests \
-	check-constitution check-eval-fixtures
+	check-constitution check-eval-fixtures check-step-names
 
 # `claude plugin validate --strict` reads one manifest at a time and picks the
 # marketplace when handed a directory, so the plugin manifest is named
@@ -105,6 +105,15 @@ check-scripts:
 # case or scores a model.
 check-eval-fixtures:
 	scripts/check-eval-fixtures.sh
+
+# check-step-names: no file may cite a step of a numbered sequence by its
+# number. The numbers are positional, so inserting a step silently invalidates
+# every citation after it -- and a stale `step 7` reads exactly like a correct
+# one. Part of `check` because it needs nothing but git and Python, and because
+# the drift it catches is invisible to every other leg. See the script's
+# docstring and docs/notes/0005-steps-are-cited-by-name.md.
+check-step-names:
+	python3 scripts/check-step-names.py
 
 # check-infra: parse the OpenTofu stack without credentials. Not part of
 # `check`, which must not start requiring OpenTofu on a laptop that is only

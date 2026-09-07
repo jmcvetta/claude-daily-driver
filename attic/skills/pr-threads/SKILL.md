@@ -38,9 +38,9 @@ Four rules. They are the whole protocol.
 4. **Nothing is left open silently.** A thread is answered or it is
    outstanding, and an outstanding thread gets said out loud — never dropped.
 
-Rules 1 and 2 are one rule seen from two sides: **reply, then resolve.** A
-resolution with no reply hides the reasoning; a reply with no resolution
-leaves the reviewer to guess whether anything happened.
+**Implemented** and **Rejected** are one rule seen from two sides: **reply,
+then resolve.** A resolution with no reply hides the reasoning; a reply with no
+resolution leaves the reviewer to guess whether anything happened.
 
 
 Reply Content

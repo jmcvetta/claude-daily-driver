@@ -1,3 +1,6 @@
+<!-- step-names: external phase — the numbered phases below are issue #35's,
+     and are named there rather than here. -->
+
 # The built-in review surface, as of CLI 2.1.263
 
 **Status:** survey complete, no decision taken.
@@ -238,9 +241,10 @@ one it forbids itself from selecting.
 
 One difference, and it is about the session rather than the cell: no
 `create_inline_comment` tool was available, so the review posted through the
-GitHub MCP instead. The artifact is what stage 2 reads, and it was identical —
-but a session lacking both routes would have no way to post at all, which is
-the failure the degradation branch in `review-cycle` covers.
+GitHub MCP instead. The artifact is what `Fix, answer, resolve, push` reads,
+and it was identical — but a session lacking both routes would have no way to
+post at all, which is the failure the degradation branch in `review-cycle`
+covers.
 
 ### 5. Claude Approvals and PR Steward were not verifiable here
 
