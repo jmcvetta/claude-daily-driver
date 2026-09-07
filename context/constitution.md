@@ -167,6 +167,8 @@ supplies a scratchpad directory of its own, which wins.
   pull request closes what.
 - `session-title` — naming this session for the Claude session lists: forty
   characters, `#123 shortened issue title` when there is an issue.
+- `implement` — an issue to a pull request ready for review: the order the
+  skills above run in, and the gates between them.
 
 ## Verification
 

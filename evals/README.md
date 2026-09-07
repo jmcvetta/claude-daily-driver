@@ -6,7 +6,8 @@ One `claude plugin eval` suite per skill, under a directory named for it:
 evals/
 ├── pr/           does `pr` fire when a PR is being opened, and only then?
 ├── pr-title/     … when a title is being written, and only then?
-└── pr-body/      … when a body is being written, and only then?
+├── pr-body/      … when a body is being written, and only then?
+└── implement/    … when an issue is being taken on, and only then?
 ```
 
 `evals/constitution-reaches-subagent/` sits beside them and is not a
@@ -14,10 +15,10 @@ trigger-accuracy suite: it is the live half of the constitution's own test,
 described under "Testing the constitution" in the repository README. It runs
 under the same commands.
 
-The three skills are siblings with overlapping vocabulary — every one of them
-has "PR" in its description — so the thing that can actually break is *which*
-one fires. Each suite therefore has two halves, and the second is the one that
-earns its keep:
+The three PR skills are siblings with overlapping vocabulary — every one of
+them has "PR" in its description — so the thing that can actually break is
+*which* one fires. Each suite therefore has two halves, and the second is the
+one that earns its keep:
 
 - **Fire cases** (`tags: [<skill>, fire]`) — four per skill, covering the
   literal `/pr`, natural phrasings, and Claude's own use of
@@ -27,6 +28,13 @@ earns its keep:
   asserts that `pr-title` fires and `pr` does not; a request to write a commit
   message asserts that neither does. A suite that only proved a skill fires
   would be green with all three descriptions collapsed into one.
+
+`implement/` has the same two halves and one more no-fire case, because its
+confusable neighbour is not a sibling skill but a *mood*: an issue number in
+the prompt reads the same whether the issue is being taken on or merely asked
+about. "What does #191 say", "summarise #191" and "is #191 still relevant" are
+questions, and a skill that cuts a branch on any of them is worse than no
+skill.
 
 Graders are all `tool_used` on the `Skill` tool, matched against the skill name
 in the tool input: deterministic, no LLM judge, no cost beyond the runs.

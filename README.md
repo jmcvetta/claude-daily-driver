@@ -22,6 +22,7 @@ hook — plus skills that fire on activity:
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
 | `review` | Reviews a branch or pull request with a panel of reviewer agents, infers how deep to go from the diff itself, walks the findings through with you, and posts the result in verse. |
 | `session-title` | Names the session in the Claude web and mobile lists: a forty-character budget, chosen rather than measured, `#123 shortened issue title` while an issue is in hand, a short noun phrase otherwise. |
+| `implement` | Takes an issue from its description to a pull request ready for review: the order of the nine steps, the gates between them, and the rule that stops the branch being reviewed twice. Invokes every skill above and holds nothing they hold. |
 
 Three PR skills rather than one because skill names are flat within a plugin,
 so siblings can be triggered independently: a decision to rewrite a PR body
@@ -32,7 +33,8 @@ Each skill carries its own trigger register: the slash command where the skill
 has one, natural phrasings — "open a PR" for `pr`, "fix the PR title" for
 `pr-title`, "rewrite the PR description" for `pr-body`, "address the review
 feedback" for `pr-threads`, "is this ready" for `review`, "this is blocked by
-#123" for `issue-deps`, "rename this session" for `session-title` — and
+#123" for `issue-deps`, "rename this session" for `session-title`,
+"implement #191" for `implement` — and
 Claude's own tool calls. The PR skills split
 `mcp__github__create_pull_request` and `mcp__github__update_pull_request`
 between them, `pr-title` on a call that sets a `title`, `pr-body` on one that
@@ -42,7 +44,9 @@ for them; `pr-threads` takes the reply and resolve tools and
 `get_review_comments`; `review` takes the moments before a branch is declared
 ready, marked non-draft, or sent to a reviewer; `issue-deps` takes the GitHub
 MCP's sub-issue and issue-read tools; `session-title` takes
-`mcp__Claude_Code_Remote__set_session_title`. That last register is the point:
+`mcp__Claude_Code_Remote__set_session_title`; and `implement` takes the move
+from reading an issue to writing code for it, which is the only one of these
+registers that is a *transition* rather than a tool. That register is the point:
 a convention that only fires when a human types a command quietly stops
 applying as more of the work runs without one.
 
@@ -109,7 +113,8 @@ claude-daily-driver/
 │   ├── review/
 │   │   ├── SKILL.md
 │   │   └── references/     the review guidelines, passed to every agent
-│   └── session-title/SKILL.md
+│   ├── session-title/SKILL.md
+│   └── implement/SKILL.md  the order the others run in
 └── template/.claude/       copied into a repository to enable the plugin
 ```
 
