@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.1.0...v0.2.0) (2026-09-07)
+
+
+### Features
+
+* add the session-title skill ([#41](https://github.com/jmcvetta/claude-daily-driver/issues/41)) ([0a98c36](https://github.com/jmcvetta/claude-daily-driver/commit/0a98c36391e0297b0867a49934355bab3bfa1bf9))
+* **judgement-call:** the gate before a choice is put to the user ([#44](https://github.com/jmcvetta/claude-daily-driver/issues/44)) ([57abdf2](https://github.com/jmcvetta/claude-daily-driver/commit/57abdf2b6260f40959bd33ac95d56a61bae9e946))
+* retire pr-threads and review from the shipped skill panel ([#50](https://github.com/jmcvetta/claude-daily-driver/issues/50)) ([03fc4b4](https://github.com/jmcvetta/claude-daily-driver/commit/03fc4b4bfd11cb468c88ab9d2bf6c712c799e5d3))
+
 ## 0.1.0 (2026-09-06)
 
 
