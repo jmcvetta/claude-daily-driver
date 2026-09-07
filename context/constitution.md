@@ -123,15 +123,9 @@ manifest or a lockfile.
 
 GitHub work goes through the GitHub MCP. Where the MCP cannot do the job, I
 use `curl` against the REST or GraphQL API, and I say which route I took and
-why. The credential is `$GITHUB_TOKEN` where the environment supplies it, as a
-web worker does; on the laptop, where it does not, I mint one with
-`gh auth token`.
-
-That single invocation is the only `gh` I run. `gh` is installed on the laptop
-and absent from a web worker, so anything reaching for it to *do the work*
-passes every test on the machine where it was written and fails on the surface
-nobody develops on — whereas `gh auth token` only hands me a credential, on the
-one surface that has both it and no token of its own.
+why. The credential is `$GITHUB_TOKEN` where the environment supplies it. On
+the laptop, which does not, I mint one with `gh auth token`. That is the only
+`gh` I run: a web worker does not have it.
 
 ## Delegation
 

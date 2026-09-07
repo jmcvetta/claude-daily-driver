@@ -48,7 +48,7 @@ every subagent. Thirteen sections:
 | Before I commit | A doc comment on every new exported symbol, focused commits, message style, named files staged. |
 | Before I call it done | The project's own gates are run, not reasoned about. |
 | Dependencies | Added and pinned through the package manager; never a hand-edited manifest or lockfile. |
-| GitHub | The GitHub MCP, `curl` where it cannot reach, and the one `gh` invocation. |
+| GitHub | The GitHub MCP, `curl` where it cannot reach, and where the token comes from. |
 | Delegation | Plan first, delegate the implementation, batch the subagents, watch the quota. |
 | Memory | Global, project and local layers, and subsidiarity between them. |
 | Temporary files | `.tmp.claude/`, unless the harness supplies a scratchpad. |
