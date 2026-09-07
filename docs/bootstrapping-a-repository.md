@@ -310,6 +310,27 @@ proof of success either, and on the version measured the two coincided. On a
 cloud container it is worth reading, `installed_plugins.json` being the file
 the setup script's verification line greps.
 
+## Repo-local review rules
+
+The plugin's reviewers carry no rule that describes one repository. A rule that
+does — a convention only this repository's toolchain makes correct — goes in
+this repository's own `CLAUDE.md`, which every surface reads and which reaches
+a reviewer subagent. There is no plugin-side mechanism to configure, and
+[`decisions/0003`](decisions/0003-repo-local-review-rules.md) is why.
+
+Two such rules used to ship globally. Paste them into the `CLAUDE.md` of a
+repository that runs Yor, Checkov, or both:
+
+```markdown
+## Review
+
+- **Yor tags are not stale.** Never flag `yor_*` or `git_*` tags in Terraform
+  resources as outdated or needing update. Yor rewrites them during the
+  release process; the hardcoded values are expected and correct.
+- **Checkov suppressions carry a reason.** Every `checkov:skip` comment must
+  state why the check is suppressed.
+```
+
 ## What none of this covers
 
 A session, in a repository with no stanza, on a machine or in an environment

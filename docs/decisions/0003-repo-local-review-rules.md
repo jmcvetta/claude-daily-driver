@@ -8,8 +8,9 @@ Terraform repositories and nothing else: never flag `yor_*` / `git_*` tags in
 Terraform resources as stale, and require a reason on every `checkov:skip`.
 Both are correct, and both are genuinely unlearnable — a general-purpose
 reviewer cannot infer either, which is why
-[`0001`](0001-built-in-review-surface.md) put them out of scope for its
-measurement rather than expecting a built-in to reproduce them.
+[#35](https://github.com/jmcvetta/claude-daily-driver/issues/35) puts them out
+of scope for its measurement rather than expecting a built-in to reproduce
+them.
 
 Correctness was never the question. Placement was. The plugin loads on every
 surface and in every repository; these two rules are meaningful in perhaps two
@@ -33,7 +34,11 @@ actually describe. They are removed here:
 
 **The plugin carries no mechanism for repo-local review rules.** `CLAUDE.md`
 is already read on every surface, is already the level subsidiarity names, and
-already reaches a reviewer subagent. A conventional path of our own — some
+already reaches a reviewer subagent — that last is measured, not assumed:
+R2's table in
+[`plugin-replaces-global-memory.md`](../planning/plugin-replaces-global-memory.md)
+settles `CLAUDE.md` → subagent as **yes**, which is the row the constitution's
+own `PreToolUse` hook exists to match. A conventional path of our own — some
 `.claude/review-rules.md` a reviewer is told to look for — would be a second
 memory layer with the same job as the first, and the reviewer would have to be
 told about it in the global layer, spending in every session exactly what this
@@ -46,20 +51,30 @@ CI, and it is declined: it would fail the day a legitimate mention landed, and
 it teaches a future reader the wrong rule — the test is not *which words*, it
 is *how many repositories does this describe*.
 
-## The text to paste
+## What this does to #35's measurement
 
-Removal is not deletion; the rules are needed where they apply. Paste into the
-`CLAUDE.md` of a repository that uses Yor, Checkov, or both:
+Two of the six arms [`0001`](0001-built-in-review-surface.md) defines are
+configurations *of this file*: **D**, one general-purpose agent carrying
+`review-guidelines.md`, and **E**, `/code-review medium` plus
+`review-guidelines.md` and no judgment panel. Both now carry a guidelines file
+with no repo-specific rules in it.
 
-```markdown
-## Review
+That matters because `0001` names the inference it was guarding against: a
+small B − A read as "a thin wrapper would do", "one that silently assumes the
+repo-specific rules survive the move". After this decision they do not survive
+the move — they are not in the file to move — so arms D and E measure the
+built-in plus a *general* checklist, and neither can be read as evidence about
+repo-specific rules either way. `0001` carries an `Amended in part` header
+saying so.
 
-- **Yor tags are not stale.** Never flag `yor_*` or `git_*` tags in Terraform
-  resources as outdated or needing update. Yor rewrites them during the
-  release process; the hardcoded values are expected and correct.
-- **Checkov suppressions carry a reason.** Every `checkov:skip` comment must
-  state why the check is suppressed.
-```
+## Where the rules go now
+
+Removal is not deletion; the rules are needed where they apply, and a decision
+record is not where anyone bootstrapping a repository will look for them. The
+block to paste is in
+[`bootstrapping-a-repository.md`](../bootstrapping-a-repository.md) under
+*Repo-local review rules*, beside the enablement stanza — one copy, so the two
+cannot drift.
 
 ## What would change this
 

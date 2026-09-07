@@ -207,8 +207,8 @@ These ship with this plugin, in `agents/`:
   nil safety.
 - `architecture-reviewer` — macro fitness: is this the right shape, does it
   fit, is the complexity proportionate.
-- `security-reviewer` — vulnerabilities, and the infrastructure rules this
-  toolkit carries that a generic security pass does not.
+- `security-reviewer` — vulnerabilities, including the infrastructure kind:
+  permissive IAM, open security groups, unencrypted storage.
 - `planning-fitness-reviewer` — planning-class diffs only.
 
 Do not also run the session's built-in `/security-review` alongside
