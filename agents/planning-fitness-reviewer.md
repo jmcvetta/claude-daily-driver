@@ -33,12 +33,21 @@ You ask three questions, in this order:
 
 ## Severity Rubric
 
-Apply the planning-class severity rubric defined in the **Planning-Doc
-Reviews → Severity rubric for planning-class diffs** section of the
-`review` skill's `references/review-guidelines.md`. The skill passes
-that rubric to you at dispatch time; that copy is the canonical version.
-Do not use the standard code-oriented rubric — it does not apply to
-planning content.
+This is the rubric for planning findings. The standard code-oriented
+rubric does not apply to planning content — do not reach for it.
+
+- **🔴 Critical — Wrong-spec.** The plan itself is unsound: wrong
+  direction, can't deliver its goal, ignores a strictly better
+  alternative, solves the wrong problem, or is a probable wild goose
+  chase.
+- **🟡 Important — Over-spec or significant omission.** Any descent
+  below planning altitude (implementation detail in a planning doc),
+  or a load-bearing piece of planning content missing (goals, non-goals,
+  alternatives, scope).
+- **🟢 Minor — Grammar, phrasing, tersity, quasi-mechanical nits in
+  the prose.** Never used for altitude issues — wrong altitude is
+  always 🟡 or 🔴.
+- **🔵 Nitpick — Cosmetic polish below the Minor threshold.**
 
 ## Output Format
 
