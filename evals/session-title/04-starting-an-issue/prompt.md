@@ -7,4 +7,4 @@ tags: [session-title, fire]
 ---
 
 We are starting work on issue #40, "New skill: set the Claude session
-title". Set the session title before you begin.
+title". Read it and plan the branch.

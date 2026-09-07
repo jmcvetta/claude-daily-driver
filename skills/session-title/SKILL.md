@@ -4,11 +4,11 @@ description: >-
   This skill should be used whenever the title of the current Claude session
   is being set or revised — including when the user says "/session-title",
   "set the session title", "rename this session", "name this session", or
-  "that title is wrong", and on Claude's own initiative when work on a GitHub
-  issue begins, when the session's subject changes materially, or on any call
-  to `mcp__Claude_Code_Remote__set_session_title`. Supplies the character
-  budget the Claude mobile UI needs and the two forms a title may take. Not
-  the title of a pull request — that is `pr-title`.
+  "that session name is wrong", and on Claude's own initiative when work on a
+  GitHub issue begins, when the session's subject changes materially, or on
+  any call to `mcp__Claude_Code_Remote__set_session_title`. Supplies the
+  character budget the Claude mobile UI needs and the two forms a title may
+  take. Not the title of a pull request — that is `pr-title`.
 ---
 
 # Session title
@@ -21,12 +21,14 @@ That is the whole design constraint.
 Budget: 40 characters
 =====================
 
-`set_session_title` accepts 500. Forty is what the mobile list shows before it
-clips, so the cap is this skill's rather than the API's.
+`set_session_title` accepts 500. Forty is this skill's own cap, chosen rather
+than measured — short enough to survive the mobile list at the width it is
+read on, long enough to say which session this is. A measurement, when someone
+takes one, is what may move it.
 
-- **Hard cap, 40 characters.** A longer title is not truncated by the UI in
-  the place I would have chosen; it is truncated in the place the renderer
-  reaches. Shortening it here keeps that choice.
+- **Hard cap, 40 characters**, counting the whole string, `#123 ` prefix
+  included. Past that the title is cut where the renderer reaches rather than
+  where a writer would have chosen; shortening it here keeps the choice.
 - **No ellipsis.** A title trimmed to fit reads as a title. One ending in `…`
   reads as a title that failed.
 
@@ -37,19 +39,28 @@ Working on an issue
     #{number} {shortened issue title}
 
 The number leads because it is the identifier — the half that must survive any
-clipping a narrower screen still applies, and the half that a human matches
-against a browser tab.
+further clipping, and the half a reader matches against a branch name or a
+browser tab.
 
-Shorten the issue title in this order, stopping as soon as it fits:
+Shortening is deletion, in this order, stopping as soon as the whole thing
+fits, and capitalising whatever word ends up first:
 
-1. Drop the Conventional Commits type prefix — `feat:`, `fix(api):`.
-2. Drop the leading noise a title carries for the issue tracker's benefit and
-   not the reader's — `New skill:`, `Bug:`, `RFC:`.
-3. Drop trailing qualifiers: a parenthesis, a clause after a dash.
-4. Cut whole words from the end, never part of one.
+1. Drop a leading prefix written for the tracker rather than the reader: a
+   Conventional Commits type (`feat:`, `fix(api):`), or a label (`New skill:`,
+   `Bug:`, `RFC:`).
+2. Drop a trailing qualifier — a parenthesis, a clause after a dash.
+3. Drop the words carrying no information, wherever they sit: articles,
+   prepositions, an auxiliary verb, an adjective the title survives without.
+4. Only then cut whole words from the end, never part of one, and never the
+   noun naming the subject — which in an issue title is as often last as
+   first.
 
-Issue #40, *"New skill: set the Claude session title"*, becomes
-`#40 Session title skill`.
+Issue #40, *"New skill: set the Claude session title"*, needs step 1 alone:
+`#40 Set the Claude session title`.
+
+Issue #212, *"fix(storage): retry with exponential backoff for the S3 upload
+client"*, loses its type prefix, then `with`, `exponential`, `the` and
+`client`: `#212 Retry backoff for S3 upload`.
 
 
 Not working on an issue
@@ -72,9 +83,9 @@ one that matters is this session's. Get it from
 `mcp__Claude_Code_Remote__get_session` with `session_id` omitted, which
 describes the caller.
 
-Both tools exist only on the Claude Code Remote surface. Where they are absent
-— a laptop session — there is no title to set, and the skill says so and stops
-rather than reaching for a substitute.
+Both tools exist only on the Claude Code Remote surface. Where they are
+absent — a laptop session — there is no way to set the title from here, and
+the skill says so and stops rather than reaching for a substitute.
 
 
 When to set it
