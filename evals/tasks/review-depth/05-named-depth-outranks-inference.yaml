@@ -15,13 +15,39 @@ pre_run:
     timeout: 60
 
 agent:
+  # `claude_settings` lives on the claude-code agent config, not the base
+  # one, so the kind has to be named here even though the experiment already
+  # supplies it — without it the block parses as the base config and the
+  # settings are rejected as an extra field.
+  type: claude-code
   allowed_tools: [Bash, Read, Grep, Glob, Skill, Agent, Task]
+
+  # `review-depth` grades which agents were dispatched, and on `coder_eval`
+  # 0.11.6 no criterion can see that: `command_executed` truncates its haystack
+  # to 2000 characters and the `Agent` schema puts `subagent_type` last, after
+  # the prompt carrying the diff, while the judge criteria render an `Agent`
+  # call as its model-written `description`. So the observation is taken by a
+  # `PreToolUse` hook instead — part of the instrument, wired here rather than
+  # in the plugin, firing in both arms, reading the tool input verbatim. See
+  # `../../fixtures/review-depth/record-dispatch.py`.
+  claude_settings:
+    hooks:
+      PreToolUse:
+        - matcher: "^(Agent|Task)$"
+          hooks:
+            - type: command
+              command: python3 .fixture/record-dispatch.py
+              timeout: 10
 
 run_limits:
   max_turns: 30
-  task_timeout: 900
-  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
-  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  task_timeout: 1080
+  # `turn_timeout` is the agent's budget; `task_timeout` is the watchdog around
+  # the whole evaluation, armed before the turn starts and still running while
+  # the criteria are checked. Equal values mean a turn that uses its budget is
+  # killed as a TIMEOUT before it can be graded, so `task_timeout` carries
+  # headroom on top. `plan` warns that the larger number cannot extend the
+  # turn; that is the point — it is not meant to.
   turn_timeout: 900
 
 # The smallest diff in the suite, against the largest depth a user can ask for.
@@ -29,17 +55,14 @@ run_limits:
 initial_prompt: "Give this branch a full review before I merge it."
 
 success_criteria:
-  - type: skill_triggered
-    description: "`review` fires on an explicit review request"
-    expected_skill: review
-    skill_name: review
-
   # A user who asks for a full review and gets a skim has been overruled by a
   # heuristic. `security-reviewer` is the member only Full adds, so its presence
   # is what separates the named depth from the inferred one.
-  - type: command_executed
+  - type: file_matches_regex
     description: The security reviewer was dispatched
-    tool_name: Agent
-    command_pattern: '"subagent_type":\s*"(?:[^"]*:)?security-reviewer"'
-    min_count: 1
+    path: .fixture/dispatched.txt
+    pattern: '^(?:[A-Za-z0-9_.-]+:)?security-reviewer$'
+    # re.MULTILINE, so `^`/`$` bracket one roster line rather than the
+    # whole file; the optional prefix tolerates a plugin-namespaced name.
+    flags: 8
     weight: 2

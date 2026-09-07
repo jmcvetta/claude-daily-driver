@@ -71,8 +71,9 @@ check-manifests:
 # The credential-free half of the constitution's acceptance test: run both
 # delivery hooks against synthetic event JSON and assert the constitution comes
 # back, identically, from each. The live half needs a model and therefore
-# credentials, so it is a `claude plugin eval` case under evals/ rather than a
-# leg here -- see the script's docstring for where the seam is and why.
+# credentials, so it is `make evals-run TASKS='tasks/constitution/*.yaml'`
+# rather than a leg here -- see the script's docstring for where the seam is
+# and why.
 check-constitution:
 	python3 scripts/check-constitution.py
 

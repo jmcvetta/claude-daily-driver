@@ -105,6 +105,7 @@ Read `per_replicate_scores` in the report rather than the mean.
 | `arm: both` | nothing — both variants are always scored |
 | `tool_used` on `Skill` | `skill_triggered` |
 | `tool_used` on `Agent` | `command_executed` with `tool_name: Agent` |
+| `tool_used` on `Agent`, by `subagent_type` | **nothing** — see below |
 | `regex` on `last_message` | **nothing** — see below |
 | `max_turns`, `timeout_seconds` | `run_limits.max_turns`, `run_limits.turn_timeout` |
 
@@ -117,9 +118,9 @@ disagreement is load-bearing:
   adapter records one telemetry row per `tool_use` block. So `tool_used` on
   `Agent` — including `input_match`, which becomes `command_pattern` — ported
   after all, and the `constitution` suite lost one grader to redesign rather
-  than three. It is also what lets `review-depth` grade **dispatch**: a
-  criterion matching `"subagent_type": "security-reviewer"` in an `Agent` call
-  is the routing decision itself, not a self-report of it.
+  than three. Its limit is length, not tool kind: the haystack is truncated to
+  2000 characters, which is why it can assert *that* a subagent ran and cannot
+  assert *which* — see "Grading dispatch" below.
 - **`regex` on `last_message` genuinely has no equivalent.** Nothing in
   `coder_eval` matches the agent's final message deterministically —
   `file_matches_regex` needs a path and reads file content, and only
@@ -127,22 +128,49 @@ disagreement is load-bearing:
   cost one grader a redesign and one intended check an omission; both are
   recorded below.
 
+One hazard `skill_triggered` carries, which the criterion's name hides: besides
+the `Skill` tool call, it scans **every string parameter of every tool** for the
+substring `skills/<name>/`, so a `Read` of
+`skills/review/references/review-guidelines.md` counts as engaging `review`.
+That is deliberate — it is how the criterion scores agents with no `Skill` tool
+— but it means a row that grants file tools and expects a skill *not* to fire is
+only as sound as the paths that row can plausibly touch. The trigger-accuracy
+rows dodge it by allowing `Skill` and nothing else; `review-depth`'s no-fire row
+allows file tools, and relies on the `pr` skill having no reason to name a path
+under `skills/review/` — which it does not.
+
 `skill_triggered` also improved a detail. The old graders matched the skill
 name out of the tool input as a regex, so `pr` had to be written `(:|")pr"` to
 avoid matching `pr-title`. `skill_name` is an exact match against the set of
 engaged skills, plugin namespace stripped, so that class of near-miss is gone.
 
 Each row carries an `expected_skill`: the ground truth for that row, repeated
-on every criterion so the report can build a confusion matrix. `none` is a
-legitimate value, and it is what the "neither of these should fire" rows use.
+on every criterion. What it does today is set the polarity — a criterion passes
+when the skill's engagement matches whether `expected_skill` names it — and
+`none` is a legitimate value, which is what the "neither of these should fire"
+rows use.
+
+It is *also* the input to `coder_eval`'s per-suite classification rollup
+(accuracy, recall, F1, a confusion matrix), and that rollup does **not** run
+here: it is computed only for tasks carrying a `suite_id`, which is set in
+exactly one place — the `dataset:` expander. Getting it would mean collapsing
+each suite's six files into one dataset-fanned task, trading six readable cases
+for one table. Worth doing when the per-skill numbers are what someone is
+actually reading; not worth doing to make a sentence in this file true.
 
 `stop_early` is armed where it is free. On a single-criterion fire case,
 `on_pass: stop` ends the run the moment the skill fires. On a no-fire case the
-distractor is armed bare (`stop_early: {}`): a misfire has already lost the
-row, so there is nothing left to pay for — but the *positive* criterion beside
-it is deliberately left unarmed, because a pass-stop there would truncate the
-run before a later misfire could be observed, and the row would score green on
-a trajectory nobody finished watching.
+distractor is armed bare (`stop_early: {}`) — a misfire has already lost the
+row, so there is nothing left to pay for — **and so is the positive criterion
+beside it**, which is the part that is easy to get backwards.
+
+Arming the positive cannot truncate anything: a bare `stop_early: {}` leaves
+`on_pass` at its default `continue`. What it does is put the criterion in the
+watcher's *pass-capable* set, and a fail-stop is deferred while any pass-capable
+armed criterion is still undecided. Leave the positive unarmed and the watcher
+cannot see it: the first distractor misfire ends the run, the positive is then
+scored on a trajectory that stopped before the right skill could fire, and the
+row records a false negative a full run would never have produced.
 
 ## The constitution suite: one grader redesigned
 
@@ -180,24 +208,58 @@ Seven cases, each one claim:
 | `06-sensitive-touch-on-a-tiny-diff` | 11 lines of release workflow still get security | miss the file holding the publishing token |
 | `07-neg-opening-a-pr` | opening a PR is not a review | tax every branch and train the skimming reflex |
 
-Every one of them grades `Agent` dispatch. The draft that existed in PR #36 was
+### Grading dispatch
+
+Every one of them grades which agents were dispatched. The draft in PR #36 was
 dropped for grading the mode line the skill *announces*, which is a self-report:
 a skill announcing "Standard" and then dispatching the Full panel would have
 passed it.
 
-**The mode line is not checked at all here, and that is a decision.** Keeping it
-as a low-weight secondary signal was the plan, and it turns out to need an
-`llm_judge` on every row — the final message has no deterministic matcher — which
-would put a scored model judgment, and its cost, on seven cases whose whole
-point is that they are deterministic. Dispatch is the outcome; the mode line is
-the narration of it. If the announced depth is ever worth asserting, the cheap
-way in is to have the skill write it somewhere `file_matches_regex` can read,
-not to hire a judge.
+**No criterion in `coder_eval` 0.11.6 can see `subagent_type`.**
+`command_executed` matches against `json.dumps(parameters)` truncated to 2000
+characters, and the `Agent` tool's schema orders its keys `description, prompt,
+subagent_type` — so the prompt carrying the diff pushes `subagent_type` past the
+window on every dispatch of consequence, and the criterion reports "not
+dispatched" for a dispatch that happened. That silently zeroes a positive and
+*inverts* a negative control. `llm_judge` and `agent_judge` are no help: their
+tool-call summariser renders an `Agent` call as its `description`, a three-word
+label the model writes.
 
-Two case sizes are load-bearing and should not be "tidied". `02` is over the
-~50-line skim threshold on purpose: under it, the case routes to Skim on size
-alone no matter which bucket tests land in, and measures nothing. `03` is over
-it for the same reason.
+So the observation is taken with a `PreToolUse` hook on `Agent`, wired through
+each task's `claude_settings` and recorded by
+`fixtures/review-depth/record-dispatch.py`. It appends one `subagent_type` per
+line to `.fixture/dispatched.txt`, which `file_matches_regex` reads.
+
+The hook is part of the **instrument**, not of the plugin under test: it is
+configured by the eval, it fires identically in both arms, it reads the tool
+input verbatim, and it emits nothing — so it cannot veto a dispatch or disagree
+with the plugin's own `PreToolUse` hook on the same event. And it is still not
+the mode line: the mode line is what the skill says it decided; the roster is
+the argument it passed to the tool.
+
+The roster is created empty by the fixture, so a `must_match: false` criterion
+reads "nothing was dispatched" instead of erroring on a missing file — which is
+the entire `bare` arm.
+
+The upstream fixes that would retire this: make the truncation bound
+configurable, or render `subagent_type` in the judge's tool-call summary.
+
+**The mode line is not checked at all here, and that is a decision.** Keeping it
+as a low-weight secondary signal was the plan, and it needs an `llm_judge` on
+every row — the final message has no deterministic matcher — which would put a
+scored model judgment, and its cost, on seven cases whose whole point is that
+they are deterministic. Dispatch is the outcome; the mode line is the narration
+of it, and the narration is what PR #36's draft was dropped for grading. If the
+announced depth is ever worth asserting on its own, the way in is the roster's:
+observe it where it is complete, not through a judge.
+
+**Every case size is load-bearing and none should be "tidied".** The depth table
+turns on ~50 and ~800 changed lines, so a case that drifts across a threshold
+does not fail — it re-routes, and then measures a depth it was not written for.
+`01`, `02` and `03` are over ~50 on purpose (under it they route to Skim on size
+alone, whatever bucket their paths land in); `04` is over ~800; `05` and `06`
+are deliberately under ~50, because "tiny and still reviewed" is the whole
+claim. `scripts/check-eval-fixtures.sh` holds those bounds and fails on drift.
 
 ### The git problem
 
@@ -254,6 +316,12 @@ One to know about and not fix here: `coder_eval` calls
 surprising way to run a suite against the wrong account.
 
 ## Cost
+
+`plan` warns on every task here that `task_timeout` exceeds `turn_timeout`.
+That is deliberate and the tasks say so: `turn_timeout` is the agent's budget,
+`task_timeout` is a watchdog armed before the turn and still running while the
+criteria are checked, so equal values mean a turn that uses its budget is killed
+as a TIMEOUT before it can be graded. The headroom is the difference.
 
 `run_limits` caps turns and wall clock per task, but nothing caps the bill. The
 18 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,

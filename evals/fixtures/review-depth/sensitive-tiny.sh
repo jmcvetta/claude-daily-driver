@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Twelve lines of release workflow. Small, and it holds the token that publishes
+# Eleven lines of release workflow. Small, and it holds the token that publishes
 # the package.
 # shellcheck source=./lib.sh
 source "$(dirname "$0")/lib.sh"

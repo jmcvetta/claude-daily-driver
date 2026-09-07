@@ -9,9 +9,13 @@ initial_prompt: >-
 
 run_limits:
   max_turns: 5
-  task_timeout: 120
-  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
-  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  task_timeout: 300
+  # `turn_timeout` is the agent's budget; `task_timeout` is the watchdog around
+  # the whole evaluation, armed before the turn starts and still running while
+  # the criteria are checked. Equal values mean a turn that uses its budget is
+  # killed as a TIMEOUT before it can be graded, so `task_timeout` carries
+  # headroom on top. `plan` warns that the larger number cannot extend the
+  # turn; that is the point — it is not meant to.
   turn_timeout: 120
 
 success_criteria:
@@ -19,8 +23,13 @@ success_criteria:
     description: "`pr-title` fires"
     expected_skill: pr-title
     skill_name: pr-title
-    # Not armed: a pass here must not truncate the run, or `pr` firing
-    # afterwards would go unobserved and the row would score green.
+    # Armed. `stop_early: {}` leaves `on_pass` at its default `continue`, so
+    # this cannot cut the run short on a pass — what it does is put this
+    # criterion in the watcher's pass-capable set, which defers the distractor's
+    # fail-stop until recall has been decided. Left unarmed, a misfire would
+    # end the run before `pr-title` had a chance to fire, and the row would
+    # record a false negative the full run would not have produced.
+    stop_early: {}
   - type: skill_triggered
     description: "`pr` does not fire"
     expected_skill: pr-title

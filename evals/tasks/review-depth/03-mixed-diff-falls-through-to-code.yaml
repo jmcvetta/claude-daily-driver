@@ -15,39 +15,64 @@ pre_run:
     timeout: 60
 
 agent:
+  # `claude_settings` lives on the claude-code agent config, not the base
+  # one, so the kind has to be named here even though the experiment already
+  # supplies it — without it the block parses as the base config and the
+  # settings are rejected as an extra field.
+  type: claude-code
   allowed_tools: [Bash, Read, Grep, Glob, Skill, Agent, Task]
+
+  # `review-depth` grades which agents were dispatched, and on `coder_eval`
+  # 0.11.6 no criterion can see that: `command_executed` truncates its haystack
+  # to 2000 characters and the `Agent` schema puts `subagent_type` last, after
+  # the prompt carrying the diff, while the judge criteria render an `Agent`
+  # call as its model-written `description`. So the observation is taken by a
+  # `PreToolUse` hook instead — part of the instrument, wired here rather than
+  # in the plugin, firing in both arms, reading the tool input verbatim. See
+  # `../../fixtures/review-depth/record-dispatch.py`.
+  claude_settings:
+    hooks:
+      PreToolUse:
+        - matcher: "^(Agent|Task)$"
+          hooks:
+            - type: command
+              command: python3 .fixture/record-dispatch.py
+              timeout: 10
 
 run_limits:
   max_turns: 30
-  task_timeout: 900
-  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
-  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  task_timeout: 1080
+  # `turn_timeout` is the agent's budget; `task_timeout` is the watchdog around
+  # the whole evaluation, armed before the turn starts and still running while
+  # the criteria are checked. Equal values mean a turn that uses its budget is
+  # killed as a TIMEOUT before it can be graded, so `task_timeout` carries
+  # headroom on top. `plan` warns that the larger number cannot extend the
+  # turn; that is the point — it is not meant to.
   turn_timeout: 900
 
 initial_prompt: "Review this branch before I merge it."
 
 success_criteria:
-  - type: skill_triggered
-    description: "`review` fires on an explicit review request"
-    expected_skill: review
-    skill_name: review
-
   # Planning-class requires EVERY path to be planning-class. One `src/` file
   # means the branch falls through to code, and the sign-handling fix here is
   # exactly the kind of change a planning rubric has nothing to say about.
-  - type: command_executed
+  - type: file_matches_regex
     description: The logic reviewer was dispatched
-    tool_name: Agent
-    command_pattern: '"subagent_type":\s*"(?:[^"]*:)?logic-reviewer"'
-    min_count: 1
+    path: .fixture/dispatched.txt
+    pattern: '^(?:[A-Za-z0-9_.-]+:)?logic-reviewer$'
+    # re.MULTILINE, so `^`/`$` bracket one roster line rather than the
+    # whole file; the optional prefix tolerates a plugin-namespaced name.
+    flags: 8
     weight: 2
 
   # The other half of the same claim, and the half that fails loudly if "every
   # path" quietly becomes "any path": a code change reviewed only for planning
   # fitness has not been reviewed.
-  - type: command_executed
+  - type: file_matches_regex
     description: The planning-fitness reviewer was not dispatched
-    tool_name: Agent
-    command_pattern: '"subagent_type":\s*"(?:[^"]*:)?planning-fitness-reviewer"'
-    min_count: 0
-    max_count: 0
+    path: .fixture/dispatched.txt
+    pattern: '^(?:[A-Za-z0-9_.-]+:)?planning-fitness-reviewer$'
+    # re.MULTILINE, so `^`/`$` bracket one roster line rather than the
+    # whole file; the optional prefix tolerates a plugin-namespaced name.
+    flags: 8
+    must_match: false

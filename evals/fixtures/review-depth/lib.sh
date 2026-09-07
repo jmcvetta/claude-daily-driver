@@ -39,6 +39,12 @@ fixture_init() {
 	git config user.email "eval@example.invalid"
 	git config user.name "Eval Fixture"
 	git config commit.gpgsign false
+
+	# The dispatch roster the PreToolUse recorder appends to. Created empty so a
+	# `must_match: false` criterion reads "nothing was dispatched" rather than
+	# failing on a missing file -- which is the whole `bare` arm, where there is
+	# no `review` skill to dispatch anything.
+	: >"${FIXTURE_DIR}/dispatched.txt"
 }
 
 # Commit whatever the case laid down as the base branch, publish it to a local

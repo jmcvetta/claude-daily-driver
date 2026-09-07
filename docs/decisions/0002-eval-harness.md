@@ -208,7 +208,7 @@ on `tool_name` for **any** tool and, off `Bash`, matches `command_pattern`
 against the JSON-serialised tool parameters; the Claude Code adapter records one
 telemetry row per `tool_use` block, `Agent` included. So `tool_used` on `Agent` —
 `input_match` and all — ports directly, and
-`evals/constitution-reaches-subagent/` lost **one** grader to redesign, not
+the constitution suite lost **one** grader to redesign, not
 three. The narrow claim that survives is about `skill_triggered`, which does
 count only `Skill` invocations.
 
@@ -216,6 +216,21 @@ That correction is also what makes the rebuilt `review-depth` suite possible on
 this harness: a criterion matching `"subagent_type": "security-reviewer"` inside
 an `Agent` call grades the dispatch itself, which is precisely the thing the
 dropped draft failed to grade.
+
+That last sentence is how it was planned and not how it shipped, for a reason
+worth recording. `command_executed` matches against
+`json.dumps(parameters)[:2000]`, and the `Agent` tool's schema orders its keys
+`description, prompt, subagent_type` — so on any diff of consequence the
+`prompt` pushes `subagent_type` past the window, and the criterion reports "not
+dispatched" for a dispatch that happened. `llm_judge` and `agent_judge` cannot
+see it either: their tool-call summariser renders an `Agent` call as its
+`description`, a three-word label the model writes. **`subagent_type` is not
+observable through any criterion in 0.11.6.** The suite therefore takes the
+observation with a `PreToolUse` hook wired through the task's
+`claude_settings` — instrument, not plugin — which sees the tool input verbatim
+and writes a roster a `file_matches_regex` criterion reads. The fix upstream
+would be to make that truncation bound configurable, or to render
+`subagent_type` in the judge summary.
 
 **A sandbox can be given a git repository.** This page records a `tempdir` with
 no repository as the reason the verification task scored 0 in both arms, and

@@ -56,9 +56,13 @@ agent:
 
 run_limits:
   max_turns: 8
-  task_timeout: 300
-  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
-  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  task_timeout: 480
+  # `turn_timeout` is the agent's budget; `task_timeout` is the watchdog around
+  # the whole evaluation, armed before the turn starts and still running while
+  # the criteria are checked. Equal values mean a turn that uses its budget is
+  # killed as a TIMEOUT before it can be graded, so `task_timeout` carries
+  # headroom on top. `plan` warns that the larger number cannot extend the
+  # turn; that is the point — it is not meant to.
   turn_timeout: 300
 
 initial_prompt: |
@@ -98,10 +102,17 @@ success_criteria:
     min_count: 1
 
   # R2's control: the prompt Claude *sent* carried no token; the hook injected
-  # it in flight. Should this ever fail while the other two pass, check whether
-  # the trace now records tool input after the hook rewrote it — that reading
-  # makes every Agent call match, and the grader would be measuring the
-  # harness's bookkeeping rather than a leak.
+  # it in flight. It holds only while telemetry records PRE-hook input, which
+  # it does — the row is built from the assistant message's `tool_use` block,
+  # emitted before any hook runs.
+  #
+  # Note which way it would break. If the trace ever started recording input
+  # after the rewrite, this control would NOT start failing: `command_executed`
+  # matches `json.dumps(parameters)` truncated to 2000 characters, and the
+  # injected constitution is over 8 KB, so the token would sit past the window
+  # and the criterion would pass vacuously forever. A control that cannot fail
+  # is worse than one that does, so the thing to re-check is the recording
+  # point, not this line's verdict.
   - type: command_executed
     description: The parent did not supply the token
     tool_name: Agent

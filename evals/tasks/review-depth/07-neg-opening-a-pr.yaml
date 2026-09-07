@@ -19,13 +19,33 @@ pre_run:
     timeout: 60
 
 agent:
+  # `claude_settings` lives on the claude-code agent config, not the base one,
+  # so the kind has to be named here even though the experiment supplies it.
+  type: claude-code
   allowed_tools: [Bash, Read, Grep, Glob, Skill, Agent, Task]
+
+  # The same dispatch recorder the fire cases use. Here it backs the no-fire
+  # claim from the other side: `skill_triggered` also counts a `skills/<name>/`
+  # path appearing in any tool parameter, so a stray `review` path would read as
+  # a misfire; an empty roster cannot be faked that way.
+  claude_settings:
+    hooks:
+      PreToolUse:
+        - matcher: "^(Agent|Task)$"
+          hooks:
+            - type: command
+              command: python3 .fixture/record-dispatch.py
+              timeout: 10
 
 run_limits:
   max_turns: 12
-  task_timeout: 600
-  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
-  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  task_timeout: 780
+  # `turn_timeout` is the agent's budget; `task_timeout` is the watchdog around
+  # the whole evaluation, armed before the turn starts and still running while
+  # the criteria are checked. Equal values mean a turn that uses its budget is
+  # killed as a TIMEOUT before it can be graded, so `task_timeout` carries
+  # headroom on top. `plan` warns that the larger number cannot extend the
+  # turn; that is the point — it is not meant to.
   turn_timeout: 600
 
 initial_prompt: "The branch is finished. Open a pull request for it."
@@ -35,6 +55,10 @@ success_criteria:
     description: "`pr` fires"
     expected_skill: pr
     skill_name: pr
+    # Armed so the watcher counts it as pass-capable and defers the
+    # distractor's fail-stop until recall is decided; `on_pass` stays at
+    # its default `continue`, so this never truncates a run itself.
+    stop_early: {}
 
   # Expensive skills are pulled, never pushed. A panel that fires on every pull
   # request open taxes every trivial branch to catch the occasional serious one,
@@ -48,3 +72,14 @@ success_criteria:
     weight: 2
     # A misfire has already lost the row; there is nothing left to pay for.
     stop_early: {}
+
+  # And no reviewer ran. This is the criterion that would catch a `review` that
+  # fired without ever calling itself `review` — the panel is the expensive
+  # part, and an empty roster is the direct evidence that none of it was paid
+  # for.
+  - type: file_matches_regex
+    description: No reviewer was dispatched
+    path: .fixture/dispatched.txt
+    pattern: '^(?:[A-Za-z0-9_.-]+:)?[a-z-]+-reviewer$'
+    flags: 8
+    must_match: false

@@ -26,6 +26,28 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FIXTURES="${REPO_ROOT}/evals/fixtures/review-depth"
 
+# Changed-line bounds per case, as `<min> <max>` (`-` for no bound). These are
+# the thresholds each case sits against, not the counts it happens to have:
+#
+#   docs-typo                 the smallest diff in the suite; must stay a skim
+#   mixed-planning-and-code   over ~50, so *kind* decides the depth, not size
+#   planning-over-800-lines   over ~800, so the size row would fire on a code diff
+#   readme-only               over ~50, for the same reason as mixed
+#   sensitive-tiny            under ~50, so only the sensitive touch can explain
+#                             a security reviewer
+#   tests-only                over ~50, so tests-bucket-with-code is what decides
+case_bounds() {
+	case "$1" in
+	docs-typo) echo "- 49" ;;
+	mixed-planning-and-code) echo "51 799" ;;
+	planning-over-800-lines) echo "801 -" ;;
+	readme-only) echo "51 799" ;;
+	sensitive-tiny) echo "- 49" ;;
+	tests-only) echo "51 799" ;;
+	*) echo "" ;;
+	esac
+}
+
 fail() {
 	printf 'FAIL: %s: %s\n' "${1}" "${2}" >&2
 	return 1
@@ -64,10 +86,26 @@ check_one() {
 	[ -n "${changed}" ] ||
 		fail "${name}" "the topic branch changes nothing"
 
-	printf 'ok  %-28s %s changed line(s) across %s file(s)\n' \
-		"${name}" \
-		"$(git diff --numstat "${base}...HEAD" | awk '{a += $1 + $2} END {print a}')" \
-		"$(printf '%s\n' "${changed}" | wc -l | tr -d ' ')"
+	[ -f "${sandbox}/.fixture/dispatched.txt" ] ||
+		fail "${name}" "no dispatch roster; every file_matches_regex criterion would error on a missing file"
+	[ ! -s "${sandbox}/.fixture/dispatched.txt" ] ||
+		fail "${name}" "the dispatch roster is not empty before the agent has run"
+
+	local lines bounds min max
+	lines="$(git diff --numstat "${base}...HEAD" | awk '{a += $1 + $2} END {print a + 0}')"
+	bounds="$(case_bounds "${name}")"
+	[ -n "${bounds}" ] ||
+		fail "${name}" "no entry in case_bounds; add the thresholds this case sits against"
+	read -r min max <<<"${bounds}"
+	[ "${min}" = "-" ] || [ "${lines}" -ge "${min}" ] ||
+		fail "${name}" "${lines} changed lines, below the ${min} this case needs; it now routes on size instead of on what it tests"
+	[ "${max}" = "-" ] || [ "${lines}" -le "${max}" ] ||
+		fail "${name}" "${lines} changed lines, above the ${max} this case allows; it now routes on size instead of on what it tests"
+
+	printf 'ok  %-28s %4s changed line(s) across %s file(s), bounds [%s, %s]\n' \
+		"${name}" "${lines}" \
+		"$(printf '%s\n' "${changed}" | wc -l | tr -d ' ')" \
+		"${min}" "${max}"
 }
 
 main() {
