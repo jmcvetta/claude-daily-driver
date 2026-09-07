@@ -7,8 +7,8 @@ description: >-
   "that session title is wrong", and on Claude's own initiative when work on a
   GitHub issue begins, when the session's subject changes materially, or on
   any call to `mcp__Claude_Code_Remote__set_session_title`. Supplies the
-  character budget the Claude mobile list is read at, and the two forms a
-  title may take. Not the title of a pull request — that is `pr-title`.
+  character budget the Claude mobile list needs, and the two forms a title
+  may take. Not the title of a pull request — that is `pr-title`.
 ---
 
 # Session title
@@ -50,21 +50,26 @@ Capitalise whatever word ends up first.
    Conventional Commits type (`feat:`, `fix(api):`), or a label (`New skill:`,
    `Bug:`, `RFC:`).
 2. Drop a trailing qualifier — a parenthesis, a clause after a dash.
-3. Drop the words carrying no information, wherever they sit and least
-   informative first: articles, prepositions, an auxiliary verb, an adjective
-   the title survives without.
+3. Drop the words carrying no information, wherever they sit, least
+   informative first: articles, then auxiliary verbs, then prepositions, then
+   an adjective the title survives without.
 4. Only then cut whole words from the end, never part of one. Where the last
    word is the noun naming the subject — in an issue title it is as often last
-   as first — keep it and cut the word before it instead.
+   as first, and where two nouns compete it is the rightmost — keep it and cut
+   the word before it instead.
+
+A title that still overruns at `#{number} {noun}` has nothing left to give.
+Stop there and let it overrun: the identifier and the subject are the two
+things worth more than the budget.
 
 Issue #40, *"New skill: set the Claude session title"*, needs step 1 alone:
 `#40 Set the Claude session title` — 32 characters.
 
 Issue #212, *"fix(storage): retry with exponential backoff for the S3 upload
-client"*, loses its type prefix at step 1, then `with`, `exponential` and
-`the` at step 3, and fits at 39: `#212 Retry backoff for S3 upload client`.
-Step 4 never runs, and `client` — the noun the title is about — survives
-because of it.
+client"*, loses its type prefix at step 1, then `the`, `with`, `for` and
+finally the adjective `exponential` at step 3, fitting at 35:
+`#212 Retry backoff S3 upload client`. Step 4 never runs, and `client` — the
+noun the title is about — survives because of it.
 
 
 Not working on an issue
