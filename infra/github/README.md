@@ -26,8 +26,8 @@ exclusion below.
 - **`github_repository`** — merge settings, visibility, feature toggles
 - **`github_repository_vulnerability_alerts`** — Dependabot alerts
 - **`github_workflow_repository_permissions`** — the default workflow token
-  scope, and whether Actions may open a pull request (the release job needs
-  the latter)
+  scope, and whether Actions may open a pull request (the release job's
+  default-token fallback needs the latter)
 - **`github_branch_protection`** on `master` — required `CI Success` check
   (strict), linear history, conversation resolution, no force pushes or
   deletions
@@ -50,14 +50,15 @@ Three consequences worth knowing:
   requires that.
 - `enforce_admins = false` leaves an escape hatch for the case where CI
   itself is what is broken.
-- **The release pull request needs that escape hatch.** GitHub suppresses
-  workflow events for anything pushed with the default token, and
-  `release-please.yml` falls back to that token while the App variables under
-  **Deliberate Exclusions** are unset. So the release pull request arrives
-  with *no* check runs at all, and `CI Success` sits "expected" on the one
-  pull request whose merge cuts a permanent tag. Configuring the App removes
-  that, because an App is a distinct identity whose pushes do produce
-  workflow events.
+- **The release pull request no longer needs that escape hatch.**
+  `release-please.yml` authenticates as a GitHub App, which is a distinct
+  identity, so `CI Success` reports on the release pull request like any
+  other. It did need it while the release job ran on the default token, in
+  both of that arrangement's eras: until 2026-06-11 GitHub created no
+  workflow runs at all for `github-actions[bot]` pull requests, and since
+  then it creates them but holds them in `action_required` until someone with
+  write access clicks **Approve workflows to run**. Either way `CI Success`
+  sat "expected" on the one pull request whose merge cuts a permanent tag.
 
 `ci.yml` carries no `paths:` filter, and must not grow one. A path-filtered
 workflow does not report a *skipped* check, it reports nothing at all, so a
@@ -66,12 +67,14 @@ pending forever. `infra.yml` is filtered precisely because it is not required;
 requiring it later means dropping its filter in the same commit, and nothing
 enforces that.
 
-## The Release Job Depends on a Workflow Permission
+## The Release Job's Fallback Depends on a Workflow Permission
 
-`release-please.yml`'s fallback to `github.token` works only while **Settings
--> Actions -> General -> Allow GitHub Actions to create and approve pull
-requests** is on. With it off, release-please does all its work, pushes its
-release branch, and then fails on the last call:
+The release job authenticates as an App and does not take this path. Its
+fallback to `github.token`, which is what runs if the App variables are ever
+cleared, works only while **Settings -> Actions -> General -> Allow GitHub
+Actions to create and approve pull requests** is on. With it off,
+release-please does all its work, pushes its release branch, and then fails on
+the last call:
 
 ```
 release-please failed: GitHub Actions is not permitted to create or approve
@@ -85,11 +88,11 @@ actually ended.
 So `can_approve_pull_request_reviews` is declared, in `repository.tf`. It was
 briefly argued here that it should not be, on the grounds that the release bot
 App is the real fix and a Tofu-managed permission would only prop up the
-fallback the App replaces. That reasoning was wrong twice over: the App is not
-configured, so the fallback is not a fallback but the actual mechanism; and a
-setting the release job depends on belongs written down next to the reason it
-is needed whether or not something better exists. Configuring the App makes
-the release job stop depending on it. It does not make it wrong to declare.
+fallback the App replaces. Half of that has since come true: the App is
+configured, and the release job no longer depends on this permission. The
+declaration stays anyway, because the other half was wrong then and is wrong
+now — a setting the release job falls back on belongs written down next to the
+reason it is needed, whether or not something better exists.
 
 ## The Provider Lock Has To Be What `init` Produces
 
@@ -125,7 +128,9 @@ manageable here — it holds no secret — and is deliberately left out anyway.
 `release-please.yml` switches to the App the moment the variable is set, so
 setting it while the private key is missing or the App is not installed makes
 the release job fail on its first step, which is worse than the fallback it
-replaces. Both go in together, by hand, alongside installing the App.
+replaces. Both go in together, by hand, alongside installing the App — which
+is how the `daily-driver-release-bot` App now serving this repository was set
+up.
 
 **Labels.** Tofu owns only what it declares, so declaring none neither adopts
 nor deletes GitHub's defaults. The repository has no labels of its own yet;
