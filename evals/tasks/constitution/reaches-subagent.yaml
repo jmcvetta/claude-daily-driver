@@ -61,7 +61,7 @@ tags: [constitution, delivery]
 # both.
 agent:
   allowed_tools: [Agent, Task, Write]
-  disallowed_tools: [Read, Grep, Glob, Bash, Edit, NotebookEdit]
+  disallowed_tools: [Read, Grep, Glob, Bash, Edit, NotebookEdit, WebFetch, WebSearch]
 
 run_limits:
   max_turns: 8

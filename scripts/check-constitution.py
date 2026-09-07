@@ -394,16 +394,18 @@ def check_one_loud_failure(errors: list[str], label: str, content: bytes | None)
 def top_level_blocks(text: str) -> dict[str, str]:
     """Split a task YAML into its top-level keys, without a YAML parser.
 
-    `check_eval_token` needs exactly two things out of a case file — the prompt
-    the model is sent, and the criteria it is scored by — and those are two
-    column-0 keys. A real parser would be more correct and would cost this
+    `check_eval_token` needs one thing out of a case file — the criteria it is
+    scored by, which is the only place the token may appear — and that is a
+    column-0 key. A real parser would be more correct and would cost this
     script the "no third-party imports" property that lets it run identically
     from a Makefile, from CI and from a web worker. Recognising a top-level key
     is a job for a regex.
 
-    Text before the first top-level key is the file's comment header, and is
-    dropped deliberately: a comment is not sent to a model, so the rule about
-    prompts naming the token has nothing to say about it.
+    Text before the first top-level key is the file's comment header and is not
+    returned. That is not an exemption: the caller subtracts the criteria block
+    from the whole file and searches what is left, so a token planted in a
+    header comment is still caught — it simply is not `success_criteria`, which
+    is the only thing this function is asked to find.
     """
     blocks: dict[str, str] = {}
     key: str | None = None
@@ -431,9 +433,14 @@ def check_eval_token(errors: list[str], expected: str) -> None:
 
     Under `claude plugin eval` the prompt and the graders were separate files,
     so "only a grader may name the token" was a rule about directories. A
-    `coder_eval` task is one file holding both, so it is now a rule about which
-    top-level key the token appears under: `success_criteria` must name it,
-    `initial_prompt` must not.
+    `coder_eval` task is one file holding both, so the rule is now about where
+    in a file the token sits, and it is enforced over every eval file rather
+    than only over task prompts: some `success_criteria` block must name the
+    current token, and nothing else anywhere under `evals/` may — not a
+    description, not an `agent.system_prompt`, not a `pre_run` command, not a
+    fixture script, not this repository's own eval README. Staleness is a
+    separate sweep, over whole files, because a retired token is just as dead
+    wherever it is written.
     """
     if not EVALS.is_dir():
         errors.append(

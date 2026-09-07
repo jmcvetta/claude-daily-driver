@@ -246,7 +246,8 @@ label the model writes.
 
 So the observation is taken with a `PreToolUse` hook on `Agent`, wired through
 each task's `claude_settings` and recorded by
-`fixtures/review-depth/record-dispatch.py`. It appends one `subagent_type` per
+`fixtures/review-depth/shared/record-dispatch.py`. It appends one
+`subagent_type` per
 line to `.fixture/dispatched.txt`, which `file_matches_regex` reads.
 
 The hook is part of the **instrument**, not of the plugin under test: it is
@@ -347,8 +348,10 @@ the report from the finding the suite exists to produce.
 **`pre_run` is the seam.** It runs a shell command inside the sandbox after
 setup and before the agent, and by default aborts the evaluation on a non-zero
 exit, so a fixture that fails to build never reaches a model and never scores a
-misleading 0. Each case mounts `fixtures/review-depth/` at `.fixture` via
-`template_dir` and runs one script from it. The scripts `git init` the sandbox
+misleading 0. Each case mounts `fixtures/review-depth/shared/` and its own
+`fixtures/review-depth/cases/<name>/` at `.fixture` — two `template_dir`
+sources, one mount point, for the reason in "What the sandbox can see" — and
+runs `.fixture/case.sh`. The scripts `git init` the sandbox
 root, exclude `.fixture/` through `.git/info/exclude` (a `.gitignore` would show
 up as a changed path and shift the diff's *kind*, which is the one thing this
 suite measures), commit a base tree, publish it to a bare `origin` under
@@ -399,9 +402,11 @@ as a TIMEOUT before it can be graded. The headroom is the difference.
 18 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
 and the fire half stops the moment the skill fires. `review-depth` is not: its six fire
 cases each dispatch a real reviewer panel over a real diff, five times, in the
-`with-plugin` arm — the `bare` arm has no skill and no agents, so it is cheap —
-and its no-fire case pays for a panel too, on exactly the trajectory it is
-trying to catch. Run one suite at a time with
+`with-plugin` arm. The `bare` arm is cheaper but not free: it has no `review`
+skill and none of the plugin's reviewer agents, but it keeps the `Agent` tool
+and thirty turns, so a session that decides to review the diff by hand can
+still spend. Its no-fire case pays for a panel too, on exactly the trajectory
+it is trying to catch. Run one suite at a time with
 `TASKS=` while iterating, and keep `make evals-plan` between edits, where the
 mistakes are free.
 

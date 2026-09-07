@@ -37,7 +37,7 @@ agent:
   # call as its model-written `description`. So the observation is taken by a
   # `PreToolUse` hook instead — part of the instrument, wired here rather than
   # in the plugin, firing in both arms, reading the tool input verbatim. See
-  # `../../fixtures/review-depth/record-dispatch.py`.
+  # `../../fixtures/review-depth/shared/record-dispatch.py`.
   claude_settings:
     hooks:
       PreToolUse:
