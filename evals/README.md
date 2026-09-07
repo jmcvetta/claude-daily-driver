@@ -29,12 +29,25 @@ one that earns its keep:
   message asserts that neither does. A suite that only proved a skill fires
   would be green with all three descriptions collapsed into one.
 
-`implement/` has the same two halves and one more no-fire case, because its
-confusable neighbour is not a sibling skill but a *mood*: an issue number in
-the prompt reads the same whether the issue is being taken on or merely asked
-about. "What does #191 say", "summarise #191" and "is #191 still relevant" are
-questions, and a skill that cuts a branch on any of them is worse than no
-skill.
+`implement/` has the same two halves, with one extra case in each, and its
+no-fire cases carry a single grader rather than the pair. Both departures have
+the same cause: its confusable neighbour is not a sibling skill but a *mood*.
+An issue number in the prompt reads the same whether the issue is being taken
+on or merely asked about, so "what does #191 say", "summarise #191" and "is
+#191 still relevant" get a case each — and the right behaviour on all three is
+that **nothing** fires, which is why there is no positive counterpart to
+assert. Naming one anyway would be asserting a coincidence.
+
+The extra fire case, `05-self-initiated`, is the register the skill exists for:
+the move from having read an issue to writing code for it, with nobody typing
+an instruction. Every other fire case is a typed instruction, and a suite made
+only of those would be green on a description that had lost the clause.
+
+The one collision a new sibling actually creates is tested from the other side
+too: `evals/pr/02-open-a-pr` now asserts that `implement` stays quiet when a
+finished branch is being turned into a pull request. The reverse assertion is
+deliberately absent — `implement` *invokes* `pr` at its step 6, so `pr` firing
+on "take #7" is correct behaviour, not a collision.
 
 Graders are all `tool_used` on the `Skill` tool, matched against the skill name
 in the tool input: deterministic, no LLM judge, no cost beyond the runs.

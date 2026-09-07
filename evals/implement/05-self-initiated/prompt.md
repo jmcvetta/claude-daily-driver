@@ -6,4 +6,4 @@ runs: 3
 tags: [implement, fire]
 ---
 
-Work on issue 12.
+#191 is the flaky auth test. Nothing blocks it and the approach is settled. Go.

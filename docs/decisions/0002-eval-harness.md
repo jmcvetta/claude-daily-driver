@@ -5,8 +5,8 @@
 [`0001`](0001-built-in-review-surface.md) and in `evals/README.md`, both of
 which take `claude plugin eval` as given.
 
-`evals/` currently holds four suites written for `claude plugin eval`
-(`pr`, `pr-title`, `pr-body`, `constitution-reaches-subagent`). **None of them
+`evals/` currently holds five suites written for `claude plugin eval`
+(`pr`, `pr-title`, `pr-body`, `implement`, `constitution-reaches-subagent`). **None of them
 can have been run on this account** — the command is early access and is not
 enabled here. (Whether they ever ran elsewhere is unknown; this is an inference
 from present unavailability, not a history.)
@@ -100,8 +100,8 @@ Capabilities confirmed by running it, which `claude plugin eval` does not have:
 - **Preserved sandboxes** and `task.json` / `task.html` per replicate.
 - **14 criterion types** against the built-in's 6 — the tool's own log says
   "Validated 15 criterion checkers", so treat the count as ~14–15 — including
-  `skill_triggered` (which detects the `Skill` tool call, and is what 24 of the
-  27 existing graders here need), `command_executed` for shell-command
+  `skill_triggered` (which detects the `Skill` tool call, and is what 33 of the
+  36 existing graders here need), `command_executed` for shell-command
   assertions,
   `agent_judge`, and an
   `llm_judge` that returns a *score* under a model of your choosing rather than
@@ -116,14 +116,14 @@ Capabilities confirmed by running it, which `claude plugin eval` does not have:
 
 ## What this costs
 
-The four existing suites must be ported. The expensive content — the prompts,
+The five existing suites must be ported. The expensive content — the prompts,
 the fire/no-fire labels, the reasoning in `evals/README.md` about why negative
 cases are what make the result mean anything — is portable; only syntax is
 locked in for most of them. **`tool_used` on `Skill` maps to `skill_triggered`,
-not to `command_executed`** — 24 of the 27 graders under `evals/` are that
+not to `command_executed`** — 33 of the 36 graders under `evals/` are that
 shape, and `command_executed` matches shell commands off command telemetry, so
 it cannot see a `Skill` call at all. The `arm: both` semantics map to
-`variants`, and `file_exists` has a direct equivalent. Estimate for those 24:
+`variants`, and `file_exists` has a direct equivalent. Estimate for those 33:
 about a day.
 
 **The other three graders have no mechanical target, and they are all in
@@ -183,7 +183,7 @@ that as reported-not-preserved.
   the skill's announced mode line rather than which agents were dispatched —
   grading the self-report instead of the outcome. It is rebuilt in `coder_eval`,
   against dispatch, in its own change.
-- The four existing suites and `evals/README.md` keep describing
+- The five existing suites and `evals/README.md` keep describing
   `claude plugin eval` until they are ported. They do not work today either way.
 - CI gating stays out of scope for now, but is no longer foreclosed: it was only
   ever blocked by CI having no credentials, which is a separate decision from

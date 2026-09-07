@@ -19,8 +19,9 @@ is the order they run in.
 It is an orchestrator, in the same shape as `pr`: **it invokes, it does not
 restate**. The title convention lives in `pr-title`, the review rubric in
 `review`, the reply protocol in `pr-threads`, and the engineering standard in
-the constitution. Nothing here repeats them. A rule that starts being restated
-here is a rule with two homes, and the copy is the one that goes stale.
+the constitution. Where a step below names a rule those files own, it names it
+as a pointer and cites the owner — a rule that acquires a second home here is
+one whose copy goes stale, and a citation is what makes the drift visible.
 
 What this skill owns is the sequencing, the gates, and the three corrections
 below.
@@ -36,18 +37,18 @@ The sequence
 | 3 | Branch off the base branch | this skill |
 | 4 | Implement | the constitution |
 | 5 | Run the project's gates | the constitution |
-| 6 | Open the draft pull request | `pr` |
+| 6 | Push, and open the draft pull request | `pr` |
 | 7 | Review | `review` |
-| 8 | Fix, answer, resolve | `review`'s walkthrough, then `pr-threads` |
+| 8 | Fix, answer, resolve, push | `review`'s walkthrough, then `pr-threads` |
 | 9 | Ready for review | `mcp__github__update_pull_request` |
 
 1 — Title the session
 ---------------------
 
-Before anything else, including before reading the issue body in full. A web
-session otherwise takes its name from the first prompt it received, which is
-the prompt that invoked this skill. `session-title` has the form and the
-budget.
+Before anything else. Read the issue *title* — that is all this step needs —
+and title the session from it before reading the body. A web session otherwise
+takes its name from the first prompt it received, which is the prompt that
+invoked this skill. `session-title` has the form and the budget.
 
 2 — Read the issue and its edges
 --------------------------------
@@ -68,43 +69,50 @@ wrong place is cheap to fix at step 3 and expensive at step 6.
 4 — Implement
 -------------
 
-The constitution governs: tests ship in the same commit as the code they
-cover, commits are focused, named files are staged. No permission is asked to
-commit.
+The constitution governs, under *While I write code*, *Before I commit* and
+*When I hit a wall*. Nothing about how to write or commit the code is decided
+here.
 
 5 — Gates
 ---------
 
-The project's own tests, linters, formatters, and whatever validation it
-defines — **run, not reasoned about**. This is the constitution's "before I
-call it done", and it sits before the pull request rather than after it, so
-that the draft opens green.
+The constitution's *Before I call it done*, run at this point rather than
+after the pull request, so that the draft opens green.
 
-6 — Draft pull request
-----------------------
+6 — Push, and open the draft pull request
+-----------------------------------------
 
-`pr` owns it: the branch guard, the existing-PR check, draft state, and the
-call on whether there is an issue to reference — there is, and it is this one.
-The `Issues` section of the body closes it, and `issue-deps` treats that line
-as the write into the graph.
+Push the branch, then invoke `pr`: it owns the branch guard, the existing-PR
+check, draft state, and the call on whether there is an issue to reference —
+there is, and it is this one. The `Issues` section of the body closes it, and
+`issue-deps` treats that line as the write into the graph.
 
 7 — Review
 ----------
 
-Invoke `review`. Not "dispatch a subagent to code review the branch": a bare
-subagent gets no depth inference, no sensitive-path override, no synthesis,
-and no handoff to `pr-threads`.
+**Wait for CI to report on the pushed head first.** A pull request opened
+seconds ago has its checks queued, and `review`'s approval criteria read a
+queued check as a failing one — so reviewing immediately buys a 👎 that says
+nothing about the code.
 
-8 — Fix, answer, resolve
-------------------------
+Then invoke `review`. Not "dispatch a subagent to code review the branch": a
+bare subagent gets no depth inference, no sensitive-path override, no
+synthesis, and no handoff to `pr-threads`.
 
-`review`'s walkthrough owns the fixing; `pr-threads` owns the threads. A
-finding is implemented or rejected with a reason, on the thread, and the
-thread is resolved. **Never left open silently.**
+8 — Fix, answer, resolve, push
+------------------------------
 
-Findings arriving from anyone else — a human reviewer, Claude Approvals, a
-lint bot — are the same protocol, and are `pr-threads`'s from the moment they
-appear.
+`review`'s walkthrough owns the fixing — the offer line it stops on, the
+`[judgment]` discussion, and the execution plan. Push what it produces:
+`review` refuses to read a branch whose local commits have not reached the
+remote, and step 9's CI gate reads the remote head rather than this one.
+
+`review` then offers to post its result to the pull request. **Take that
+offer.** A review nobody posted leaves step 9's second gate vacuous — there
+are no threads to answer, so nothing can fail it — and the record of why this
+branch was judged ready never reaches the pull request. Posting is also what
+hands the lifecycle to `pr-threads`, which owns every thread from there:
+Claude's own, a human reviewer's, Claude Approvals', a bot's.
 
 9 — Ready for review
 --------------------
@@ -117,8 +125,8 @@ already run.
 Three corrections
 =================
 
-The hand-typed prompt this skill replaces got three things wrong. They are the
-only original content here.
+The hand-typed prompt this skill replaces got three things wrong. These are
+the three it corrects.
 
 `draft: false` does not re-trigger `review`
 -------------------------------------------
@@ -127,12 +135,25 @@ only original content here.
 exactly that moment — and the review already ran, at step 7, on this same
 branch.
 
-**The step-7 review discharges it.** Do not review twice. If the branch has
-changed since step 7 in any way beyond the fixes that review itself agreed —
-new feature work, a rebase that pulled in someone else's change, a scope
-addition — that is a new diff, and step 7 runs again over it before step 9.
-Fixes made under `review`'s own walkthrough do not count as such a change;
-re-reviewing the answer to a review is the loop this rule exists to cut.
+**The step-7 review discharges it.** Do not review twice. `review`'s own
+*Boundaries* section says the same from the other side, so that the rule holds
+whichever file is being read at step 9.
+
+The test is **provenance, not sameness**: record the head SHA at step 7, and
+classify every commit made after it.
+
+- **Answering** — a review finding, a review thread, a lint bot, a red check.
+  These do not re-trigger step 7, however many of them there are. Answering a
+  review is not new work, and re-reviewing the answer is the loop this rule
+  exists to cut.
+- **Changing what the code does** — new feature work, a scope addition, a
+  merge or rebase that pulls in someone else's commits. This is a new diff.
+  Step 7 runs again over it, once, before step 9, and its head SHA becomes the
+  new mark.
+
+The classification is per commit and the categories do not compound: a run
+that only ever answers reaches step 9 with one review behind it, which is the
+point.
 
 Ready is a gate, not a step
 ---------------------------
@@ -140,12 +161,14 @@ Ready is a gate, not a step
 "After fixing, set the PR to ready" reads as unconditional. It is not. The
 pull request goes to ready only when **all** of these hold:
 
-- CI is green on the head commit.
-- No review thread is unanswered or unresolved.
+- CI is green on the head commit. **Pending is not green** — wait for it,
+  rather than treating an unreported check as either answer.
+- No review thread is unanswered or unresolved — from any reviewer, not only
+  from the step-7 review.
 - The step-7 review's verdict is 👍, or every 🔴 and 🟡 behind a 👎 has been
   fixed or explicitly deferred with the user's agreement.
 
-Any one of them failing means it **stays a draft**, and the reason is stated
+Red CI or an open thread means it **stays a draft**, and the reason is stated
 in one line. A red pull request marked ready is a claim about the work that is
 not true.
 
@@ -159,18 +182,22 @@ Restated as step 7 because this is the correction most likely to be lost:
 Where it stops and waits
 ========================
 
-Autonomy is the point, so each pause has to earn itself. There are three.
+Autonomy is the point, so each pause has to earn itself. There are four.
 
 - **A blocked issue, or an issue whose intent is genuinely ambiguous.** The
   constitution forbids guessing at intent; this is that rule at step 2.
-- **A `[judgment]` finding.** `review`'s own walkthrough owns this pause — do
-  not pre-empt it, and do not add a second one around it.
+- **`review`'s offer line, and the `[judgment]` discussion behind it.** Both
+  belong to `review`'s walkthrough — `review` is read-only until the offer is
+  accepted, including for `[obvious]` fixes. Emit the offer and wait for it;
+  do not pre-empt the pause, and do not add a second one around it.
 - **The approach failing mid-implementation.** Cascading complexity, an
   assumption turning out wrong: stop and re-assess rather than pushing through
   to a pull request that documents a wrong turn.
+- **CI still running**, at steps 7 and 9. A wait, not a question — nothing is
+  asked, and nothing proceeds on a check that has not reported.
 
-Everything else runs through. No permission is asked to commit, to open the
-draft, or to apply an `[obvious]` fix.
+Everything else runs through. No permission is asked to commit, to push, or to
+open the draft.
 
 
 Non-goals
