@@ -73,10 +73,11 @@ claude plugin eval . --tag pr-body                    # one skill's suite
 claude plugin eval . --tag no-fire --runs 1           # just the no-fire half
 ```
 
-Neither selector reaches the whole no-fire half: `evals/pr/02-open-a-pr`
-carries a no-fire assertion about `implement` while being, by its own name and
-tag, a fire case for `pr`. The tag is the better habit of the two — a case is
-renamed more often than it is retagged — but run the suite whole before
+Neither selector — the `no-fire` tag above, nor a `--case '*neg*'` glob over
+case names — reaches the whole no-fire half: `evals/pr/02-open-a-pr` carries a
+no-fire assertion about `implement` while being, by its own name and tag, a
+fire case for `pr`. The tag is the better habit of the two, since a case is
+renamed more often than it is retagged, but run the suite whole before
 trusting a green no-fire run.
 
 `claude plugin eval` is in early access; the command reports as much where the

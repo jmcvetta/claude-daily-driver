@@ -126,8 +126,11 @@ request, where step 8 can answer them and where they remain the record of why
 the branch was judged ready. **That they arrive as resolvable review threads
 rather than plain comments is inferred, not measured** — `0001` records the
 flag from `--help`, never from a live pull request. Where they turn out to be
-plain comments, step 8's reply-and-resolve becomes reply-only; say so once and
-record the answer in `0001` rather than leaving the next run to rediscover it.
+plain comments, step 8's reply-and-resolve becomes reply-only: read them with
+`get_comments` rather than `get_review_comments`, answer with
+`mcp__github__add_issue_comment`, and read the ready gate's thread bullet as
+*every finding answered in a comment*. Say so once, and record the answer in
+`0001` rather than leaving the next run to rediscover it.
 
 **Record the head SHA you reviewed.** Step 9's test is measured from it, and
 nothing else records it.
@@ -144,13 +147,20 @@ Every finding gets a verdict, on its thread, and the thread is closed:
 1. **Implemented** — fix it, reply saying so, resolve the thread.
 2. **Rejected** — reply with the reason, and resolve it anyway. A rejection is
    an answer; only silence is not.
-3. **Deferred** — only with the user's agreement, which `judgement-call` gates.
-   Reply naming what was deferred and to where, then resolve: the deferral is
-   the answer, and an open thread would claim the question is still live.
-4. **Never left open silently.** The rule the other three exist to serve.
+3. **Deferred** — only where the user asks for it. Claude does not propose a
+   deferral: `judgement-call` names "leave a TODO" as the option that is never
+   a real one, so a deferral Claude offers is the noise that skill deletes.
+   When the user does defer, reply naming what was deferred and to where, then
+   resolve — an open thread would claim the question is still live.
+4. **A repeat finding** — a reviewer opening a new thread for something
+   already rejected in an earlier round — is resolved with the same message as
+   before. A fresh variation invites a fresh argument over a question that was
+   already answered. This one is live here precisely because step 7 can run a
+   second time and re-raise what step 8 rejected.
+5. **Never left open silently.** The rule the other four exist to serve.
 
-Read the threads with `mcp__github__pull_request_read` and
-`get_review_comments`, reply with
+Read the threads with `mcp__github__pull_request_read` using its
+`get_review_comments` method, reply with
 `mcp__github__add_reply_to_pull_request_comment`, close with
 `mcp__github__resolve_review_thread`.
 
@@ -188,12 +198,18 @@ Step 9 does not re-run step 7
 
 Marking a draft ready is a natural moment to review, and the branch was
 already reviewed at step 7. **Review once.** The question this answers is not
-academic: step 8 puts commits on the branch, so by step 9 the head is never
-the one step 7 read, and a rule that keyed on sameness would re-review every
-run forever.
+academic: step 8 usually puts commits on the branch, so by step 9 the head is
+usually not the one step 7 read, and a rule that keyed on sameness would
+re-review on every run that had anything to fix.
 
 The test is therefore **provenance, not sameness**: record the head SHA at
 step 7, and classify every commit made after it.
+
+Where the branch's history is rewritten — a rebase, an amend, a squash — the
+recorded SHA stops being an ancestor of the head and the mark is void. There
+are then no commits "after it" to read, which is not the same as there being
+none. Fall back to content: compare the pull request's diff against what step
+7 reviewed, and re-review only if it has changed.
 
 - **Answering** — a review finding, a review thread, a lint bot, a red check.
   These do not re-trigger step 7, however many of them there are. Answering a
@@ -247,9 +263,10 @@ and `--comment` is what makes its findings survive the session.
 Where it stops and waits
 ========================
 
-Autonomy is the point, so each pause has to earn itself. Three of the four
-below go to the user; the fourth is listed because it stops the sequence, not
-because it asks anything.
+Autonomy is the point, so each pause has to earn itself. Four stop the
+sequence; the ones that stop it to *ask* are the ambiguous issue, the
+trade-off, and the failing approach. A blocked issue and a running check stop
+it to report, and wait on something other than an answer.
 
 - **A blocked issue, or an issue whose intent is genuinely ambiguous.** The
   constitution forbids guessing at intent; this is that rule at step 2.
