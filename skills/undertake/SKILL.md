@@ -1,25 +1,27 @@
 ---
 name: undertake
 description: >-
-  This skill should be used whenever a GitHub issue is being taken from its
+  This skill should be used whenever a piece of work is being taken from its
   description to a pull request ready for review — including when the user says
   "/undertake", "undertake #34", "take #7", "work on issue 12", "start on
   that issue", "let's build #4", or "implement #191" — and on Claude's own
-  move from reading an issue to writing code for it. Every one of those names
-  a tracked issue, which is the point: this skill fires on a verb plus an
-  issue reference, never on the verb alone. Supplies the order of the steps,
-  the gates between them, and the rule that keeps the branch from being
-  reviewed twice. Do NOT use this skill for work that is not a tracked issue —
-  "implement a retry loop", "build the parser" and "fix this function" are
-  ordinary work and must not fire it — nor for merely reading, summarising or
-  discussing an issue, since "what does #191 say" is a question rather than an
-  assignment.
+  move from reading an issue to writing code for it. An issue reference is
+  welcome but not required: invoked for work that has no issue yet, the skill
+  opens one at step 0, because tracked work is the point. What is required is
+  the invocation — "implement a retry loop", "build the parser" and "fix this
+  function", said on their own, are ordinary work and must NOT fire it.
+  Supplies the order of the steps, the gates between them, and the rule that
+  keeps the branch from being reviewed twice. Not for merely reading,
+  summarising or discussing an issue, since "what does #191 say" is a question
+  rather than an assignment.
 ---
 
 # Undertake
 
 An issue in, a pull request ready for review out. Nine steps, and this skill
-is the order they run in.
+is the order they run in. Where the work arrives with no issue, a step 0 opens
+one first — an issue is what this skill takes in, and untracked work is what
+running without one leaves behind.
 
 It is an orchestrator, in the same shape as `pr`: **it invokes, it does not
 restate**. The title convention lives in `pr-title`, the pull request itself in
@@ -39,6 +41,7 @@ The sequence
 
 | # | Step | Owner |
 | - | ---- | ----- |
+| 0 | Open the issue, where the work has none | this skill, `issue-deps` |
 | 1 | Title the session from the issue | `session-title` |
 | 2 | Read the issue and its edges | `mcp__github__issue_read`, `issue-deps` |
 | 3 | Branch off the base branch | this skill |
@@ -49,13 +52,44 @@ The sequence
 | 8 | Fix, answer, resolve, push | this skill |
 | 9 | Ready for review | `mcp__github__update_pull_request` |
 
+0 — An issue, where there is none
+---------------------------------
+
+Skipped where the invocation names an issue, which is the common case. Where
+it does not, this step is what supplies one, and the nine after it are
+unchanged: what would otherwise happen is a branch, a review and a merge with
+no record of why any of it was wanted, and a pull request body with nothing to
+close.
+
+**Search before writing.** `mcp__github__search_issues` over the repository's
+open issues first: work described in a prompt has often been described in an
+issue already, and a second issue for it splits the trail in two. Where one
+already covers the request, that is the issue — go on to step 1 with it, and
+say which one it is, so a wrong match is corrected before the branch is cut.
+
+Otherwise open one with `mcp__github__issue_write`. Title and body record what
+was asked and no more: an issue is the statement of the request, and scope
+invented for it is scope the pull request is then measured against. No
+permission is asked — the invocation is the authorisation, and an issue is
+cheap to close.
+
+**A request too vague to write an issue for is a stop.** This is step 2's
+intent gate arriving early, and the constitution's rule against guessing at
+intent: an issue that guesses at what "done" means is worse than no issue,
+because the guess then reads as settled.
+
+Edges are `issue-deps`' business, and its confirm-before-write rule *does*
+bite here — unlike the closing reference at step 6, a parent or a blocker for
+a new issue is inferred from evidence rather than given by the assignment.
+
 1 — Title the session
 ---------------------
 
-Before anything else. Read the issue *title* — that is all this step needs —
-and title the session from it before reading the body. A web session otherwise
-takes its name from the first prompt it received, which is the prompt that
-invoked this skill. `session-title` has the form and the budget.
+As soon as there is an issue, and before anything else is read of it. Read the
+issue *title* — that is all this step needs — and title the session from it
+before reading the body. A web session otherwise takes its name from the first
+prompt it received, which is the prompt that invoked this skill.
+`session-title` has the form and the budget.
 
 `session-title` stops where `set_session_title` does not exist, which on a
 laptop it does not. That stop is the step's, not the sequence's: say so in a
@@ -272,8 +306,9 @@ sequence; the ones that stop it to *ask* are the ambiguous issue, the
 trade-off, and the failing approach. A blocked issue and a running check stop
 it to report, and wait on something other than an answer.
 
-- **A blocked issue, or an issue whose intent is genuinely ambiguous.** The
-  constitution forbids guessing at intent; this is that rule at step 2.
+- **A blocked issue, an issue whose intent is genuinely ambiguous, or a
+  request too vague to write an issue for.** The constitution forbids guessing
+  at intent; this is that rule, at steps 0 and 2.
 - **A review finding whose fix is a real trade-off**, in the sense
   `judgement-call` gives that phrase: two defensible approaches differing in
   something the user owns. That skill owns the gate, and it is the gate for
@@ -285,8 +320,8 @@ it to report, and wait on something other than an answer.
 - **CI still running**, at steps 7 and 9. A wait, not a question — nothing is
   asked, and nothing proceeds on a check that has not reported.
 
-Everything else runs through. No permission is asked to commit, to push, or to
-open the draft.
+Everything else runs through. No permission is asked to open the issue, to
+commit, to push, or to open the draft.
 
 
 Non-goals
@@ -298,7 +333,12 @@ Non-goals
 - **Does not fire on reading an issue.** Discussing #191 is not undertaking
   it. "What does #191 say", "summarise #191", "is #191 still relevant" are
   questions; answer them, and do not cut a branch.
-- **Does not fire on work that is not a tracked issue.** "Implement a retry
-  loop" is ordinary work, and running nine steps and a review panel over it
-  would be the heaviest possible way to write ten lines. The issue reference is
-  what distinguishes the two, and it is not optional.
+- **Does not fire on work it was not asked to undertake.** "Implement a retry
+  loop", said on its own, is ordinary work, and running ten steps and a review
+  panel over it would be the heaviest possible way to write ten lines. What
+  separates the two is the invocation, not the issue reference: invoked, the
+  skill tracks the work at step 0 and runs; not invoked, it stays out of the
+  way.
+- **Does not open an issue for anything but the work in hand.** Step 0 tracks
+  what was asked for. A bug noticed in passing is worth reporting to the user;
+  it is not this run's second issue.

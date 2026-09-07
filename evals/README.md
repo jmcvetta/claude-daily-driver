@@ -1,6 +1,6 @@
 # Evals
 
-Five suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
+Six suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
 than by `claude plugin eval`. The reasoning for the harness is
 [`docs/decisions/0002-eval-harness.md`](../docs/decisions/0002-eval-harness.md);
 the short version is that the built-in cannot be run on this account, is
@@ -14,6 +14,7 @@ evals/
 │   ├── pr/              does `pr` fire when a PR is opened, and only then?
 │   ├── pr-title/        … when a title is written, and only then?
 │   ├── pr-body/         … when a body is written, and only then?
+│   ├── undertake/       … when work is undertaken, and only when invoked?
 │   ├── constitution/    does the constitution reach a subagent?
 │   └── review-depth/    does `review` send the right panel at the diff?
 └── fixtures/review-depth/
@@ -69,6 +70,16 @@ has two halves, and the second is the one that earns its keep:
   and `pr` does not; a request to write a commit message asserts that none of
   the three does. A suite that only proved a skill fires would be green with
   all three descriptions collapsed into one.
+
+`undertake/` is a trigger-accuracy suite of a different shape: two cases over
+one request, differing only in whether the skill was invoked. Step 0 opens an
+issue for work that has none, which removes the issue reference as the thing
+that distinguishes an undertaking from ordinary work and leaves the invocation
+carrying that weight alone. The pair is what asserts it carries it — the fire
+case and the no-fire case describe the same retry loop, so a description that
+drifts in either direction fails one of them. Its numbering leaves a gap at
+02–04: the `0[56]` in the no-fire glob above is the convention, so a no-fire
+case is numbered into that range rather than after the case before it.
 
 `constitution/` is not a trigger-accuracy suite: it is the live half of the
 constitution's own test, described under "Testing the constitution" in the
