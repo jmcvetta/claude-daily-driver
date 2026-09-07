@@ -1,6 +1,6 @@
 task_id: review-cycle-04-resolve-the-threads
 description: >-
-  Resolution named without the fixing. The protocol'"'"'s point is that resolving
+  Resolution named without the fixing. The protocol's point is that resolving
   without replying is not one of its options, so this must reach the skill
   rather than the bare MCP call.
 tags: [trigger-accuracy, review-cycle, fire]

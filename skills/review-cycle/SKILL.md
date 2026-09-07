@@ -6,12 +6,11 @@ description: >-
   "review the PR and fix what it finds", "address the review feedback", "reply
   to the review comments", "resolve those threads", or "does that need another
   review?", and including any call Claude makes on its own initiative to the
-  built-in `/code-review`, to `mcp__github__add_reply_to_pull_request_comment`,
-  to `mcp__github__resolve_review_thread`, or to
-  `mcp__github__pull_request_read` with the `get_review_comments` method.
-  Supplies the review invocation and its named effort level, the protocol every
-  finding is answered under, and the test for whether a later push has earned a
-  second round. Do NOT use this skill for opening a pull request or bringing
+  built-in `/code-review` aimed at a pull request, to
+  `mcp__github__add_reply_to_pull_request_comment`, or to
+  `mcp__github__resolve_review_thread`. Supplies the review invocation and its
+  named effort level, the protocol every finding is answered under, and the
+  test for whether a later push has earned a second round. Do NOT use this skill for opening a pull request or bringing
   one up to date — that is `pr` — nor for marking a draft ready, which is the
   caller's gate and not part of the round.
 ---
@@ -40,6 +39,14 @@ The round
 | 1 | Review the head | the built-in `/code-review` |
 | 2 | Fix, answer, resolve, push | this skill |
 | 3 | Does it go again? | this skill |
+
+**A round entered on findings that already exist starts at stage 2.** Half the
+register arrives that way — *"address the review feedback"*, *"reply to the
+review comments"*, *"resolve those threads"* — and the findings are then a
+human's, a bot's, or an earlier `/code-review`'s. Running stage 1 over them
+would post a fresh set on top of the ones somebody asked to have answered,
+which is worse than not firing at all. Stage 1 is for a head nobody has
+reviewed yet; stage 3 still decides what happens after.
 
 
 1 — Review
@@ -76,14 +83,18 @@ reviewer, and `--comment` is what makes its findings survive the session.
 
 `--comment` is also what carries the findings out of the terminal and onto the
 pull request, where they remain the record of why the branch was judged ready.
-**That they arrive as resolvable review threads rather than plain comments is
-inferred, not measured** — `0001` records the flag from `--help`, never from a
-live pull request. Where they turn out to be plain comments, stage 2's
-reply-and-resolve becomes reply-only: read them with `get_comments` rather than
-`get_review_comments`, answer with `mcp__github__add_issue_comment`, and read
-every rule below that says *resolve* as *answered in a comment*. Say so once,
-and record the answer in `0001` rather than leaving the next round to
-rediscover it.
+They arrive as **resolvable review threads**, inline on the diff under a
+submitted `COMMENT` review — measured on a live pull request, CLI 2.1.263,
+2026-09-07, and recorded in `0001` §4. Stage 2's reply-and-resolve is therefore
+the ordinary path rather than a hoped-for one.
+
+Should a later CLI post plain issue comments instead, stage 2 degrades to
+reply-only: read them with `get_comments` rather than `get_review_comments`,
+answer with `mcp__github__add_issue_comment`, and read *resolve* as *answered
+in a comment* — in this file **and in the caller's gate**, where a bullet
+asking for no unresolved thread would otherwise be a condition the round can
+never satisfy. Say so once, and re-measure into `0001` rather than leaving the
+next round to rediscover it.
 
 Record the head SHA
 -------------------

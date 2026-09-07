@@ -1,12 +1,15 @@
 task_id: review-cycle-02-review-and-fix
 description: >-
   The whole round in one sentence, with no slash command and no tool named.
-  This is the register the skill exists for.
+  This is the register the skill exists for. The wording leans on the round's
+  own defining property — nothing left open — rather than on "review and fix",
+  which is near-verbatim the built-in `code-review` skill's own description
+  and would leave the row to be decided by a coin toss between the two.
 tags: [trigger-accuracy, review-cycle, fire]
 
 initial_prompt: >-
-  The branch is pushed and the PR is open. Review it and fix what the review
-  finds.
+  The PR is open and CI is green. Review it and see every finding through —
+  nothing left open.
 
 agent:
   # `allowed_tools` is a permission allowlist, not a tool filter: the model is
