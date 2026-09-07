@@ -81,8 +81,9 @@ nothing below it runs.
 2. **Does the behaviour change — what the thing returns, what it decides,
    what it does as a side effect?** If none of those move, the change is one
    of the silent types: `refactor` for code restructured to do the same
-   thing, `perf` for the same thing done faster, `style` for formatting,
-   `docs`, `test`, `build`, `ci`, `chore`. Speed, formatting and internal
+   thing, `perf` for the same thing done faster, `chore` for a dependency
+   bump or a housekeeping change, `style` for formatting, and `docs`,
+   `test`, `build`, `ci`. Speed, formatting and internal
    shape are not behaviour here — that is what lets `perf` and `refactor` be
    silent at all — but an output, a decision or a side effect is, and a
    `refactor` that moves one is not a refactor.
@@ -135,8 +136,12 @@ Squash-merge makes the title the one commit master receives, so the type
 describes everything merged. Where a pull request carries more than one kind
 of change, the highest-impact one decides: breaking over `feat`, `feat` over
 `fix`, `fix` over the silent types. A `feat` that includes a refactor is a
-`feat`. Two unrelated changes of consequence are a pull request to split,
-which is `pr`'s business.
+`feat`.
+
+`revert` takes no part in that ranking, because it describes a whole pull
+request or none of it. An undo carrying unrelated work alongside it — like
+any two changes of consequence in one pull request — wants splitting, which
+is `pr`'s business.
 
 
 What the type releases

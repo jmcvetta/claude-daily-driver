@@ -424,7 +424,7 @@ criteria are checked, so equal values mean a turn that uses its budget is killed
 as a TIMEOUT before it can be graded. The headroom is the difference.
 
 `run_limits` caps turns and wall clock per task, but nothing caps the bill. The
-18 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
+24 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
 and the fire half stops the moment the skill fires. `review-depth` is not: its six fire
 cases each dispatch a real reviewer panel over a real diff, five times, in the
 `with-plugin` arm. The `bare` arm is cheaper but not free: it has no `review`
