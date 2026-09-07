@@ -17,10 +17,17 @@ That is the rule this script enforces, and
 
 WHAT IT FLAGS
 
-    A sequence noun followed by a number: "step 7", "stage 2", "phases 2-4",
-    "Rules 1 and 2". Nothing else -- a heading written `7 — Open the draft` and
-    a table row written `| 7 |` do not match, which is what leaves the numbers
-    their reading job.
+    A sequence noun followed by a number, in prose: step 7, stage 2, phases
+    2-4, Rules 1 and 2. Nothing else -- a heading written `7 — Open the draft`
+    and a table row written `| 7 |` do not match, which is what leaves the
+    numbers their reading job.
+
+    Code is not prose, so a code span or a fenced block is skipped. The rule
+    itself has to be written down somewhere, and the only way to say what a
+    bad citation looks like is to write one; this file, the note and the
+    skills that state the convention all quote the bad form in backticks, and
+    a quotation is not a citation. A real citation is bare prose -- every one
+    of the seventy this check was written for was.
 
 THE ESCAPE HATCH
 
@@ -71,6 +78,12 @@ SKIP = ("CHANGELOG.md",)
 
 CITATION = re.compile(rf"\b({'|'.join(NOUNS)})s?\s+\d", re.IGNORECASE)
 
+# Code spans and fenced blocks, blanked before the scan so that a quotation of
+# the bad form is not read as an instance of it. Backticks are the only marker
+# needed: a citation somebody wrote to be followed is bare prose.
+CODE_SPAN = re.compile(r"`[^`\n]*`")
+FENCE = re.compile(r"^\s*(```|~~~)")
+
 # `<!-- step-names: external phase — reason -->`. The noun is what the waiver
 # covers; the trailing text is the reason, required so that a waiver has to say
 # whose numbering it is deferring to.
@@ -99,14 +112,22 @@ CLEAN = (
     "1. **Tracker prefix.** Drop a leading prefix",
     "eleven steps, and this skill is the order they run in",
     "step by step, without stopping",
+    # Quotations of the bad form, which the rule has to be able to write down.
+    "flags a sequence noun followed by a number -- `step 7`, `stage 2`",
+    "carried a `stage 2` aimed at `review-cycle`",
 )
+
+
+def prose(line: str) -> str:
+    """The line with its code spans blanked out."""
+    return CODE_SPAN.sub(lambda m: " " * len(m.group(0)), line)
 
 
 def selftest() -> None:
     for text in FLAGGED:
-        assert CITATION.search(text), f"selftest: not flagged: {text!r}"
+        assert CITATION.search(prose(text)), f"selftest: not flagged: {text!r}"
     for text in CLEAN:
-        assert not CITATION.search(text), f"selftest: wrongly flagged: {text!r}"
+        assert not CITATION.search(prose(text)), f"selftest: wrongly flagged: {text!r}"
 
     assert waived("<!-- step-names: external phase — issue #35's. -->") == {"phase"}
     assert waived("<!-- step-names: external phases — issue #35's. -->") == {"phase"}
@@ -116,19 +137,28 @@ def selftest() -> None:
     assert waived("<!-- step-names: external phase -->") == set()
 
 
-def tracked() -> list[Path]:
+def scannable() -> list[Path]:
+    """Every file git would carry, tracked or merely not ignored.
+
+    `--others` is not decoration. A file is untracked until it is staged, and
+    checking only what is tracked means a new one is invisible on the laptop
+    and flagged for the first time by CI, after the push. Measured: it is how
+    the note documenting this very rule first went out red.
+    """
     out = subprocess.run(
-        ["git", "ls-files", "-z"],
+        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
         cwd=ROOT,
         capture_output=True,
         text=True,
         check=True,
     ).stdout
-    return [
-        ROOT / name
-        for name in out.split("\0")
-        if name and name.endswith(SUFFIXES) and name not in SKIP
-    ]
+    return sorted(
+        {
+            ROOT / name
+            for name in out.split("\0")
+            if name and name.endswith(SUFFIXES) and name not in SKIP
+        }
+    )
 
 
 def waived(text: str) -> set[str]:
@@ -144,13 +174,19 @@ def main() -> int:
     selftest()
 
     errors: list[str] = []
-    files = tracked()
+    files = scannable()
     for path in files:
         text = path.read_text(encoding="utf-8")
         exempt = waived(text)
         where = path.relative_to(ROOT)
+        fenced = False
         for number, line in enumerate(text.splitlines(), 1):
-            for match in CITATION.finditer(line):
+            if FENCE.match(line):
+                fenced = not fenced
+                continue
+            if fenced:
+                continue
+            for match in CITATION.finditer(prose(line)):
                 if match.group(1).lower() in exempt:
                     continue
                 errors.append(

@@ -1,6 +1,3 @@
-<!-- step-names: external phase — the #35 phases named below are that issue's,
-     and are named there rather than here. -->
-
 # A step is cited by its name, never by its number
 
 **Status:** decided, 2026-09-07.
@@ -47,10 +44,17 @@ stale citations in 8354f33 were doing.
 
 **`scripts/check-step-names.py` enforces it**, as a leg of `make check`. It
 flags a sequence noun followed by a number — `step 7`, `stage 2`, `phases 2–4`,
-`Rules 1 and 2` — over every tracked Markdown and YAML file. Its own self-test
-runs before the scan on every invocation rather than behind a flag: this check
-fails silently in the direction that matters, and a detector that has stopped
-matching reports a clean repository.
+`Rules 1 and 2` — over every Markdown and YAML file git would carry, tracked or
+merely not ignored. Its own self-test runs before the scan on every invocation
+rather than behind a flag: this check fails silently in the direction that
+matters, and a detector that has stopped matching reports a clean repository.
+
+**A code span is a quotation, not a citation**, and is skipped — as is a
+fenced block. The rule has to be written down, and the only way to say what a
+bad citation looks like is to write one; this note is the file that does it
+most. Backticks are enough of a marker because a citation somebody wrote to be
+*followed* is bare prose: all seventy of the ones this check was written for
+were, measured by running it over the branch point.
 
 ## The escape hatch, and why it is per noun
 
