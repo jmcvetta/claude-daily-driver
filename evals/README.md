@@ -6,7 +6,8 @@ One `claude plugin eval` suite per skill, under a directory named for it:
 evals/
 ├── pr/           does `pr` fire when a PR is being opened, and only then?
 ├── pr-title/     … when a title is being written, and only then?
-└── pr-body/      … when a body is being written, and only then?
+├── pr-body/      … when a body is being written, and only then?
+└── session-title/ … when the *session's* name is, and not when a PR's is?
 ```
 
 `evals/constitution-reaches-subagent/` sits beside them and is not a
@@ -14,9 +15,9 @@ trigger-accuracy suite: it is the live half of the constitution's own test,
 described under "Testing the constitution" in the repository README. It runs
 under the same commands.
 
-The three skills are siblings with overlapping vocabulary — every one of them
-has "PR" in its description — so the thing that can actually break is *which*
-one fires. Each suite therefore has two halves, and the second is the one that
+The skills are siblings with overlapping vocabulary — three have "PR" in their
+descriptions and two are about a *title* — so the thing that can actually
+break is *which* one fires. Each suite therefore has two halves, and the second is the one that
 earns its keep:
 
 - **Fire cases** (`tags: [<skill>, fire]`) — four per skill, covering the
@@ -25,8 +26,10 @@ earns its keep:
 - **No-fire cases** (`tags: [<skill>, no-fire]`) — two per skill, drawn from
   the *adjacent* skills rather than from unrelated work. "Fix just the title"
   asserts that `pr-title` fires and `pr` does not; a request to write a commit
-  message asserts that neither does. A suite that only proved a skill fires
-  would be green with all three descriptions collapsed into one.
+  message asserts that neither does; and "fix the title on the pull request"
+  asserts that `pr-title` fires where `session-title` must not. A suite that
+  only proved a skill fires would be green with every description collapsed
+  into one.
 
 Graders are all `tool_used` on the `Skill` tool, matched against the skill name
 in the tool input: deterministic, no LLM judge, no cost beyond the runs.
