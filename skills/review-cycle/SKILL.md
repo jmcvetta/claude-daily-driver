@@ -26,8 +26,8 @@ is the three things around it — the level, the thread protocol, and the
 re-review test — none of which the built-in has an opinion about, and all three
 of which are the ones that go wrong.
 
-Callers keep their own gates. `undertake` runs this round between its step 6
-and its step 9 and owns whether the pull request then goes ready; nothing here
+Callers keep their own gates. `undertake` runs this round between its step 7
+and its step 10 and owns whether the pull request then goes ready; nothing here
 marks a draft ready or merges anything.
 
 
