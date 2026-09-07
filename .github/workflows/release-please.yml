@@ -52,24 +52,36 @@ jobs:
       # and both go through the Issues API.
       issues: write
     steps:
-      # GitHub suppresses workflow events for anything pushed with the default
-      # token, so a release pull request opened with GITHUB_TOKEN arrives with
-      # no checks — on the one pull request whose merge cuts a permanent tag.
-      # `CI Success` is required, so that pull request needs the admin escape
-      # hatch `enforce_admins = false` leaves open. A GitHub App is a distinct
-      # identity, so CI runs on its pull requests normally and the escape
-      # hatch stops being part of the release procedure.
+      # Authenticate as the release bot App. `github-actions[bot]` is not a
+      # workable identity for the one pull request whose merge cuts a
+      # permanent tag. Until 2026-06-11 GitHub created no workflow runs at
+      # all for pull requests that bot opened, so the release pull request
+      # arrived with no checks and required `CI Success` sat "expected"
+      # forever. Since then the runs are created but held in
+      # `action_required` until someone with write access clicks "Approve
+      # workflows to run" — better, and still a human on every release.
+      # A GitHub App is a distinct identity, so CI and PR Title Check report
+      # on its pull requests unprompted. (Projected Releases skips
+      # release-please branches by its own `if:`, and reports `skipped` under
+      # every identity.)
       #
-      # Set the repository variable RELEASE_BOT_APP_ID and the secret
-      # RELEASE_BOT_PRIVATE_KEY to use one; without them this step is skipped
-      # and the fallback below is the default token. That fallback works at
-      # all only while Settings -> Actions -> General -> "Allow GitHub Actions
-      # to create and approve pull requests" is on. With that off,
-      # release-please pushes its release branch and then fails on the call
-      # that opens the pull request, which looks like a partial success -- and
-      # is how this workflow's first run ended. That setting is now declared
-      # in infra/github/repository.tf, so it is applied rather than
-      # remembered.
+      # https://github.blog/changelog/2026-06-11-bot-created-pull-requests-can-run-workflows-if-approved/
+      #
+      # The App is configured: the repository variable RELEASE_BOT_APP_ID and
+      # the secret RELEASE_BOT_PRIVATE_KEY are set, so this step runs and the
+      # `||` fallbacks below never fire. Only the variable gates the step, so
+      # the two are not symmetrical on the way out: clearing the variable
+      # returns the repository quietly to the default token and to approving
+      # workflows by hand, while clearing the private key alone leaves the
+      # step enabled and kills the release job on its first line. They go in,
+      # and come out, together — infra/github/README.md says the same under
+      # Deliberate Exclusions. The fallback works at all only while Settings
+      # -> Actions -> General -> "Allow GitHub Actions to create and approve
+      # pull requests" is on. With that off, release-please pushes its
+      # release branch and then fails on the call that opens the pull
+      # request, which looks like a partial success -- and is how this
+      # workflow's first run ended. That setting is declared in
+      # infra/github/repository.tf, so it is applied rather than remembered.
       - id: app-token
         if: vars.RELEASE_BOT_APP_ID != ''
         uses: actions/create-github-app-token@v3
