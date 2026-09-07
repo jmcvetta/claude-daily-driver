@@ -75,24 +75,6 @@ block to paste is in
 [`bootstrapping-a-repository.md`](../bootstrapping-a-repository.md) under
 *Repo-local review rules* — one copy, so the two cannot drift.
 
-## One residue, named rather than fixed
-
-`agents/planning-fitness-reviewer.md` says planning-class means a proposal
-under `docs/proposals/`, a `README.md` or a `CLAUDE.md`, and
-`attic/skills/review/references/review-guidelines.md` says the same. That is a
-directory convention of the author's other repositories — not of this one,
-which uses `docs/planning/` and `docs/decisions/` — and it fails the same test
-the Yor rule failed. The attic's `SKILL.md` is not part of the residue: its
-classification table names `docs/planning/` alongside `docs/proposals/`, which
-is what the `review-depth` eval grades and what its planning-class case
-(`docs/planning/cache-rollout.md`) passes against.
-
-So the disagreement is between the shipped agent description and that table,
-and it is left standing because settling it is not a placement change: with
-`review` in the attic the agent description is the only planning-class routing
-surface that loads, and what it should say is a question about what the eval
-measures. That predates this decision and is not this one's to answer.
-
 ## What would change this
 
 A third repository needing the same rules is not enough — it is a third paste.
