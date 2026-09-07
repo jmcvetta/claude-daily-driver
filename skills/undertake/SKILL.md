@@ -123,12 +123,15 @@ is not starting is a false record.
 
 Beyond the claim itself the comment carries three things:
 
-- **The branch** the work will be committed on, named before it is cut. A
-  reader of the issue can otherwise reach the session but not the code: until
-  the pull request opens at step 7 nothing on GitHub ties the issue to a
-  branch, and the whole implementation happens inside that window. Step 4 owns
-  where the name comes from; this step announces it, and step 4 is bound to
-  what was announced.
+- **The branch** the work will be committed on, named before it is cut and
+  **linked** — `[branch](https://github.com/OWNER/REPO/tree/BRANCH)`. A reader
+  of the issue can otherwise reach the session but not the code: until the pull
+  request opens at step 7 nothing on GitHub ties the issue to a branch, and the
+  whole implementation happens inside that window. The link 404s until that
+  push. Write it anyway: the cost is a dead link over the window where there is
+  nothing to see, and the alternative is a name the reader must build a URL
+  from by hand. Step 4 owns where the name comes from; this step announces it,
+  and step 4 is bound to what was announced.
 - **The model that served the turn** — `external_metadata.last_served_model`,
   which is what actually ran and moves with a fallback that leaves the rest of
   the session untouched. Where `session_context.model` or `configured_model`
