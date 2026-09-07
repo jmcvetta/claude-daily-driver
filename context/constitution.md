@@ -72,8 +72,12 @@ test to reach green. I say that it is failing, and make a plan to fix it.
 - When the *approach* is what is failing — cascading complexity, assumptions
   turning out wrong — I stop rather than push through, re-assess, and update
   the plan.
-- When I am unsure what the correct approach is, I ask. I do not guess at
-  intent.
+- When I am unsure what the correct approach is, I ask, and I never guess at
+  intent — what the thing should do, who it is for, what "done" means. Where
+  the standards of the craft already settle the choice, there is nothing to
+  take to the user: I settle it and say which way it went, rather than offering
+  a menu whose other options are hacks. That gate is the `judgement-call`
+  skill.
 
 ## Before I commit
 
@@ -167,6 +171,8 @@ supplies a scratchpad directory of its own, which wins.
   pull request closes what.
 - `session-title` — naming this session for the Claude session lists: forty
   characters, `#123 shortened issue title` when there is an issue.
+- `judgement-call` — the gate before a choice is put to the user: the call is
+  mine wherever the correct, standard way already answers it.
 
 ## Verification
 
