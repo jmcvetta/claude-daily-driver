@@ -1,6 +1,6 @@
 # Evals
 
-Five suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
+Six suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
 than by `claude plugin eval`. The reasoning for the harness is
 [`docs/decisions/0002-eval-harness.md`](../docs/decisions/0002-eval-harness.md);
 the short version is that the built-in cannot be run on this account, is
@@ -13,6 +13,8 @@ evals/
 ├── tasks/
 │   ├── pr/              does `pr` fire when a PR is opened, and only then?
 │   ├── pr-title/        … when a title is written, and only then?
+│   ├── conventional-commits-type/
+│   │                    … when a type is chosen, and never for a commit message?
 │   ├── pr-body/         … when a body is written, and only then?
 │   ├── constitution/    does the constitution reach a subagent?
 │   └── review-depth/    does `review` send the right panel at the diff?
@@ -56,10 +58,15 @@ Three things the Makefile does that a hand-typed `coder-eval` will not:
 
 ## What the suites are for
 
-The three trigger-accuracy suites exist because `pr`, `pr-title` and `pr-body`
+The trigger-accuracy suites exist because `pr`, `pr-title` and `pr-body`
 are siblings with overlapping vocabulary — every one of them has "PR" in its
-description — so the thing that can actually break is *which* one fires. Each
-has two halves, and the second is the one that earns its keep:
+description — so the thing that can actually break is *which* one fires.
+`conventional-commits-type` sits behind `pr-title` and is asked for without
+a title in hand, so its suite adds the delegation route — a title correction
+that must reach the type skill rather than decide the type in place — and
+the one adjacent request where a type is tempting and wrong: a commit
+message, which is prose by the constitution's rule. Each suite has two
+halves, and the second is the one that earns its keep:
 
 - **Fire cases** — four per skill, covering the literal `/pr`, natural
   phrasings, and Claude's own use of `mcp__github__create_pull_request` /
@@ -417,7 +424,7 @@ criteria are checked, so equal values mean a turn that uses its budget is killed
 as a TIMEOUT before it can be graded. The headroom is the difference.
 
 `run_limits` caps turns and wall clock per task, but nothing caps the bill. The
-18 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
+24 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
 and the fire half stops the moment the skill fires. `review-depth` is not: its six fire
 cases each dispatch a real reviewer panel over a real diff, five times, in the
 `with-plugin` arm. The `bare` arm is cheaper but not free: it has no `review`
