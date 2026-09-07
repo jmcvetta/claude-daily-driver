@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.4.0...v0.5.0) (2026-09-07)
+
+
+### Features
+
+* **review-cycle:** extract the review-and-answer round from undertake ([#72](https://github.com/jmcvetta/claude-daily-driver/issues/72)) ([103c44b](https://github.com/jmcvetta/claude-daily-driver/commit/103c44b45b6e8d8a7844e20cc319bf6796a8256d))
+* **undertake:** open an issue where the work has none ([#71](https://github.com/jmcvetta/claude-daily-driver/issues/71)) ([2d4db15](https://github.com/jmcvetta/claude-daily-driver/commit/2d4db15bad77a1e1cea4006c5ee08e724bc25159))
+
 ## [0.4.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.3.1...v0.4.0) (2026-09-07)
 
 
