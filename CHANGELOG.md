@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.6.0...v0.7.0) (2026-09-07)
+
+
+### Features
+
+* **constitution:** write in Simplified Technical English ([#82](https://github.com/jmcvetta/claude-daily-driver/issues/82)) ([6ef6bc2](https://github.com/jmcvetta/claude-daily-driver/commit/6ef6bc2f328aee09261b3ac1d92e09d1f0840159))
+
 ## [0.6.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.5.0...v0.6.0) (2026-09-07)
 
 

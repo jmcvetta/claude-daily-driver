@@ -13,7 +13,7 @@ So the numbers stay for reading -- in the sequence table, and as the `4 — Cut
 the branch` prefix on a heading -- and every *reference* names the step
 instead. A name survives the insertion that renumbers everything after it.
 That is the rule this script enforces, and
-`docs/notes/0004-steps-are-cited-by-name.md` is the decision behind it.
+`docs/notes/0005-steps-are-cited-by-name.md` is the decision behind it.
 
 WHAT IT FLAGS
 
@@ -288,7 +288,7 @@ def main() -> int:
         print(
             "\nSteps are cited by name so that inserting one does not "
             "invalidate every\nlater citation. See "
-            "docs/notes/0004-steps-are-cited-by-name.md.",
+            "docs/notes/0005-steps-are-cited-by-name.md.",
             file=sys.stderr,
         )
         return 1

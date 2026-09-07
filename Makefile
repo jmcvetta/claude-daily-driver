@@ -111,7 +111,7 @@ check-eval-fixtures:
 # every citation after it -- and a stale `step 7` reads exactly like a correct
 # one. Part of `check` because it needs nothing but git and Python, and because
 # the drift it catches is invisible to every other leg. See the script's
-# docstring and docs/notes/0004-steps-are-cited-by-name.md.
+# docstring and docs/notes/0005-steps-are-cited-by-name.md.
 check-step-names:
 	python3 scripts/check-step-names.py
 

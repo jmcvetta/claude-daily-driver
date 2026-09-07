@@ -41,7 +41,7 @@ other file that refers to one. The numbers order the sequence and do nothing
 else: insert a step and all of them move, while a name stays where it was put.
 That is why `review-cycle` names `Open the draft` and `Ready for review`
 rather than the positions those two occupy today.
-[`0004`](../../docs/notes/0004-steps-are-cited-by-name.md) is the decision and
+[`0005`](../../docs/notes/0005-steps-are-cited-by-name.md) is the decision and
 `scripts/check-step-names.py` is what enforces it.
 
 

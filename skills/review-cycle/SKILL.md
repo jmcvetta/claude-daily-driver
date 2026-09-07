@@ -44,7 +44,7 @@ The round
 `undertake`, whose last two steps are the first two of these and carry the same
 names for that reason. The numbers order the round and do nothing else, because
 a number moves when a stage is inserted and a name does not.
-[`0004`](../../docs/notes/0004-steps-are-cited-by-name.md) is the decision.
+[`0005`](../../docs/notes/0005-steps-are-cited-by-name.md) is the decision.
 
 **A round entered on findings that already exist starts at `Fix, answer,
 resolve, push`.** Half the register arrives that way — *"address the review

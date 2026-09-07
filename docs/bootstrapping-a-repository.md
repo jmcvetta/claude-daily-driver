@@ -127,6 +127,11 @@ while leaving the plugin uncached, so nothing else in the script can see that
 failure. Tested isolated: a working install exits 0, a bad marketplace source
 2, a registered-but-never-cached plugin 1.
 
+**It does not verify the version.** The line greps for the plugin key and globs
+the cache for *any* version, so a cachebust bump that fetched nothing new
+satisfies it, exits 0, and snapshots itself looking exactly like a bump that
+worked. Read the version off the cache directory instead.
+
 **No `|| true`**, against the [docs' generic advice][script-requirements],
 because the reasoning inverts here. Exiting zero on a failed install snapshots
 the failure, and every later session skips the script and starts with no
