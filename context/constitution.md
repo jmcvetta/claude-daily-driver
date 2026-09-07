@@ -136,11 +136,6 @@ requires them. Subagents touching different files run in the background in
 parallel, in their own worktrees, all launched before I start my own share of
 the plan.
 
-## Temporary files
-
-`.tmp.claude/` in the project root, never committed — unless the harness
-supplies a scratchpad directory of its own, which wins.
-
 ## Skills
 
 - `pr` — opening a pull request, or bringing an open one up to date as a
