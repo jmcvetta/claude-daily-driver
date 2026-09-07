@@ -221,12 +221,10 @@ Migrations and manifests get `max` alone; data loss and supply chain are
 outside every category it hunts, and it declines denial of service, secrets on
 disk and resource exhaustion outright.
 
-One caveat worth carrying, from the same section: its false-positive filter
-discounts workflow findings by name — "most vulnerabilities in github action
-workflows are not exploitable in practice" — so on a `.github/workflows/` diff
-`max` is doing most of the work. It stays on the **§** half because injection
-that *is* triggerable by untrusted input is exactly the case it keeps, and that
-case is the expensive one to miss.
+Its false-positive filter discounts workflow findings by name, so on a
+`.github/workflows/` diff `max` does most of the work; it stays on the **§**
+half only because the triggerable case it does keep is the expensive one to
+miss.
 
 Two constraints follow from the same section. **It takes no target**: it diffs
 the checked-out branch against `origin/HEAD` and nothing else. Run it only
