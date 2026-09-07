@@ -21,7 +21,7 @@ hook — plus skills that fire on activity:
 | `pr-threads` | The review-thread lifecycle for any reviewer: reply with a verdict, resolve, re-resolve a repeat finding, never leave a thread open silently — plus the comment minimisation the GitHub MCP does not expose. |
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
 | `review` | Reviews a branch or pull request with a panel of reviewer agents, infers how deep to go from the diff itself, walks the findings through with you, and posts the result in verse. |
-| `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. What survives the gate is intent, a real trade-off, scope, and anything irreversible. |
+| `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. What survives the gate is intent, a real trade-off, scope, and any confirmation another skill requires. |
 
 Three PR skills rather than one because skill names are flat within a plugin,
 so siblings can be triggered independently: a decision to rewrite a PR body
@@ -40,7 +40,7 @@ update wider than either alone, with `gh pr create` / `gh pr edit` as a
 fallback on a harness that still reaches for them; `pr-threads` takes the reply
 and resolve tools and `get_review_comments`; `review` takes the moments before
 a branch is declared ready, marked non-draft, or sent to a reviewer;
-`issue-deps` takes the GitHub MCP's sub-issue and issue-read tools; and
+`issue-deps` takes the GitHub MCP's sub-issue and issue-read tools. And
 `judgement-call` takes `AskUserQuestion`. Those tool-call registers are the
 point: a convention that only fires when a human types a command quietly stops
 applying as more of the work runs without one.
@@ -74,14 +74,15 @@ none of them pins a model. A pin ages into a cost decision nobody revisits.
 
 `judgement-call` is the odd one out: it fires on a question about to be asked
 rather than on a repository operation about to run. Its register is
-`AskUserQuestion` and the sentences that stand in for it, because the thing it
-exists to stop is a menu of one correct option and several hacks, which costs a
-round trip to answer with the standard that was never in doubt. It is
-deliberately not every offer of next steps — an offer to do *more* is a scope
-question, and scope is the user's. The rule it applies is the constitution's
-own: correct beats quick, no workarounds. The boundary is the interesting
-half — intent, a genuine trade-off, scope and anything irreversible still go to
-the user, and no confirmation another skill requires is waived by it.
+`AskUserQuestion`, the sentences that stand in for it, and your own "just
+decide", because the thing it exists to stop is a menu of one correct option
+and several hacks, which costs a round trip to answer with the standard that
+was never in doubt. The rule it applies is the constitution's own: correct
+beats quick, no workarounds. The boundary is the interesting half — intent, a
+genuine trade-off and scope still come to you, an offer to do *more* is a scope
+question and scope is yours, and no confirmation another skill requires is
+waived. Anything irreversible or destructive is outside the gate altogether,
+where the non-negotiables already govern it.
 
 ## Layout
 

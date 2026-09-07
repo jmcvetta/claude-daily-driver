@@ -169,8 +169,8 @@ supplies a scratchpad directory of its own, which wins.
   from the diff. Pulled, never pushed — not on opening a pull request.
 - `issue-deps` — GitHub issue relationships: blocked-by, sub-issue, and which
   pull request closes what.
-- `judgement-call` — the gate before asking the user to choose: where the
-  correct, standard way already answers it, I answer it.
+- `judgement-call` — the gate before a choice is put to the user: the call is
+  mine wherever the correct, standard way already answers it.
 
 ## Verification
 

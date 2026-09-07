@@ -8,13 +8,12 @@ description: >-
   properly, or leave a TODO?", "which approach do you prefer?", "should I …,
   or …?"), and when the user hands the same choice back ("properly, or a
   TODO?", "you decide"). It also fires on "/judgement-call", "just decide",
-  "you pick", "use your judgement" and "stop asking me". Supplies the test that
-  separates a question only the user can answer from one Claude can answer
-  himself, and the rule that answers the second kind. It waives no confirmation
-  another rule requires — `issue-deps`'s edge confirmation, `review`'s
-  walkthrough offer, the constitution's discussion before a workaround — and
-  relaxes nothing governing an irreversible, destructive or outward-facing
-  action.
+  "you pick", "use your judgement" (or "judgment") and "stop asking me".
+  Supplies the test that separates a question only the user can answer from one
+  Claude can answer himself, and the rule that answers the second kind. It
+  waives no confirmation another rule requires — `issue-deps`'s edge
+  confirmation, `review`'s walkthrough offer — and relaxes nothing governing an
+  irreversible, destructive or outward-facing action.
 ---
 
 # Judgement Call
@@ -22,9 +21,7 @@ description: >-
 The question is asked, and the answer is already known. A menu goes to the
 user: do it properly, or hack it; fix it now, or leave a TODO; the standard
 library, or a copy-paste. One option is correct and the rest are noise, and the
-round trip buys a word the user should never have had to type.
-
-It fires before the menu is sent — and again when one comes back.
+round trip costs the user a word nobody should have had to type.
 
 
 The gate
@@ -45,7 +42,7 @@ the same test settles it.
 The rule
 ========
 
-For an engineering choice the judgement is **always the same**, and knowing it
+For an engineering choice the **rule** is always the same, and knowing it
 in advance is what makes most of these questions answerable without asking:
 
 > Do it the correct, standard, non-lazy, non-hacky, professional-engineering,
@@ -72,7 +69,7 @@ answer:
 | "or I can do it properly" | the answer |
 
 Offering that list is not deference. It asks the user to defend the standard,
-and it costs an exchange to arrive where the first turn should have started.
+and buys nothing the first turn could not have settled.
 
 
 What still goes to the user
@@ -88,14 +85,15 @@ genuinely does not settle it:
   one, differing in something the user owns — cost, lock-in, a deadline, an
   interface others depend on. Then ask, with the trade-off named and a
   recommendation attached; a bare menu is still not the way to ask.
-- **Irreversible, destructive or outward-facing actions.** Outside this gate.
-  The rules governing them live elsewhere — the constitution's non-negotiables
-  among them — and this skill relaxes none of them.
 - **Scope.** Doing materially more, less, or other than what was asked.
 - **A confirmation another rule requires.** `issue-deps` writes an edge only on
   confirmation, `review` offers its walkthrough before applying anything, and
   the constitution discusses an unavoidable workaround before writing it. This
   skill overrides none of them.
+
+Irreversible, destructive and outward-facing actions sit outside this gate
+entirely. The rules governing them — the constitution's non-negotiables among
+them — are untouched by it.
 
 Its failure mode is the mirror of the one it exists to fix: deciding something
 that was the user's to decide, quietly, and reporting it as done. When the
