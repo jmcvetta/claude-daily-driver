@@ -37,8 +37,4 @@ If no security issues are found, state that clearly.
 
 - Only flag issues in the changed code, not pre-existing issues
 - Cite specific line numbers and code snippets as evidence
-- **COMPLETELY IGNORE Yor/git tags**: Do NOT comment on `yor_*` or `git_*`
-  tags in Terraform resources. These are automatically updated by Yor
-  during the release process; hardcoded values are expected and correct.
-  Never flag them as stale, outdated, or needing update.
 - Recognize intentional security patterns (e.g., test fixtures with fake credentials)

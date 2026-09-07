@@ -47,16 +47,8 @@ Detailed Code Analysis
 - **Intentional patterns**: Don't flag deliberate architectural choices as problems
 - **Lazy/Sneaky Workarounds**: Flag any lazy, sneaky workarounds in the code
   that avoid addressing a real issue.
-- **COMPLETELY IGNORE Yor/git tags - NEVER MENTION THEM**: Do NOT comment on
-  `yor_*` or `git_*` tags in Terraform resources EVER. These are AUTOMATICALLY
-  updated by Yor during the release process. Hardcoded values are EXPECTED and
-  CORRECT. Never flag them as stale, outdated, or needing update. They are NOT
-  issues - not critical, not important, not minor, not even nitpicks. IGNORE
-  THEM COMPLETELY in all reviews.
 - **Hidden or skipped errors**: Ensure that we have not hidden or skipped
   errors.  Where there are errors, they must be fixed!
-- **Valid reason for Checkov suppression**: Any `checkov:skip` suppression
-  comment must include a valid reason for the suppression.
 
 
 Issue Classification Guidelines (CRITICAL)
@@ -149,13 +141,13 @@ Approval Criteria
 -----------------
 
 In Local mode the pull request's CI status cannot be read at all. Treat the GHA
-and Checkov criteria below as **unverified**, and say so in the verdict — an
+criteria below as **unverified**, and say so in the verdict — an
 unreadable check is not a failing one, and the remaining criteria are judged on
 their own merits. Only a check that actually reports failure forces a 👎.
 
 Give thumbs up (👍) ONLY if ALL of these are true AND you passed the checklist:
 - [ ] No bugs or logic errors found
-- [ ] All GHA checks are passing (including Checkov)
+- [ ] All GHA checks are passing
 - [ ] Code follows established patterns in the codebase
 - [ ] Error handling is comprehensive
 - [ ] Security considerations addressed (no exposed secrets, injection risks, etc.)
@@ -167,7 +159,7 @@ Give thumbs up (👍) ONLY if ALL of these are true AND you passed the checklist
 Give thumbs down (👎) if ANY of these are true:
 - [ ] Critical bugs or security issues present
 - [ ] Anything would break the build
-- [ ] Any GHA or Checkov checks are failing
+- [ ] Any GHA checks are failing
 - [ ] Missing error handling for likely failure cases
 - [ ] Code breaks existing functionality
 - [ ] Significant performance degradation likely
