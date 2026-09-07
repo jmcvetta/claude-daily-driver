@@ -124,7 +124,13 @@ is not starting is a false record.
 Beyond the claim itself the comment carries three things:
 
 - **The branch** the work will be committed on, named before it is cut and
-  **linked** — `[branch](https://github.com/OWNER/REPO/tree/BRANCH)`. A reader
+  **linked** — `[branch](https://github.com/OWNER/REPO/tree/BRANCH)`.
+  `OWNER/REPO` is the repository the branch will be **pushed to**, which on a
+  fork is not the repository the issue is in: read it from
+  `session_context.outcomes[].git_repository.git_info.repo`, the same entry
+  step 4's first source reads, or from the `origin` remote where there is no
+  call. Built from the issue's repository instead, the link 404s for good
+  rather than only until the push, and the trade below stops holding. A reader
   of the issue can otherwise reach the session but not the code: until the pull
   request opens at step 7 nothing on GitHub ties the issue to a branch, and the
   whole implementation happens inside that window. The link 404s until that
@@ -150,7 +156,9 @@ and so is the branch, where the harness designated one.
 Where that call is unavailable the comment still goes up, and says the surface
 supplied neither. `session-title` stops there because a title it cannot set is
 nothing; a claim that names no model is still a claim. The branch is not lost
-with them: step 4's third source needs nothing but the issue.
+with them: step 4's second and third sources need no call at all — the
+project's convention where it documents one, and `issue-<number>-<slug>`
+otherwise.
 
 **Once per session, not once per run.** A sequence re-entered — its blocker
 cleared, the issue handed over again — does not claim what it has claimed
@@ -174,8 +182,12 @@ this order:
 
 1. **The branch the harness designated for this session**, where it designated
    one. `mcp__Claude_Code_Remote__get_session` reports it at
-   `session_context.outcomes[].git_repository.git_info.branches`. Nothing is
-   chosen here: a web worker refuses a push anywhere else.
+   `session_context.outcomes[].git_repository.git_info.branches`. Both of those
+   are arrays: read the outcome whose `git_info.repo` names the repository this
+   work will be pushed to, and take the one branch it lists. Where it lists
+   more than one, the source has not answered — that is the stop below, not a
+   pick. Nothing is chosen here otherwise: a web worker refuses a push
+   anywhere else.
    `external_metadata.current_branches` is a different field and answers a
    different question — what is checked out, which before this step need not
    be the designated branch.
@@ -270,14 +282,18 @@ not true.
 Where it stops and waits
 ========================
 
-Autonomy is the point, so each pause has to earn itself. Five stop the
-sequence. Three stop it to *ask* — the ambiguous issue, the request too vague
-to write one for, and the failing approach. A blocked issue and a running check
-stop it to report, and wait on something other than an answer.
+Autonomy is the point, so each pause has to earn itself. Six stop the
+sequence. Four stop it to *ask* — the ambiguous issue, the request too vague
+to write one for, the failing approach, and a designated branch the harness
+states ambiguously. A blocked issue and a running check stop it to report, and
+wait on something other than an answer.
 
 - **A blocked issue, an issue whose intent is genuinely ambiguous, or a
   request too vague to write an issue for.** The constitution forbids guessing
   at intent; this is that rule, at steps 0 and 2.
+- **More than one designated branch** for this repository, at step 4's first
+  source. Guessing which one the harness will accept risks a claim already
+  posted at step 3 that no push can honour.
 - **The approach failing mid-implementation** — the constitution's *When I hit
   a wall*, at step 5. A pull request that documents a wrong turn is worse than
   no pull request.
