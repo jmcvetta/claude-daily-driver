@@ -47,16 +47,8 @@ Detailed Code Analysis
 - **Intentional patterns**: Don't flag deliberate architectural choices as problems
 - **Lazy/Sneaky Workarounds**: Flag any lazy, sneaky workarounds in the code
   that avoid addressing a real issue.
-- **COMPLETELY IGNORE Yor/git tags - NEVER MENTION THEM**: Do NOT comment on
-  `yor_*` or `git_*` tags in Terraform resources EVER. These are AUTOMATICALLY
-  updated by Yor during the release process. Hardcoded values are EXPECTED and
-  CORRECT. Never flag them as stale, outdated, or needing update. They are NOT
-  issues - not critical, not important, not minor, not even nitpicks. IGNORE
-  THEM COMPLETELY in all reviews.
 - **Hidden or skipped errors**: Ensure that we have not hidden or skipped
   errors.  Where there are errors, they must be fixed!
-- **Valid reason for Checkov suppression**: Any `checkov:skip` suppression
-  comment must include a valid reason for the suppression.
 
 
 Issue Classification Guidelines (CRITICAL)
