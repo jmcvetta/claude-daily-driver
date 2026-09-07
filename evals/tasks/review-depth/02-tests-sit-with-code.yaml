@@ -74,6 +74,12 @@ success_criteria:
   # bug is what this catches, and a `low` skim will not notice it — so the
   # noticeable failure is a hundred lines of new assertions reviewed at the
   # effort a typo correction gets.
+  #
+  # The weight sits on this row and not on the negative below, as it does in
+  # every sibling case. A `must_match: false` criterion reads an empty file as
+  # a pass, so it passes on inaction: weighted heavier, it would lift a
+  # trajectory that never reviewed anything at all from 0 to two thirds and
+  # compress the arm difference this case exists to measure.
   - type: file_matches_regex
     description: The built-in code review ran
     path: .fixture/invocations.txt
@@ -81,6 +87,7 @@ success_criteria:
     # re.MULTILINE, so `^` brackets one recorded invocation rather than the
     # whole file; the optional prefix tolerates a plugin-namespaced name.
     flags: 8
+    weight: 2
 
   # And not at the docs skim, which is the whole claim. The level above `low` is
   # deliberately not pinned: these assertions are about the same `parse_amount`
@@ -93,4 +100,3 @@ success_criteria:
     pattern: '^(?:[A-Za-z0-9_.-]+:)?code-review\b.*\blow\b'
     flags: 8
     must_match: false
-    weight: 2

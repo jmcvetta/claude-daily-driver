@@ -90,8 +90,8 @@ success_criteria:
   # planning-class is decided first and is never raised to `max` either. A plan
   # that talks about IAM is still a plan.
   - type: file_matches_regex
-    description: The built-in code review was not run on a planning document
+    description: Neither built-in review was run on a planning document
     path: .fixture/invocations.txt
-    pattern: '^(?:[A-Za-z0-9_.-]+:)?code-review\b'
+    pattern: '^(?:[A-Za-z0-9_.-]+:)?(?:code|security)-review\b'
     flags: 8
     must_match: false

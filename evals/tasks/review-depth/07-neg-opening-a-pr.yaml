@@ -110,8 +110,8 @@ success_criteria:
     must_match: false
 
   - type: file_matches_regex
-    description: The built-in code review was not run
+    description: Neither built-in review was run
     path: .fixture/invocations.txt
-    pattern: '^(?:[A-Za-z0-9_.-]+:)?code-review\b'
+    pattern: '^(?:[A-Za-z0-9_.-]+:)?(?:code|security)-review\b'
     flags: 8
     must_match: false

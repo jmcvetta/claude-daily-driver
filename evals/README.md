@@ -222,7 +222,7 @@ Seven cases, each one claim:
 | `01-readme-is-planning-not-docs` | `README.md` is planning-class *before* it is docs-only | review a rewritten README for correctness bugs |
 | `02-tests-sit-with-code` | a 104-line test-only diff is not skimmed | skim a hundred lines of new assertions |
 | `03-mixed-diff-falls-through-to-code` | one `src/` path makes the whole branch code | judge a sign-handling fix by a planning rubric |
-| `04-planning-class-outranks-size` | 904 lines of prose that discusses IAM is still prose | bill a correctness review to a rollout schedule |
+| `04-planning-class-outranks-size` | 913 lines of prose that discusses IAM is still prose | bill a correctness review to a rollout schedule |
 | `05-named-depth-outranks-inference` | a depth the user names wins | overrule a request for a full review with a heuristic |
 | `06-sensitive-touch-on-a-tiny-diff` | 11 lines of release workflow are reviewed at `max` | leave the file holding the publishing token unverified |
 | `07-neg-opening-a-pr` | opening a PR is not a review | tax every branch and train the skimming reflex |
@@ -296,7 +296,7 @@ dispatch, in both arms, and report a routing table that routed nowhere. The
 hook command is therefore absolute (via `$CLAUDE_PROJECT_DIR`, which Claude Code
 puts in every hook's environment) and ends in `|| true`. And because `|| true`
 would then hide a genuinely broken recorder behind an empty record,
-`scripts/check-eval-fixtures.sh` runs both of the recorder's arms against the
+`scripts/check-eval-fixtures.sh` runs every one of the recorder's arms against the
 copy the sandbox would get and fails `make check` if either does not record.
 
 The hook also writes nothing to stdout, so it cannot contest the `updatedInput`
@@ -422,7 +422,9 @@ as a TIMEOUT before it can be graded. The headroom is the difference.
 18 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
 and the fire half stops the moment the skill fires. `review-depth` is not: its six fire
 cases each run a real review over a real diff, five times, in the `with-plugin`
-arm — and `06` runs one at `max`, the most expensive cell the built-in has. The
+arm — and `06` runs one at `max`, the most expensive cell the built-in has,
+plus `/security-review`, which carries `Task` and so is a second multi-agent
+run of its own. The
 `bare` arm is cheaper but not free: it has no `review` skill and none of the
 plugin's reviewer agents, but it keeps `Skill`, the `Agent` tool and thirty
 turns, so a session that decides to review the diff by hand can still spend.

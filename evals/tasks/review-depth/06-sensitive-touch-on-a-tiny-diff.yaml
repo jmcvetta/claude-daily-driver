@@ -86,3 +86,25 @@ success_criteria:
     # whole file; the optional prefix tolerates a plugin-namespaced name.
     flags: 8
     weight: 2
+
+  # The target, which is as load-bearing as the level: unnamed, `/code-review`
+  # reviews the *working* diff, which on this fixture — where the work is
+  # committed and pushed — is empty, and an empty diff comes back clean. The
+  # fixture's base branch is `master`, so a Local-mode invocation names it
+  # either bare or as `origin/master`; the pattern takes both, in either
+  # argument order.
+  - type: file_matches_regex
+    description: The invocation named a target, not just a level
+    path: .fixture/invocations.txt
+    pattern: '^(?:[A-Za-z0-9_.-]+:)?code-review\b.*\bmaster\b'
+    flags: 8
+
+  # The other half of what a sensitive touch buys. `max` is verification, not a
+  # threat model, and a release workflow holding a publishing token wants both.
+  # Weighted lighter than the level: this is the second analysis, not the one
+  # the route is named for.
+  - type: file_matches_regex
+    description: The built-in security review also ran
+    path: .fixture/invocations.txt
+    pattern: '^(?:[A-Za-z0-9_.-]+:)?security-review\b'
+    flags: 8
