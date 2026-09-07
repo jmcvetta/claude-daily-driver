@@ -961,11 +961,12 @@ premature decision that produced ten commands nobody remembers.
 
 ## Sequencing
 
-1. ~~Settle R2 empirically.~~ **Done** — see R2. The answer requires a second
-   hook, folded into step 2.
-2. Draft the constitution plus *both* delivery hooks — `SessionStart` for the
-   main session, `PreToolUse` on `Agent` for subagents — and the acceptance
-   test that proves the token reaches both.
+1. **Settle R2.** ~~Empirically.~~ **Done** — see R2. The answer requires a
+   second hook, folded into **The constitution and its hooks** below.
+2. **The constitution and its hooks.** Draft the constitution plus *both*
+   delivery hooks — `SessionStart` for the main session, `PreToolUse` on
+   `Agent` for subagents — and the acceptance test that proves the token
+   reaches both.
 3. ~~Split `pr` into `pr` / `pr-title` / `pr-body`; adopt MCP triggers (D2,
    D5).~~ **Done** — three sibling skills, triggering on
    `mcp__github__create_pull_request` and

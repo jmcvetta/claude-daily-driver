@@ -1,0 +1,78 @@
+<!-- step-names: external phase — the #35 phases named below are that issue's,
+     and are named there rather than here. -->
+
+# A step is cited by its name, never by its number
+
+**Status:** decided, 2026-09-07.
+**Provenance:** chosen by an agent in the pull request resolving #83 — the
+same pull request as the change it justifies — and ratified by that merge, not
+by a separate call from the author.
+**Resolves:** [#83](https://github.com/jmcvetta/claude-daily-driver/issues/83).
+
+Three skills lay out a numbered sequence — `undertake`'s eleven steps,
+`review-cycle`'s three stages, `session-title`'s four cuts — and files across
+the repository cited them by number. Seventy such citations, across twelve
+files, twelve of them crossing a file boundary.
+
+A number is positional. Insert a step and every citation of every later step is
+wrong, in prose that goes on reading exactly like prose that is right: a stale
+`step 7` has no tell. Nothing in `make check` looked at them, and nothing could
+have, because there was nothing stable to check them against.
+
+This had already cost. 8354f33 added `Claim the issue` in the middle of
+`undertake` and shifted six steps under it; its own commit message records
+hand-chasing the two citations that lived in other files. Two were found
+because the author went looking. The next insertion had no reason to be as
+lucky, and `docs/notes/0001` was already carrying a `stage 2` that nobody had
+noticed pointed into `review-cycle`.
+
+## Decided
+
+**Every step in a numbered sequence has a name, and the name is what gets
+cited.** `undertake` runs the round between `Open the draft` and
+`Ready for review`; `review-cycle`'s round starts at `Review the head`;
+`session-title`'s worked examples cut at **Tracker prefix** and **Empty
+words**.
+
+**The numbers stay, and do only what they are good at** — ordering. They live
+in the sequence table and in the `4 — Cut the branch` prefix on a heading, and
+nowhere else. Neither form is a citation, so neither is affected by the rule,
+and both go on giving a reader the shape of the sequence at a glance.
+
+**`undertake`'s last two steps carry `review-cycle`'s first two names.** They
+are the same work seen from two skills. One name for it is what lets either
+cite it without reaching into the other's numbering — which is what the two
+stale citations in 8354f33 were doing.
+
+**`scripts/check-step-names.py` enforces it**, as a leg of `make check`. It
+flags a sequence noun followed by a number — `step 7`, `stage 2`, `phases 2–4`,
+`Rules 1 and 2` — over every tracked Markdown and YAML file. Its own self-test
+runs before the scan on every invocation rather than behind a flag: this check
+fails silently in the direction that matters, and a detector that has stopped
+matching reports a clean repository.
+
+## The escape hatch, and why it is per noun
+
+A numbering this repository does not own cannot be renamed here. `docs/notes/`
+0001 and 0002 both cite the phases of
+[#35](https://github.com/jmcvetta/claude-daily-driver/issues/35), which are
+named in that issue and not in this repository. Those files waive the noun:
+
+    <!-- step-names: external phase — the phases are issue #35's. -->
+
+**Per noun, not per file**, and the reason is the case that made the rule.
+`0001` cites #35's phases nine times *and* carried one stale `stage 2` aimed at
+`review-cycle`. A file-wide waiver would have covered both and hidden the only
+one that was actually broken.
+
+## What was considered and not done
+
+**Renaming without a check.** A convention nothing enforces is a convention
+that drifts back one pull request at a time, and this one drifts back
+invisibly — which is the entire complaint. The rename alone would have fixed
+forty-six citations and prevented none.
+
+**Excluding `docs/` from the check.** Tempting, because the notes are dated
+records rather than live instructions. It was the wrong line: `0001`'s stale
+`stage 2` was in `docs/notes/`, and an exclusion drawn there would have kept
+the one real cross-file bug the check found on its first run.

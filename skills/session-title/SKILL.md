@@ -45,32 +45,34 @@ browser tab.
 
 Shortening is deletion, one word or phrase at a time, in this order —
 re-checking the fit after each and stopping the moment the whole thing fits.
-Capitalise whatever word ends up first.
+Capitalise whatever word ends up first. Each cut is named, and the name is how
+it is cited below: the numbers order them and nothing else.
 
-1. Drop a leading prefix written for the tracker rather than the reader: a
-   Conventional Commits type (`feat:`, `fix(api):`), or a label (`New skill:`,
-   `Bug:`, `RFC:`).
-2. Drop a trailing qualifier — a parenthesis, a clause after a dash.
-3. Drop the words carrying no information, wherever they sit, least
-   informative first: articles, then auxiliary verbs, then prepositions, then
-   the adjectives the title survives without.
-4. Only then cut whole words from the end, never part of one. Where the last
-   word is the noun naming the subject — in an issue title it is as often last
-   as first, and where two compete it is the one the work is on, the rightmost
-   only failing that — keep it and cut the word before it instead.
+1. **Tracker prefix.** Drop a leading prefix written for the tracker rather
+   than the reader: a Conventional Commits type (`feat:`, `fix(api):`), or a
+   label (`New skill:`, `Bug:`, `RFC:`).
+2. **Trailing qualifier.** Drop a parenthesis, or a clause after a dash.
+3. **Empty words.** Drop the words carrying no information, wherever they sit,
+   least informative first: articles, then auxiliary verbs, then prepositions,
+   then the adjectives the title survives without.
+4. **Words from the end.** Only then cut whole words from the end, never part
+   of one. Where the last word is the noun naming the subject — in an issue
+   title it is as often last as first, and where two compete it is the one the
+   work is on, the rightmost only failing that — keep it and cut the word
+   before it instead.
 
 A title that still overruns at `#{number} {noun}` has nothing left to give.
 Stop there and let it overrun: the identifier and the subject are the two
 things worth more than the budget.
 
-Issue #40, *"New skill: set the Claude session title"*, needs step 1 alone:
-`#40 Set the Claude session title` — 32 characters.
+Issue #40, *"New skill: set the Claude session title"*, needs **Tracker
+prefix** alone: `#40 Set the Claude session title` — 32 characters.
 
 Issue #212, *"fix(storage): retry with exponential backoff for the S3 upload
-client"*, loses its type prefix at step 1, then `the`, `with`, `for` and
-finally the adjective `exponential` at step 3, fitting at 35:
-`#212 Retry backoff S3 upload client`. Step 4 never runs, and `client` — the
-noun the title is about — survives because of it.
+client"*, loses its type prefix to **Tracker prefix**, then `the`, `with`,
+`for` and finally the adjective `exponential` to **Empty words**, fitting at
+35: `#212 Retry backoff S3 upload client`. **Words from the end** never runs,
+and `client` — the noun the title is about — survives because of it.
 
 
 Not working on an issue

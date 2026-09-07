@@ -1,9 +1,9 @@
 task_id: undertake-03-implement-an-issue
 description: >-
   An issue handed over with no invocation — the half of the trigger register
-  that predates step 0. It is here because step 0 is what put that half at
-  risk: a description rewritten around the invocation alone would stop firing
-  on exactly this, the phrasing the register has always advertised.
+  that predates `Open the issue`. It is here because that step is what put the
+  half at risk: a description rewritten around the invocation alone would stop
+  firing on exactly this, the phrasing the register has always advertised.
 tags: [trigger-accuracy, undertake, fire]
 
 initial_prompt: "Implement #191."

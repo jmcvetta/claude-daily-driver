@@ -214,7 +214,8 @@ then the gear. There is no settings page and no direct URL.
    in. The install lands in a `~/.claude` the environment keeps, so it is done
    once per environment rather than once per repository — measured on a
    laptop, and *not* repeated in the cloud, so if you open a second repository
-   in the same environment, run step 4 there too before relying on it.
+   in the same environment, run **Ask it what it got** there too before relying
+   on it.
 
 2. **Give it this Setup script.**
 
@@ -253,7 +254,7 @@ then the gear. There is no settings page and no direct URL.
    is the one answer no other check reaches; a session that cannot quote it
    did not get it, whatever else it believes. The skills should be the ones in
    the table above. The directory name is the installed version — which is
-   what step 5 turns on.
+   what **After a release, bump the `CACHEBUST` number** turns on.
 
    Do **not** ask what plugins are installed. A session answers that from the
    harness, which — measured, in two separate cloud environments — reported an
@@ -271,9 +272,10 @@ then the gear. There is no settings page and no direct URL.
    session inside the environment to update the plugin does not work: the
    session is downstream of the snapshot, not the thing that builds it.
 
-   Then repeat step 4 and read the version off the cache directory. The
-   script's verification line cannot do this for you — it greps for the plugin
-   key and globs the cache for *any* version, so a bump that failed to fetch
+   Then repeat **Ask it what it got** and read the version off the cache
+   directory. The script's verification line cannot do this for you — it greps
+   for the plugin key and globs the cache for *any* version, so a bump that
+   failed to fetch
    anything new satisfies it, exits 0, and snapshots itself looking exactly
    like a bump that worked.
 
