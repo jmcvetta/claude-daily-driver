@@ -810,7 +810,10 @@ the credential requirement actually starts:
   `${CLAUDE_PLUGIN_ROOT}`, malformed JSON, non-zero exit.
 - **The live half runs on demand**, as a `claude plugin eval` case on the
   laptop or in a credentialed workflow. Only it can prove the harness
-  *honours* `updatedInput`, which is the R2 finding proper.
+  *honours* `updatedInput`, which is the R2 finding proper. *(The harness has
+  since changed — see [`0002`](../decisions/0002-eval-harness.md); the live
+  half is now `make evals-run TASKS='tasks/constitution/*.yaml'`. The split
+  either side of the credential requirement is unaffected.)*
 
 The division is honest rather than merely convenient: the first half tests this
 plugin, the second tests an assumption about the harness that a future release
@@ -966,12 +969,17 @@ premature decision that produced ten commands nobody remembers.
 3. ~~Split `pr` into `pr` / `pr-title` / `pr-body`; adopt MCP triggers (D2,
    D5).~~ **Done** — three sibling skills, triggering on
    `mcp__github__create_pull_request` and
-   `mcp__github__update_pull_request`, with a `claude plugin eval` suite each
-   under `evals/`. `pr-threads` has since landed too; `pr-ci` remains.
+   `mcp__github__update_pull_request`, with an eval suite each under `evals/`
+   — written for `claude plugin eval` at the time, since ported to `coder_eval`
+   per [`0002`](../decisions/0002-eval-harness.md). `pr-threads` has since
+   landed too; `pr-ci` remains.
 4. Port `review` and the agent panel; audit for rot (D6).
 5. Memory skill, written by the compaction hook (D7) — and the `PostCompact`
    `additionalContext` question answered first, since it decides whether the
    hook needs a nested Claude invocation at all.
 6. Deletions (D1, D3, D4, D8), the `curl` rewrite of the surviving `gh`
    scripts (D3), and the repo template plus `bootstrap` skill (R4).
-7. `claude plugin eval` suites for trigger accuracy across every skill.
+7. Trigger-accuracy suites across every skill. The three `pr*` skills, the
+   constitution's live half and `review`'s depth routing have them; the rest do
+   not. Written for `coder_eval`, not `claude plugin eval` — see
+   [`0002`](../decisions/0002-eval-harness.md) for why the harness changed.

@@ -33,18 +33,17 @@ has one, natural phrasings — "open a PR" for `pr`, "fix the PR title" for
 `pr-title`, "rewrite the PR description" for `pr-body`, "this is blocked by
 #123" for `issue-deps`, "rename this session" for `session-title`, "just
 decide" for `judgement-call`, "undertake #34" or "implement #191" for
-`undertake` — and Claude's
-own tool calls. The PR skills split `mcp__github__create_pull_request` and
-`mcp__github__update_pull_request` between them, `pr-title` on a call that
-sets a `title`, `pr-body` on one that sets a `body`, `pr` on a create or on an
-update wider than either alone, with `gh pr create` / `gh pr edit` as a
-fallback on a harness that still reaches for them; `issue-deps` takes the
-GitHub MCP's sub-issue and issue-read tools; `session-title` takes
-`mcp__Claude_Code_Remote__set_session_title`; `judgement-call` takes
-`AskUserQuestion`; and `undertake` takes the move from reading an issue to
-writing code for it. Those registers are the point: a convention that only
-fires when a human types a command quietly stops applying as more of the work
-runs without one.
+`undertake` — and Claude's own tool calls. The PR skills split
+`mcp__github__create_pull_request` and `mcp__github__update_pull_request`
+between them, `pr-title` on a call that sets a `title`, `pr-body` on one that
+sets a `body`, `pr` on a create or on an update wider than either alone, with
+`gh pr create` / `gh pr edit` as a fallback on a harness that still reaches
+for them; `issue-deps` takes the GitHub MCP's sub-issue and issue-read tools;
+`session-title` takes `mcp__Claude_Code_Remote__set_session_title`;
+`judgement-call` takes `AskUserQuestion`; and `undertake` takes the move from
+reading an issue to writing code for it. Those registers are the point: a
+convention that only fires when a human types a command quietly stops applying
+as more of the work runs without one.
 
 Naming the MCP tools is also a stronger trigger than naming `gh pr create` is —
 an exact tool name where the fallback is, in effect, a regex over a bash
@@ -115,7 +114,7 @@ claude-daily-driver/
 │   │   └── scripts/        plugin runtime, owned by the skill beside it
 │   ├── session-title/SKILL.md
 │   ├── judgement-call/SKILL.md
-│   └── undertake/SKILL.md the order the others run in
+│   └── undertake/SKILL.md
 └── template/.claude/       copied into a repository to enable the plugin
 ```
 
@@ -159,10 +158,11 @@ credential requirement starts:
   that the subagent's prompt is *exactly* the main session's context plus the
   original prompt, which is the assertion that catches drift between the two
   injection points. No model, no credentials.
-- **`claude plugin eval evals/`** runs the live half, which is the R2
-  experiment itself: a subagent is asked for a token nobody put in its prompt.
-  Only a real session can prove the harness honours `updatedInput`, and a
-  credentialed run is the price of asking.
+- **`make evals-run TASKS='tasks/constitution/*.yaml'`** runs the live half,
+  which is the R2 experiment itself: a subagent is asked for a token nobody put
+  in its prompt. Only a real session can prove the harness honours
+  `updatedInput`, and a credentialed run is the price of asking. See
+  [`evals/README.md`](evals/README.md).
 
 They fail for different reasons and deserve to fail separately: the first
 tests this plugin, the second tests an assumption about the harness that a

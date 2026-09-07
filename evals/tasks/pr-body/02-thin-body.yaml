@@ -1,0 +1,37 @@
+task_id: pr-body-02-thin-body
+description: >-
+  The complaint rather than the instruction: what is wrong with the body, with
+  the fix left implicit.
+tags: [trigger-accuracy, pr-body, fire]
+
+initial_prompt: "The PR body is thin. Add the engineering detail a reviewer would want."
+
+agent:
+  # `allowed_tools` is a permission allowlist, not a tool filter: the model is
+  # still offered `Read` and friends and merely denied at the permission check.
+  # That is not enough here. Telemetry records a `tool_use` block when it is
+  # generated, before any result, and `skill_triggered` counts a `skills/<name>/`
+  # path in ANY tool parameter as engaging that skill — so a *denied* read of
+  # `skills/pr/SKILL.md`, which is exactly what a model weighing two sibling
+  # skills reaches for, would fail a no-fire row. `disallowed_tools` is the one
+  # that actually removes a tool, so the path can never be typed.
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  # `turn_timeout` is the agent's budget; `task_timeout` is the watchdog around
+  # the whole evaluation, armed before the turn starts and still running while
+  # the criteria are checked. Equal values mean a turn that uses its budget is
+  # killed as a TIMEOUT before it can be graded, so `task_timeout` carries
+  # headroom on top. `plan` warns that the larger number cannot extend the
+  # turn; that is the point — it is not meant to.
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`pr-body` fires on a thin body"
+    expected_skill: pr-body
+    skill_name: pr-body
+    stop_early:
+      on_pass: stop

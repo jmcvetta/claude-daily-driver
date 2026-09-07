@@ -11,7 +11,7 @@ credential requirement actually starts, and this is the half below that line:
   credentials. It catches every cause listed under R1: a bad path, an empty or
   unreadable constitution, malformed event JSON, a nonzero exit, output that
   is not JSON.
-- **`evals/constitution-reaches-subagent/`**: the live half. Only a real
+- **`evals/tasks/constitution/`**: the live half. Only a real
   session can prove the harness *honours* `updatedInput`, which is the R2
   finding proper, and only a real model can be asked what it was told.
 
@@ -50,11 +50,17 @@ TOKEN_LINE = re.compile(r"^constitution-token: (\S+)$")
 
 # A *stale* token is by definition not the one that ships, so the guard that
 # hunts for one cannot go by the token's value, and it must not go by the
-# `constitution-token:` label either: the control grader embeds the bare token
-# in `input_match` and never says the word, which is exactly the file whose
-# staleness matters most -- its `max: 0` leak control would go on matching a
+# `constitution-token:` label either: the leak control embeds the bare token in
+# a `command_pattern` and never says the word, which is exactly the criterion
+# whose staleness matters most -- its `max_count: 0` would go on matching a
 # retired value and pass vacuously. So the guard goes by the token's shape.
-TOKEN_SHAPE = re.compile(r"\b[a-z]+(?:-[a-z]+)+-\d+\b")
+#
+# Four or more words then a number, which is one word more than any task id,
+# model name or branch name under `evals/` -- the sweep below reads whole files,
+# and a looser shape would flag `pr-body-01` and `claude-sonnet-5` on every run.
+# The coupling to the current token's shape is deliberate and guarded: a token
+# that stops matching this pattern fails the check below by name.
+TOKEN_SHAPE = re.compile(r"\b[a-z]+(?:-[a-z]+){3,}-\d+\b")
 
 # The tool names a subagent spawn can arrive under. `Agent` is current; `Task`
 # is what the same tool was called for years, and a matcher that admits only
@@ -385,13 +391,57 @@ def check_one_loud_failure(errors: list[str], label: str, content: bytes | None)
                 )
 
 
+def top_level_blocks(text: str) -> dict[str, str]:
+    """Split a task YAML into its top-level keys, without a YAML parser.
+
+    `check_eval_token` needs one thing out of a case file — the criteria it is
+    scored by, which is the only place the token may appear — and that is a
+    column-0 key. A real parser would be more correct and would cost this
+    script the "no third-party imports" property that lets it run identically
+    from a Makefile, from CI and from a web worker. Recognising a top-level key
+    is a job for a regex.
+
+    Text before the first top-level key is the file's comment header and is not
+    returned. That is not an exemption: the caller subtracts the criteria block
+    from the whole file and searches what is left, so a token planted in a
+    header comment is still caught — it simply is not `success_criteria`, which
+    is the only thing this function is asked to find.
+    """
+    blocks: dict[str, str] = {}
+    key: str | None = None
+    lines: list[str] = []
+    for line in text.splitlines(keepends=True):
+        match = re.match(r"^([A-Za-z_][A-Za-z0-9_]*):", line)
+        if match:
+            if key is not None:
+                blocks[key] = "".join(lines)
+            key, lines = match.group(1), [line]
+        elif key is not None:
+            lines.append(line)
+    if key is not None:
+        blocks[key] = "".join(lines)
+    return blocks
+
+
 def check_eval_token(errors: list[str], expected: str) -> None:
     """The live half asserts on the same token this half reads.
 
     The token is written twice by necessity — once in the constitution, once in
-    the grader that looks for it coming back — and two copies of a constant is
-    how the live suite comes to be quietly testing last month's token. Any eval
-    file that talks about the token has to name the current one.
+    the criterion that looks for it coming back — and two copies of a constant
+    is how the live suite comes to be quietly testing last month's token. Any
+    eval file that talks about the token has to name the current one.
+
+    Under `claude plugin eval` the prompt and the graders were separate files,
+    so "only a grader may name the token" was a rule about directories. A
+    `coder_eval` task is one file holding both, so the rule is now about where
+    in a file the token sits, and it is enforced over every eval file rather
+    than only over task prompts: some `success_criteria` block must name the
+    current token, and no other text in any `.yaml`, `.yml`, `.md`, `.sh` or
+    `.py` file under `evals/` may — not a
+    description, not an `agent.system_prompt`, not a `pre_run` command, not a
+    fixture script, not this repository's own eval README. Staleness is a
+    separate sweep, over whole files, because a retired token is just as dead
+    wherever it is written.
     """
     if not EVALS.is_dir():
         errors.append(
@@ -408,37 +458,49 @@ def check_eval_token(errors: list[str], expected: str) -> None:
         )
 
     asserted = False
-    for path in sorted(EVALS.rglob("*.md")):
+    for path in sorted(EVALS.rglob("*")):
+        if not path.is_file() or path.suffix not in {".yaml", ".yml", ".md", ".sh", ".py"}:
+            continue
         text = path.read_text(encoding="utf-8")
         where = path.relative_to(ROOT)
-        if path.parent.name == "graders":
-            stale = sorted(set(TOKEN_SHAPE.findall(text)) - {expected})
-            if stale:
-                errors.append(
-                    f"{where}: names {', '.join(stale)}, which is not the "
-                    f"token that ships ({expected}); the live suite would be "
-                    f"testing a token that no longer exists"
-                )
-            elif expected in text:
-                asserted = True
-            elif "constitution-token" in text:
-                errors.append(
-                    f"{where}: talks about the constitution token without "
-                    f"naming the current one ({expected})"
-                )
-        elif expected in text:
-            # A prompt that spells the token out hands the parent the answer,
-            # and a live run that then "passes" has measured nothing.
+
+        # Staleness, over the whole file. A retired token is just as dead in an
+        # `agent.system_prompt`, a `pre_run` command or a prose paragraph, and
+        # those are places the criteria/prompt split below never looks.
+        stale = sorted(set(TOKEN_SHAPE.findall(text)) - {expected})
+        if stale:
             errors.append(
-                f"{where}: contains the token itself. Only the graders may "
-                f"name it; a case prompt that does is telling the session "
+                f"{where}: names {', '.join(stale)}, which is not the "
+                f"token that ships ({expected}); the live suite would be "
+                f"testing a token that no longer exists"
+            )
+
+        if expected not in text:
+            continue
+
+        # The token may appear in exactly one place: a task's success_criteria.
+        # Under `claude plugin eval` that rule was about directories -- prompts
+        # in one file, graders in another. A `coder_eval` task is one file, so
+        # it is now about which top-level key the token sits under, and
+        # everything that is not a task YAML is off limits outright.
+        criteria = top_level_blocks(text).get("success_criteria", "") if path.suffix in {".yaml", ".yml"} else ""
+        if expected in criteria:
+            asserted = True
+        leaked = text.replace(criteria, "")
+        if expected in leaked:
+            # Anywhere else is the session being handed the answer: a prompt
+            # that spells the token out, a fixture that writes it to disk, a
+            # README that quotes it into a copy-pasteable command.
+            errors.append(
+                f"{where}: names the token outside success_criteria. Only a "
+                f"criterion may name it; anywhere else is telling the session "
                 f"what the subagent was supposed to have been told."
             )
 
     if not asserted:
         errors.append(
-            f"no grader under {EVALS.relative_to(ROOT)}/ asserts on the "
-            f"constitution token, so the live half proves nothing"
+            f"no success_criteria under {EVALS.relative_to(ROOT)}/ asserts on "
+            f"the constitution token, so the live half proves nothing"
         )
 
 
