@@ -7,8 +7,9 @@ description: >-
   "that session title is wrong", and on Claude's own initiative when work on a
   GitHub issue begins, when the session's subject changes materially, or on
   any call to `mcp__Claude_Code_Remote__set_session_title`. Supplies the
-  character budget the Claude mobile list needs, and the two forms a title
-  may take. Not the title of a pull request — that is `pr-title`.
+  character budget a title is written to for the Claude mobile list, and
+  the two forms that title may take. Not the title of a pull request —
+  that is `pr-title`.
 ---
 
 # Session title
@@ -52,11 +53,11 @@ Capitalise whatever word ends up first.
 2. Drop a trailing qualifier — a parenthesis, a clause after a dash.
 3. Drop the words carrying no information, wherever they sit, least
    informative first: articles, then auxiliary verbs, then prepositions, then
-   an adjective the title survives without.
+   the adjectives the title survives without.
 4. Only then cut whole words from the end, never part of one. Where the last
    word is the noun naming the subject — in an issue title it is as often last
-   as first, and where two nouns compete it is the rightmost — keep it and cut
-   the word before it instead.
+   as first, and where two compete it is the one the work is on, the rightmost
+   only failing that — keep it and cut the word before it instead.
 
 A title that still overruns at `#{number} {noun}` has nothing left to give.
 Stop there and let it overrun: the identifier and the subject are the two
