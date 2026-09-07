@@ -28,6 +28,12 @@ is asked for, and — measured — a user-scope install then loads the plugin in
 repository carrying no settings of its own at all. That is what makes
 bootstrapping a once-per-machine act rather than a once-per-repository one.
 
+That last row is a **laptop** measurement and has not been repeated in the
+cloud, where every row below was taken against this repository, which carries
+the stanza in its own `.claude/settings.json`. So the cloud case for a
+second, stanza-less repository in an already-bootstrapped environment is
+confounded rather than proven: check it there rather than inheriting it.
+
 ## The per-repository stanza, and what it buys
 
 A repository *can* declare that it wants the plugin, with an
@@ -156,7 +162,7 @@ Three checks, in increasing order of what they actually prove:
 
 | Check | What it proves |
 | ----- | -------------- |
-| `grep -n enabledPlugins .claude/settings.json` | that the file says so — and the file is the half that fetches nothing. Cold-start-proof, works from anywhere |
+| `grep -n enabledPlugins .claude/settings.json` | that the file says so — and the file is the half that fetches nothing. Cold-start-proof, works from anywhere. Only meaningful in a repository that carries the stanza at all: on the install path the README documents nothing writes that key, so a miss here proves nothing |
 | `claude plugin details daily-driver@claude-daily-driver` | that the names are right and the plugin is on this machine. **Not** that it loaded: measured printing the full component inventory for a session whose `init` reported no plugins at all. Says `not found` anywhere the marketplace was never cached |
 | asking a session what it loaded | the question the other two are proxies for |
 

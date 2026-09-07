@@ -186,10 +186,9 @@ claude plugin marketplace add jmcvetta/claude-daily-driver
 claude plugin install daily-driver@claude-daily-driver
 ```
 
-In the cloud there is no interactive `/plugin` to reach for and no shell that
-runs before the session does, so the same two commands go in the
-environment's **Setup script**, which is the one writer that beats the plugin
-scan.
+In the cloud there is no interactive `/plugin` to reach for and no shell of
+your own to run the commands from, so they go in the environment's **Setup
+script**, which is the one writer that beats the plugin scan.
 
 ### A cloud environment, in five steps
 
@@ -199,9 +198,11 @@ then the gear. There is no settings page and no direct URL.
 
 [web]: https://claude.ai/code
 
-1. **Create the environment.** Point it at whichever repository you want the
-   plugin available in — it is bootstrapped once, for every repository it
-   later opens, so the choice is not load-bearing.
+1. **Create the environment.** Point it at the repository you want the plugin
+   in. The install lands in a `~/.claude` the environment keeps, so it is done
+   once per environment rather than once per repository — measured on a
+   laptop, and *not* repeated in the cloud, so if you open a second repository
+   in the same environment, run step 4 there too before relying on it.
 
 2. **Give it this Setup script.**
 
@@ -229,14 +230,23 @@ then the gear. There is no settings page and no direct URL.
 3. **Start a web session on that environment.**
 
 4. **Ask it what it got.** Nothing announces a plugin that failed to load, so
-   this step is the whole point of the other four:
+   this step is the whole point of the other four. Ask for three things, in
+   this order:
 
-   > What plugins are installed, and what skills do they provide?
+   > Quote the last line of `context/constitution.md`. Then list the skills
+   > available to you whose names begin `daily-driver:`. Then run `ls
+   > ~/.claude/plugins/cache/claude-daily-driver/daily-driver/`.
 
-   Expect `daily-driver` and the skills in the table above. Then ask for the
-   last line of `context/constitution.md` — the constitution arrives by hook
-   rather than as a skill, and a session that cannot quote that line did not
-   get it, whatever else it believes.
+   The constitution arrives by hook rather than as a skill, so its last line
+   is the one answer no other check reaches; a session that cannot quote it
+   did not get it, whatever else it believes. The skills should be the ones in
+   the table above. The directory name is the installed version — which is
+   what step 5 turns on.
+
+   Do **not** ask what plugins are installed. A session answers that from the
+   harness, which — measured, in two separate cloud environments — reported an
+   empty list while the plugin was live and its skills were firing. It is the
+   one question here with a known wrong answer.
 
 5. **After a release, bump the `CACHEBUST` number.** An existing environment
    does not pick up a new release on its own, and this is the only way to make
@@ -249,11 +259,21 @@ then the gear. There is no settings page and no direct URL.
    session inside the environment to update the plugin does not work: the
    session is downstream of the snapshot, not the thing that builds it.
 
+   Then repeat step 4 and read the version off the cache directory. The
+   script's verification line cannot do this for you — it greps for the plugin
+   key and globs the cache for *any* version, so a bump that failed to fetch
+   anything new satisfies it, exits 0, and snapshots itself looking exactly
+   like a bump that worked.
+
 [docs/bootstrapping-a-repository.md](docs/bootstrapping-a-repository.md) has
-the mechanism under all of this — where an install puts its state, what the
-per-repository stanza is worth (less than it looks), the three ways to check
-whether the plugin loaded, and the two readers that look like checks and are
-not.
+the mechanism under all of this — where an install puts its state, the three
+ways to check whether the plugin loaded, and the two readers that look like
+checks and are not. It also has *the stanza*: the `extraKnownMarketplaces` +
+`enabledPlugins` block a repository can carry in `.claude/settings.json` to
+declare that it wants the plugin, what it is worth (less than it looks, and
+nothing at all in the cloud), and the two writers for it — `template/.claude/`
+to copy into a repository that has none, and `python3 scripts/stanza.py
+--write <repo>` to merge it into one that already has settings.
 
 ## Portability
 
