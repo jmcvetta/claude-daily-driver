@@ -24,7 +24,7 @@ hook — plus skills that fire on activity:
 | `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. What survives the gate is intent, a real trade-off, scope, and any confirmation another rule requires. |
 | `undertake` | Takes an issue from its description to a pull request ready for review: the order of the nine steps, the gates between them, and the rule that stops the branch being reviewed twice. Invokes the skills above, directly or through `pr`, and leans on the built-in `/code-review` where `review` used to sit. |
 
-Three PR skills rather than one because skill names are flat within a plugin,
+Four PR skills rather than one because skill names are flat within a plugin,
 so siblings can be triggered independently: a decision to rewrite a PR body
 fires `pr-body` directly, without routing through `pr` to get there. The type
 is split out of `pr-title` for the same reason — "is this a fix or a feat?"

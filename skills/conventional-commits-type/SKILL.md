@@ -7,11 +7,11 @@ description: >-
   says "the type is wrong" or "that's not a fix", questions what version
   merging will cut, or when a Projected Releases comment on a pull request
   disagrees with what the author meant; and whenever `pr-title` needs the type
-  for a title it is writing. Supplies the tests that pick the type from what
-  the change does, the two gates and the one test that settle it, and what
-  the type decides about the next release. Not for writing the title itself — that is
-  `pr-title` — and not for commit messages, which are not Conventional Commits
-  in this toolkit.
+  for a title it is writing. Supplies the two gates and the one test that
+  pick the type from what the change does, and what the type decides about
+  the next release. Not for writing the title itself — that is `pr-title` —
+  and not for commit messages, which are not Conventional Commits in this
+  toolkit.
 ---
 
 # Conventional Commits Type
@@ -30,9 +30,10 @@ Two titles this toolkit reached for, and why both were too small:
   applying Terraform rules in every repository it is loaded in. A reviewer
   that behaves differently after the merge has not been refactored.
 - *"fix(agents): inline the planning severity rubric into
-  planning-fitness-reviewer"* — the title #54 did merge with, and a `feat:`.
-  A broken pointer prompted it, but the rubric it named was unreachable on
-  every run, so no review had ever applied it. After the merge one does.
+  planning-fitness-reviewer"* — the title #54 merged with, where a `feat:`
+  was warranted. A broken pointer prompted it, but the rubric it named was
+  unreachable on every run, so no review had ever applied it. After the
+  merge one does.
 
 Both reached for the smaller word, and that is the direction this skill
 exists to stop. An over-typed change cuts a version one size too large; an
@@ -62,19 +63,29 @@ decides the type; the diff's shape does not.
 The tests
 =========
 
-The first two are gates: where one fires it settles the type, and nothing
-below it runs.
+One case skips them. A **wholesale undo** of a change already merged is a
+`revert`, whatever the undone change was typed — patch, with its own
+changelog section. Where the undone change had already been released, gate 1
+below applies on top of it: `revert!:`, with the footer, because taking back
+what a consumer may already be using breaks them. A *partial* undo is not a
+revert; it is an ordinary change, and the gates type it.
+
+Otherwise the first two are gates: where one fires it settles the type, and
+nothing below it runs.
 
 1. **Does it break anyone?** A caller, a configuration, or a workflow that
    worked before the merge and does not after it. Then the type it would
    otherwise have carries `!` — `feat!:`, `fix!:` — and the body carries a
    `BREAKING CHANGE:` footer saying what broke. Major bump.
 
-2. **Does anything a consumer can observe change?** If nothing does, the
-   change is one of the silent types: `refactor` for code restructured to do
-   the same thing, `perf` for the same thing done faster, `style` for
-   formatting, `docs`, `test`, `build`, `ci`, `chore`. A `refactor` that
-   changes an output, a decision or a side effect is not one.
+2. **Does the behaviour change — what the thing returns, what it decides,
+   what it does as a side effect?** If none of those move, the change is one
+   of the silent types: `refactor` for code restructured to do the same
+   thing, `perf` for the same thing done faster, `style` for formatting,
+   `docs`, `test`, `build`, `ci`, `chore`. Speed, formatting and internal
+   shape are not behaviour here — that is what lets `perf` and `refactor` be
+   silent at all — but an output, a decision or a side effect is, and a
+   `refactor` that moves one is not a refactor.
 
 Past both gates the behaviour changes, and the only question left is `fix` or
 `feat`. One test settles it:
@@ -147,7 +158,7 @@ accepted as a synonym for `feat`; write `feat`.
 
 What a given title will actually cut is not worth reasoning out. In this
 repository the *Projected Releases* check comments it on every pull request
-but release-please's own, and that comment is the test: read it against what the change warrants, and
-treat a bug fix that projects a minor version, or a new capability that
-projects a patch, as a title to correct. Where the check does not run, the
-table above is the best available answer.
+but release-please's own, and that comment is the test: read it against what
+the change warrants, and treat a bug fix that projects a minor version, or a
+new capability that projects a patch, as a title to correct. Where the check
+does not run, the table above is the best available answer.
