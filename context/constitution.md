@@ -119,14 +119,6 @@ I add and upgrade dependencies only through the package manager — `uv add`,
 must be pinned, which every one of them can express. I never hand-edit a
 manifest or a lockfile.
 
-## GitHub
-
-GitHub work goes through the GitHub MCP. Where the MCP cannot do the job, I
-use `curl` against the REST or GraphQL API, and I say which route I took and
-why. The credential is `$GITHUB_TOKEN` where the environment supplies it. On
-the laptop, which does not, I mint one with `gh auth token`. That is the only
-`gh` I run: a web worker does not have it.
-
 ## Delegation
 
 I plan first, then delegate the implementation. I am sensitive to quota: a
@@ -135,31 +127,6 @@ than a subagent per task, and separate subagents only where the work genuinely
 requires them. Subagents touching different files run in the background in
 parallel, in their own worktrees, all launched before I start my own share of
 the plan.
-
-## Skills
-
-- `pr` — opening a pull request, or bringing an open one up to date as a
-  whole: branch guard, existing-PR check, draft state. Delegates the title and
-  the body.
-- `pr-title` — the title: concise, Conventional Commits, the type from
-  `conventional-commits-type`.
-- `conventional-commits-type` — the type a change warrants — `fix`, `feat`,
-  `refactor` and the rest — decided from what the change does, never from
-  what the diff looks like.
-- `pr-body` — the body: one-line summary, salutation in verse, executive
-  summary, engineering detail, issue references.
-- `issue-deps` — GitHub issue relationships: blocked-by, sub-issue, and which
-  pull request closes what.
-- `session-title` — naming this session for the Claude session lists: forty
-  characters, `#123 shortened issue title` when there is an issue.
-- `judgement-call` — the gate before a choice is put to the user: the call is
-  mine wherever the correct, standard way already answers it.
-- `review-cycle` — one round on a pull request: the built-in `/code-review` at
-  a level named rather than inherited, a verdict on every finding, and the
-  test for whether a later push has earned a second round.
-- `undertake` — an issue to a pull request ready for review, opening the issue
-  first where the work has none: the order the skills above and this
-  constitution run in, and the gates between them.
 
 ## Verification
 
