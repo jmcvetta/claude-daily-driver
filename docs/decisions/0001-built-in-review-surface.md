@@ -32,7 +32,8 @@ of writing the version at the top.
 - Effort levels trade recall against precision.
 - `--comment` posts findings as inline PR comments; `--fix` applies them.
 - Findings are emitted through a typed `ReportFindings` channel, not as prose.
-- `/security-review` and `/simplify` exist as described.
+- `/simplify` exists as described. `/security-review` does too, but "as
+  described" turns out to leave out the two things a caller needs — see §5.
 
 
 ## What the issue got wrong or missed
@@ -201,7 +202,57 @@ in that payload, and its three-value severity is not the plugin's four-tier
 rubric. But "no built-in provides it" should be narrowed to "no built-in
 provides *this shape* of it", and the overlap is worth a look before phase 5.
 
-### 5. Claude Approvals and PR Steward were not verifiable here
+### 5. `/security-review` does not overlap `/code-review`, and takes no target
+
+The issue lists `/security-review` as existing "as described" and goes no
+further. Two facts about it decide whether it belongs beside `/code-review`
+rather than instead of it, and both are in the binary. Read at the same version
+and by the same method as everything above; **re-confirm on the next CLI
+version**, because none of this is documented anywhere a release note would
+mention.
+
+**It is a different reviewer, not a second opinion.** Its `SECURITY CATEGORIES
+TO EXAMINE` are input validation (SQL, command, XXE, template and NoSQL
+injection, path traversal), authentication and authorization, and — further
+down the same list — unsafe deserialization and data exposure. Against the
+angle bundle in §2, which is "3 correctness angles + 3 cleanup angles + 1
+altitude angle + 1 conventions angle", plus D (language pitfalls) and E
+(wrapper/proxy correctness) at `xhigh` and `max`: **no cell of the
+`/code-review` matrix runs a security angle at any level.** The
+one-opinion-counted-twice objection that applies to two agents reading a diff
+for one dimension does not apply here.
+
+It is also tuned for precision over recall in a way `/code-review` is not:
+"Only flag issues where you're >80% confident of actual exploitability", and a
+sub-task pass that filters its own findings below confidence 8. It explicitly
+declines three classes — denial of service, secrets stored on disk, and rate
+limiting or resource exhaustion — so a diff whose risk is one of those is not
+covered by running it.
+
+**It takes no target.** Where `/code-review` accepts a working diff, a PR
+number, a branch or a path, `/security-review` hard-codes its inputs in the
+prompt:
+
+```
+FILES MODIFIED:  !`git diff --name-only origin/HEAD...`
+DIFF CONTENT:    !`git diff origin/HEAD...`
+```
+
+It reviews the checked-out branch against `origin/HEAD` and nothing else. Two
+consequences for any caller: a pull request number cannot be passed to it, so
+on a session whose checkout is some other branch it reviews the wrong diff; and
+where `origin/HEAD` is unresolvable it reads an *empty* diff and reports clean,
+which is indistinguishable from a review that found nothing. Its declared
+`allowed-tools` include `Task`, so it is a multi-agent run in its own right and
+is priced accordingly.
+
+Its output contract is its own: a markdown report, one `# Vuln N:` block per
+finding carrying file, line, severity, category, description, exploit scenario
+and recommendation, graded **HIGH / MEDIUM / LOW** — not the `ReportFindings`
+shape §"Harness findings" describes, and not the four-tier rubric this
+repository's own reviews use. Anything consuming both has to map between them.
+
+### 6. Claude Approvals and PR Steward were not verifiable here
 
 Both are described in this session's harness prompt — Approvals as a
 merge-gating check run whose rows name blockers, Steward as an agent that

@@ -137,11 +137,11 @@ the security-shaped half, which the analysis treats differently.
 - **§** request boundaries: handlers, routes, controllers, deserialization,
   file-path and URL handling
 - database migrations and schema changes
-- dependency manifests, and any lockfile change that moves a dependency's
-  version — a `--upgrade-package` bump with no manifest movement is a
-  supply-chain decision wearing a lockfile. A lockfile regenerated without
-  moving a version carries no decision at all, and Size ignores lockfiles, so
-  it is a Skim.
+- a dependency added, removed, or a version or constraint moved — in a
+  manifest or a lockfile alike. A `--upgrade-package` bump with no manifest
+  movement is still a supply-chain decision; a comment reflowed in a manifest,
+  or a lockfile regenerated without moving a version, is not a decision at all
+  and routes like the prose it is.
 
 **Take the first row that matches**, the way the kind buckets are read.
 
@@ -151,7 +151,7 @@ the security-shaped half, which the analysis treats differently.
 | **Verified** | a sensitive touch | `/code-review max`, plus `/security-review` on the **§** half |
 | **Skim** | docs-only, or under ~50 changed lines | `/code-review low` |
 | **Standard** | code, under ~800 changed lines | `/code-review medium` |
-| **Full** | over ~800 changed lines, or the user asked for depth | `/code-review xhigh` |
+| **Full** | over ~800 changed lines | `/code-review xhigh` |
 
 Skim is `low` deliberately: `low` caps findings hard — around four on most
 families — which is proportionate to fifty lines, or to prose. Where the row
@@ -188,9 +188,9 @@ by its own description. Name the target, because unnamed it reviews the
 *working* diff — empty on a branch whose work is committed, and an empty diff
 comes back clean.
 
-Inside this skill `/code-review` is the analysis, not a trigger. The
-description fires this skill when someone reaches for the built-in *instead of*
-reviewing properly; it does not fire on this line.
+Inside this skill `/code-review` and `/security-review` are the analysis, not
+triggers. The description fires this skill when someone reaches for a built-in
+*instead of* reviewing properly; it does not fire on the lines below.
 
 **What a level buys depends on the session's model family**, because
 `/code-review` resolves a model-family × effort cell: on Sonnet 5 `medium` is
@@ -208,26 +208,26 @@ of being handled. Whether that deserves an agent is #35's question, not this
 skill's.
 
 On the **§** half of the sensitive list, also run the built-in
-**`/security-review`**. The two do not overlap: per `0001` the angle bundles
-`/code-review` runs are correctness, cleanup, altitude and conventions, with no
-security angle at any level, while `/security-review` hunts injection, authz
-bypass, crypto, deserialization and data exposure. `max` buys verification, not
-a threat model. Migrations and dependency manifests get `max` alone — data loss
-and supply chain are outside every category it hunts.
+**`/security-review`**. The two do not overlap — `0001` §5 reads both out of
+the binary: no cell of the `/code-review` matrix runs a security angle at any
+level, and `/security-review` examines injection, authorization, unsafe
+deserialization and data exposure. `max` buys verification, not a threat model.
+Migrations and manifests get `max` alone; data loss and supply chain are
+outside every category it hunts, and it declines denial of service, secrets on
+disk and resource exhaustion outright.
 
-Two constraints, because it is not parameterised the way `/code-review` is.
-**It takes no target**: it diffs the checked-out branch against `origin/HEAD`
-and nothing else. So run it only where the diff under review *is* the checked-
-out branch — not when a pull request number was supplied for some other branch,
-and not where `origin/HEAD` was unresolvable in Pre-flight, since there it
-reads an empty diff and reports clean. Skip it in a stated line rather than
-silently.
+Two constraints follow from the same section. **It takes no target**: it diffs
+the checked-out branch against `origin/HEAD` and nothing else. Run it only
+where the diff under review *is* the checked-out branch — not when a pull
+request number was supplied for another branch, and not where `origin/HEAD` was
+unresolvable in Pre-flight, since there it reads an empty diff and reports
+clean. Skip it in a stated line rather than silently.
 
-**Merge its findings into the one list.** It returns its own report, graded
-HIGH / MEDIUM / LOW: map those onto 🔴 / 🟡 / 🟢, de-duplicate against
-`/code-review`'s findings rather than appending, and tag the survivors
-`[obvious]` / `[judgment]` like any other. Two reports handed over whole is a
-longer list that dilutes the real finding.
+**Merge its findings into the one list.** Its report grades HIGH / MEDIUM /
+LOW: map those onto 🔴 / 🟡 / 🟢, de-duplicate against `/code-review`'s findings
+rather than appending, and tag the survivors `[obvious]` / `[judgment]` like
+any other. Two reports handed over whole is a longer list that dilutes the real
+finding.
 
 See [`docs/decisions/0001-built-in-review-surface.md`](../../docs/decisions/0001-built-in-review-surface.md)
 for the full matrix and the CLI version it was read from. Re-confirm it when

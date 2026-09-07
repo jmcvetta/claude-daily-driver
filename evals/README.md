@@ -296,8 +296,11 @@ dispatch, in both arms, and report a routing table that routed nowhere. The
 hook command is therefore absolute (via `$CLAUDE_PROJECT_DIR`, which Claude Code
 puts in every hook's environment) and ends in `|| true`. And because `|| true`
 would then hide a genuinely broken recorder behind an empty record,
-`scripts/check-eval-fixtures.sh` runs every one of the recorder's arms against the
-copy the sandbox would get and fails `make check` if either does not record.
+`scripts/check-eval-fixtures.sh` puts five probe events through the recorder —
+a subagent dispatch, a skill call, that call with the name slashed, the same
+behind a leading space, and one with a multi-line argument — against the copy
+the sandbox would get, and fails `make check` if any of them does not record
+what it should.
 
 The hook also writes nothing to stdout, so it cannot contest the `updatedInput`
 returned by the plugin's own `PreToolUse` hook on the same event.
