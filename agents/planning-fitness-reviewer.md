@@ -33,9 +33,9 @@ You ask three questions, in this order:
 
 ## Severity Rubric
 
-This is the rubric for planning findings. The plain code-review scale
-the other reviewers use does not apply to planning content — do not
-reach for it.
+The tier names are the four the other reviewers use; the thresholds
+are not. Judge planning findings by the criteria below, never by the
+code-oriented ones that share the names.
 
 - **🔴 Critical — Wrong-spec.** The plan itself is unsound: wrong
   direction, can't deliver its goal, ignores a strictly better
