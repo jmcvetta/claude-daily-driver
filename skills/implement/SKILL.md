@@ -52,6 +52,10 @@ and title the session from it before reading the body. A web session otherwise
 takes its name from the first prompt it received, which is the prompt that
 invoked this skill. `session-title` has the form and the budget.
 
+`session-title` stops where `set_session_title` does not exist, which on a
+laptop it does not. That stop is the step's, not the sequence's: say so in a
+line and go to step 2.
+
 2 — Read the issue and its edges
 --------------------------------
 
@@ -87,7 +91,10 @@ after the pull request, so that the draft opens green.
 Push the branch, then invoke `pr`: it owns the branch guard, the existing-PR
 check, draft state, and the call on whether there is an issue to reference —
 there is, and it is this one. The `Issues` section of the body closes it, and
-`issue-deps` treats that line as the write into the graph.
+`issue-deps` treats that line as the write into the graph — and its
+confirm-before-write rule does not bite here, because the edge is given by the
+assignment rather than inferred from evidence. The issue being implemented is
+the issue the pull request closes.
 
 7 — Review
 ----------
@@ -109,6 +116,9 @@ no rubric, posts nothing, and leaves no thread behind for step 8 to answer.
 `--comment` is what makes step 8 possible at all: findings on the pull request
 are threads, and threads are the record of why the branch was judged ready.
 Findings that stay in the terminal are gone by the next session.
+
+**Record the head SHA you reviewed.** Step 9's test is measured from it, and
+nothing else records it.
 
 8 — Fix, answer, resolve, push
 ------------------------------
@@ -163,9 +173,13 @@ step 7, and classify every commit made after it.
   Step 7 runs again over it, once, before step 9, and its head SHA becomes the
   new mark.
 
-The classification is per commit and the categories do not compound: a run
-that only ever answers reaches step 9 with one review behind it, which is the
-point. Where `review` is live rather than in `attic/skills/`, this is also
+Where one commit is both — a merge from the base branch made to get a red
+check green — **changing what the code does wins**. A merge brings in code
+nothing has reviewed, whatever its reason.
+
+Otherwise the classification is per commit and the categories do not compound:
+a run that only ever answers reaches step 9 with one review behind it, which
+is the point. Where `review` is live rather than in `attic/skills/`, this is also
 what discharges the `draft: false` trigger in its description — it fires on
 exactly the moment step 9 occupies, and a review already run on this head is
 that trigger already answered.
@@ -200,7 +214,8 @@ and `--comment` is what makes its findings survive the session.
 Where it stops and waits
 ========================
 
-Autonomy is the point, so each pause has to earn itself. There are four.
+Autonomy is the point, so each pause has to earn itself. Four go to the user;
+the waits and hard stops at steps 7 and 9 are named there and ask nothing.
 
 - **A blocked issue, or an issue whose intent is genuinely ambiguous.** The
   constitution forbids guessing at intent; this is that rule at step 2.
@@ -209,9 +224,9 @@ Autonomy is the point, so each pause has to earn itself. There are four.
   something the user owns. That skill owns the gate, and it is the gate for
   every question this skill would otherwise ask. A finding whose fix the
   standard already picks is not one of these — fix it and say so.
-- **The approach failing mid-implementation.** Cascading complexity, an
-  assumption turning out wrong: stop and re-assess rather than pushing through
-  to a pull request that documents a wrong turn.
+- **The approach failing mid-implementation** — the constitution's *When I hit
+  a wall*, at step 4. A pull request that documents a wrong turn is worse than
+  no pull request.
 - **CI still running**, at steps 7 and 9. A wait, not a question — nothing is
   asked, and nothing proceeds on a check that has not reported.
 

@@ -6,10 +6,10 @@
 which take `claude plugin eval` as given.
 
 `evals/` currently holds five suites written for `claude plugin eval`
-(`pr`, `pr-title`, `pr-body`, `implement`, `constitution-reaches-subagent`). **None of them
-can have been run on this account** — the command is early access and is not
-enabled here. (Whether they ever ran elsewhere is unknown; this is an inference
-from present unavailability, not a history.)
+(`pr`, `pr-title`, `pr-body`, `implement`, `constitution-reaches-subagent`).
+**None of them can have been run on this account** — the command is early
+access and is not enabled here. (Whether they ever ran elsewhere is unknown;
+this is an inference from present unavailability, not a history.)
 
 ```
 $ claude plugin eval . --tag review-depth --runs 1

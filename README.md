@@ -33,17 +33,17 @@ has one, natural phrasings — "open a PR" for `pr`, "fix the PR title" for
 `pr-title`, "rewrite the PR description" for `pr-body`, "this is blocked by
 #123" for `issue-deps`, "rename this session" for `session-title`, "just
 decide" for `judgement-call`, "implement #191" for `implement` — and Claude's
-own tool calls. The PR skills split
-`mcp__github__create_pull_request` and `mcp__github__update_pull_request`
-between them, `pr-title` on a call that sets a `title`, `pr-body` on one that
-sets a `body`, `pr` on a create or on an update wider than either alone, with
-`gh pr create` / `gh pr edit` as a fallback on a harness that still reaches
-for them; `issue-deps` takes the GitHub MCP's sub-issue and issue-read tools;
-`session-title` takes `mcp__Claude_Code_Remote__set_session_title`;
-`judgement-call` takes `AskUserQuestion`; and `implement` takes the move from
-reading an issue to writing code for it. Those registers are the
-point: a convention that only fires when a human types a command quietly stops
-applying as more of the work runs without one.
+own tool calls. The PR skills split `mcp__github__create_pull_request` and
+`mcp__github__update_pull_request` between them, `pr-title` on a call that
+sets a `title`, `pr-body` on one that sets a `body`, `pr` on a create or on an
+update wider than either alone, with `gh pr create` / `gh pr edit` as a
+fallback on a harness that still reaches for them; `issue-deps` takes the
+GitHub MCP's sub-issue and issue-read tools; `session-title` takes
+`mcp__Claude_Code_Remote__set_session_title`; `judgement-call` takes
+`AskUserQuestion`; and `implement` takes the move from reading an issue to
+writing code for it. Those registers are the point: a convention that only
+fires when a human types a command quietly stops applying as more of the work
+runs without one.
 
 Naming the MCP tools is also a stronger trigger than naming `gh pr create` is —
 an exact tool name where the fallback is, in effect, a regex over a bash

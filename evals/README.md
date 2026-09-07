@@ -38,10 +38,13 @@ on or merely asked about, so "what does #191 say", "summarise #191" and "is
 that **nothing** fires, which is why there is no positive counterpart to
 assert. Naming one anyway would be asserting a coincidence.
 
-The extra fire case, `05-self-initiated`, is the register the skill exists for:
-the move from having read an issue to writing code for it, with nobody typing
-an instruction. Every other fire case is a typed instruction, and a suite made
-only of those would be green on a description that had lost the clause.
+The extra fire case, `05-self-initiated`, is the closest the harness gets to
+the register the skill exists for — the move from having read an issue to
+writing code for it. A case is one prompt, so a fire that nobody prompts
+cannot be staged; what this case does instead is name the issue and its state
+and stop, with no verb the description could match on. Every other fire case
+hands over a verb. This one asserts the skill fires on the work being obvious
+rather than on the word for it.
 
 The one collision a new sibling actually creates is tested from the other side
 too: `evals/pr/02-open-a-pr` now asserts that `implement` stays quiet when a
@@ -67,8 +70,12 @@ is deliberately credential-free.
 ```sh
 claude plugin eval . --ablation with-without          # everything
 claude plugin eval . --tag pr-body                    # one skill's suite
-claude plugin eval . --case '*neg*' --runs 1          # just the no-fire half
+claude plugin eval . --tag no-fire --runs 1           # just the no-fire half
 ```
+
+The no-fire half is selected by tag rather than by a `*neg*` glob over case
+names: `evals/pr/02-open-a-pr` carries a no-fire assertion about `implement`
+while being, by its own name and tag, a fire case for `pr`.
 
 `claude plugin eval` is in early access; the command reports as much where the
 account does not have it.
