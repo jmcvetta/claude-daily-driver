@@ -222,6 +222,23 @@ protocol applies unchanged; there is no degradation to plain issue comments on
 Each comment also arrives with the Claude Code attribution footer appended, and
 a `suggestion` block where the fix is a single-line edit.
 
+**Re-measured at `medium`, 2026-09-07.** The run above was at `max`, and the
+level is not incidental: `medium` and `high` dispatch `o5-bmin`, the one cell
+this document records as ignoring the output-contract selector (see
+"`ReportFindings` is present interactively" below), so `max`'s posting shape
+does not establish `medium`'s. `/code-review 76 medium --comment` on PR #76
+produced the same artifact — a submitted `COMMENT` review, inline comments
+anchored to the diff, `PRRT_…` thread ids from `get_review_comments`,
+attribution footers and a `suggestion` block. The reply-then-resolve protocol
+therefore holds at the level `review-cycle` names by default, not only at the
+one it forbids itself from selecting.
+
+One difference, and it is about the session rather than the cell: no
+`create_inline_comment` tool was available, so the review posted through the
+GitHub MCP instead. The artifact is what stage 2 reads, and it was identical —
+but a session lacking both routes would have no way to post at all, which is
+the failure the degradation branch in `review-cycle` covers.
+
 ### 5. Claude Approvals and PR Steward were not verifiable here
 
 Both are described in this session's harness prompt — Approvals as a
