@@ -105,6 +105,10 @@ blocked by an open one is a stop, not a start** — say which issue blocks it
 and wait. Reading the graph is free and needs no confirmation; `issue-deps`
 says so.
 
+The comments too, because step 3 needs to know whether the issue is claimed
+already — by this session, which means the sequence is being re-entered, or by
+another.
+
 3 — Claim the issue
 -------------------
 
@@ -117,27 +121,31 @@ After step 2 rather than before it, because the edges decide whether there is
 anything to claim: a blocked issue stops at step 2, and a claim on work that
 is not starting is a false record.
 
-Beyond the claim itself the comment carries two things, and both are read from
-`mcp__Claude_Code_Remote__get_session` with `session_id` omitted, which
-describes the caller:
+Beyond the claim itself the comment carries two things, both read from
+`mcp__Claude_Code_Remote__get_session` — the call `session-title` documents,
+on the one surface it says supplies it:
 
-- **The model serving the session** — its `session_context.model`, and its
-  `external_metadata.last_served_model` where the two disagree, which is what
-  a turn-scoped fallback looks like. Never a name recalled instead of read: the
-  serving model is not always the configured one, and a provenance record that
-  guesses is worse than one that says nothing.
+- **The model that served the turn** — `external_metadata.last_served_model`,
+  which is what actually ran and moves with a fallback that leaves the rest of
+  the session untouched. Where `session_context.model` or `configured_model`
+  disagrees with it, name that too: the gap between what a session was set to
+  run and what ran is the half of the record worth having. Never a name
+  recalled instead of read — a provenance record that guesses is worse than
+  one that says nothing.
 - **The session**, as `https://claude.ai/code/session_…` built from the same
   call's session id. The identifier is what the reader needs; the link is that
   identifier and somewhere to go with it.
 
-`get_session` exists only on the Claude Code Remote surface. On a laptop the
-comment still goes up, and says the surface supplies neither — unlike
-`session-title`, which has nothing to fall back on, a claim that names no model
-is still a claim.
+Where that call is unavailable the comment still goes up, and says the surface
+supplied neither. `session-title` stops there because a title it cannot set is
+nothing; a claim that names no model is still a claim.
 
-Once per run of this sequence. A second session undertaking the same issue
-claims it too: that duplicate is the thing the claim makes visible, not a
-thing to suppress.
+**Once per session, not once per run.** A sequence re-entered — its blocker
+cleared, the issue handed over again — does not claim what it has claimed
+already, and step 2's read of the comments is what shows it. A claim from a
+*different* session is not suppressed: that collision is the thing the claim
+exists to make visible, and it is worth a line to the user before the branch
+is cut.
 
 4 — Branch
 ----------
@@ -251,7 +259,7 @@ a review finding whose fix is a real trade-off. Both are `review-cycle`'s, and
 the second is `judgement-call`'s gate applied inside it.
 
 Everything else runs through. No permission is asked to open the issue, to
-commit, to push, or to open the draft.
+claim it, to commit, to push, or to open the draft.
 
 
 Non-goals
@@ -265,10 +273,10 @@ Non-goals
   questions; answer them, and do not cut a branch.
 - **Does not fire on work it was not asked to undertake.** "Implement a retry
   loop", with neither an issue nor an invocation, is ordinary work, and running
-  ten steps and a review round over it would be the heaviest possible way to
-  write ten lines. Step 0 makes the issue reference optional; it does not make
-  it the only thing that was ever doing the separating. An issue handed over,
-  or this skill named — either fires it, and neither is ordinary work.
+  eleven steps and a review round over it would be the heaviest possible way
+  to write ten lines. Step 0 makes the issue reference optional; it does not
+  make it the only thing that was ever doing the separating. An issue handed
+  over, or this skill named — either fires it, and neither is ordinary work.
 - **Does not open an issue for anything but the work in hand.** Step 0 tracks
   what was asked for. A bug noticed in passing is worth reporting to the user;
   it is not this run's second issue.
