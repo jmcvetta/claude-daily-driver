@@ -1,6 +1,10 @@
 # Repo-local review rules live in the repository's own `CLAUDE.md`
 
 **Status:** decided, 2026-09-07.
+**Provenance:** chosen by an agent in
+[#55](https://github.com/jmcvetta/claude-daily-driver/pull/55) — the same pull request as
+the change it justifies — and ratified by that merge, not by a separate call
+from the author.
 **Resolves:** [#53](https://github.com/jmcvetta/claude-daily-driver/issues/53).
 
 Two review rules shipped in the global layer that describe two of the author's

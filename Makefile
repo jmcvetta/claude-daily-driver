@@ -14,7 +14,7 @@ SHELL := /bin/bash
 # The `coder_eval` release the eval suites are written against. Pinned on
 # purpose: being able to hold a version back is the whole reason the suites are
 # not written for `claude plugin eval`, which ships inside the CLI and moves
-# when it does. See docs/decisions/0002-eval-harness.md.
+# when it does. See docs/notes/0002-eval-harness.md.
 CODER_EVAL_VERSION := 0.11.6
 
 # Usage telemetry is ON by default in `coder_eval`, to a UiPath-controlled

@@ -68,7 +68,7 @@ migrations, or CI configuration. Naming it is what makes two rounds on one
 branch comparable — `/code-review` otherwise reuses whatever level was typed
 last, in some other session, about some other diff.
 
-[`0001`](../../docs/decisions/0001-built-in-review-surface.md) has the
+[`0001`](../../docs/notes/0001-built-in-review-surface.md) has the
 model-family matrix behind the default: on Opus 5, `medium` and `high` resolve
 to the same cell and only `max` verifies. It is pinned to CLI 2.1.263 and says
 so; check the version before treating the cell as current.

@@ -811,7 +811,7 @@ the credential requirement actually starts:
 - **The live half runs on demand**, as a `claude plugin eval` case on the
   laptop or in a credentialed workflow. Only it can prove the harness
   *honours* `updatedInput`, which is the R2 finding proper. *(The harness has
-  since changed — see [`0002`](../decisions/0002-eval-harness.md); the live
+  since changed — see [`0002`](../notes/0002-eval-harness.md); the live
   half is now `make evals-run TASKS='tasks/constitution/*.yaml'`. The split
   either side of the credential requirement is unaffected.)*
 
@@ -971,7 +971,7 @@ premature decision that produced ten commands nobody remembers.
    `mcp__github__create_pull_request` and
    `mcp__github__update_pull_request`, with an eval suite each under `evals/`
    — written for `claude plugin eval` at the time, since ported to `coder_eval`
-   per [`0002`](../decisions/0002-eval-harness.md). `pr-threads` has since
+   per [`0002`](../notes/0002-eval-harness.md). `pr-threads` has since
    landed too; `pr-ci` remains.
 4. Port `review` and the agent panel; audit for rot (D6).
 5. Memory skill, written by the compaction hook (D7) — and the `PostCompact`
@@ -982,4 +982,4 @@ premature decision that produced ten commands nobody remembers.
 7. Trigger-accuracy suites across every skill. The three `pr*` skills, the
    constitution's live half and `review`'s depth routing have them; the rest do
    not. Written for `coder_eval`, not `claude plugin eval` — see
-   [`0002`](../decisions/0002-eval-harness.md) for why the harness changed.
+   [`0002`](../notes/0002-eval-harness.md) for why the harness changed.
