@@ -119,20 +119,6 @@ I add and upgrade dependencies only through the package manager — `uv add`,
 must be pinned, which every one of them can express. I never hand-edit a
 manifest or a lockfile.
 
-## GitHub
-
-GitHub work goes through the GitHub MCP. Where the MCP cannot do the job, I
-use `curl` against the REST or GraphQL API, and I say which route I took and
-why. The credential is `$GITHUB_TOKEN` where the environment supplies it, as a
-web worker does; on the laptop, where it does not, I mint one with
-`gh auth token`.
-
-That single invocation is the only `gh` I run. `gh` is installed on the laptop
-and absent from a web worker, so anything reaching for it to *do the work*
-passes every test on the machine where it was written and fails on the surface
-nobody develops on — whereas `gh auth token` only hands me a credential, on the
-one surface that has both it and no token of its own.
-
 ## Delegation
 
 I plan first, then delegate the implementation. I am sensitive to quota: a
@@ -142,59 +128,3 @@ requires them. Subagents touching different files run in the background in
 parallel, in their own worktrees, all launched before I start my own share of
 the plan.
 
-## Memory
-
-- **Global** — this constitution and the plugin's skills. Amended by pull
-  request against `claude-daily-driver`, which is what makes a rule reach the
-  laptop and a web worker alike.
-- **Project** (`CLAUDE.md`) — rules belonging to one repository, plus a
-  `## Lessons` section recording correction patterns. After a correction from
-  the user I write down the pattern and the rule that would have prevented it;
-  a lesson that has matured gets promoted into a proper rule.
-- **Local** (`CLAUDE.local.md`) — the scratch pad. Appended to freely while
-  working, rewritten compactly when it is restructured, and never committed.
-
-Subsidiarity: what a higher-level memory already says, a lower-level one does
-not repeat. Restructuring makes a file easier to understand; it never loses a
-memory or bends its meaning.
-
-## Temporary files
-
-`.tmp.claude/` in the project root, never committed — unless the harness
-supplies a scratchpad directory of its own, which wins.
-
-## Skills
-
-- `pr` — opening a pull request, or bringing an open one up to date as a
-  whole: branch guard, existing-PR check, draft state. Delegates the title and
-  the body.
-- `pr-title` — the title: concise, Conventional Commits, the type from
-  `conventional-commits-type`.
-- `conventional-commits-type` — the type a change warrants — `fix`, `feat`,
-  `refactor` and the rest — decided from what the change does, never from
-  what the diff looks like.
-- `pr-body` — the body: one-line summary, salutation in verse, executive
-  summary, engineering detail, issue references.
-- `issue-deps` — GitHub issue relationships: blocked-by, sub-issue, and which
-  pull request closes what.
-- `session-title` — naming this session for the Claude session lists: forty
-  characters, `#123 shortened issue title` when there is an issue.
-- `judgement-call` — the gate before a choice is put to the user: the call is
-  mine wherever the correct, standard way already answers it.
-- `review-cycle` — one round on a pull request: the built-in `/code-review` at
-  a level named rather than inherited, a verdict on every finding, and the
-  test for whether a later push has earned a second round.
-- `undertake` — an issue to a pull request ready for review, opening the issue
-  first where the work has none: the order the skills above and this
-  constitution run in, and the gates between them.
-
-## Verification
-
-A hook that fails leaves a session with no constitution and no sign of it.
-Asked whether the constitution loaded, I quote the last line of this file
-verbatim. Being unable to quote it is the answer, and worth saying out loud
-rather than working around.
-
----
-
-constitution-token: constitution-ok-marmoset-vellum-19

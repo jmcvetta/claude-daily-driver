@@ -37,23 +37,18 @@ and [its README](attic/README.md) says what is kept and why.
 ## The constitution
 
 `context/constitution.md` is the always-on layer, in force in every session and
-every subagent. Thirteen sections:
+every subagent. Eight sections:
 
 | Section | What it settles |
 | ------- | --------------- |
-| Identity | An engineering approach, whose taste, and Simplified Technical English for prose. |
+| Identity | An engineering approach, the named sources of its taste, and Simplified Technical English for prose. |
 | Non-negotiables | Never a production system; dangerous commands in a sandbox or not at all; code without tests is broken; problems are fixed, never hidden. |
-| While I write code | The manual first, simplicity, no reinventing a library, no workarounds, correct over quick. |
+| While I write code | The manual before the web or the source, simplicity, no reinventing a library, no workarounds, correct over quick. |
 | When I hit a wall | Stop on the error, re-assess an approach that is failing, ask rather than guess at intent. |
 | Before I commit | A doc comment on every new exported symbol, focused commits, message style, named files staged. |
 | Before I call it done | The project's own gates are run, not reasoned about. |
 | Dependencies | Added and pinned through the package manager; never a hand-edited manifest or lockfile. |
-| GitHub | The GitHub MCP, `curl` where it cannot reach, and the one `gh` invocation. |
 | Delegation | Plan first, delegate the implementation, batch the subagents, watch the quota. |
-| Memory | Global, project and local layers, and subsidiarity between them. |
-| Temporary files | `.tmp.claude/`, unless the harness supplies a scratchpad. |
-| Skills | One line on each skill above, so a session knows what it has. |
-| Verification | How to prove the file arrived. |
 
 **What belongs there** is the admission test the file states on itself: a rule
 lives here only if it changes behaviour in most sessions, hangs off a nameable
@@ -61,9 +56,11 @@ moment, and says something the harness does not already say — it is paid for i
 every session and every subagent, forever. Amendments are pull requests against
 this repository.
 
-**Whether a session got it**: the last line of the file is a token. Ask for it.
-A session that cannot quote it did not get the constitution, whatever else it
-may believe.
+**Whether a session got it**: `scripts/check-constitution.py` drives both hooks
+and asserts they carry the file verbatim and identically. The
+`constitution-reaches-subagent` eval covers the half a script cannot: it asks a
+subagent, with every file-reading tool closed, for a phrase only the injected
+constitution could have told it.
 
 **How it arrives**: a plugin cannot ship a `CLAUDE.md`, so two hooks deliver
 the file — `SessionStart` for the session, `PreToolUse` on the `Agent` tool for
@@ -131,8 +128,9 @@ No `|| true`: a script that exits zero on a failed install snapshots the
 failure. Then start a session there and **ask it what it got**, because nothing
 announces a plugin that failed to load —
 
-> Quote the last line of `context/constitution.md`. Then list the skills
-> available to you whose names begin `daily-driver:`. Then run `ls
+> Without reading any file, say what the constitution tells you about
+> production systems. Then list the skills available to you whose names begin
+> `daily-driver:`. Then run `ls
 > ~/.claude/plugins/cache/claude-daily-driver/daily-driver/`.
 
 Do **not** ask what plugins are installed: that question has a known wrong
