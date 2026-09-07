@@ -163,10 +163,6 @@ supplies a scratchpad directory of its own, which wins.
   contents warrant.
 - `pr-body` — the body: one-line summary, salutation in verse, executive
   summary, engineering detail, issue references.
-- `pr-threads` — the review-thread lifecycle: reply with a verdict, resolve,
-  never leave a thread open silently.
-- `review` — judging changes ready: the reviewer panel, with depth inferred
-  from the diff. Pulled, never pushed — not on opening a pull request.
 - `issue-deps` — GitHub issue relationships: blocked-by, sub-issue, and which
   pull request closes what.
 - `session-title` — naming this session for the Claude session lists: forty

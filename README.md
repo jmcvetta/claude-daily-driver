@@ -18,9 +18,7 @@ hook — plus skills that fire on activity:
 | `pr`       | Opens the pull request for the current branch, or brings an open one up to date: branch guard, existing-PR check, draft by default, and the call on whether there is an issue to reference. Delegates the title and the body to the two below. |
 | `pr-title` | The title convention: concise, and Conventional Commits with the type the contents actually warrant — which is what release-please reads to decide the next version. |
 | `pr-body`  | The body structure: a one-line summary under 85 characters, a salutation in verse, an executive summary, as much engineering detail as fits, and the `Issues` section that closes it. |
-| `pr-threads` | The review-thread lifecycle for any reviewer: reply with a verdict, resolve, re-resolve a repeat finding, never leave a thread open silently — plus the comment minimisation the GitHub MCP does not expose. |
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
-| `review` | Reviews a branch or pull request with a panel of reviewer agents, infers how deep to go from the diff itself, walks the findings through with you, and posts the result in verse. |
 | `session-title` | Names the session in the Claude web and mobile lists: a forty-character budget, chosen rather than measured, `#123 shortened issue title` while an issue is in hand, a short noun phrase otherwise. |
 | `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. What survives the gate is intent, a real trade-off, scope, and any confirmation another rule requires. |
 
@@ -31,22 +29,18 @@ is two extra descriptions in context.
 
 Each skill carries its own trigger register: the slash command where the skill
 has one, natural phrasings — "open a PR" for `pr`, "fix the PR title" for
-`pr-title`, "rewrite the PR description" for `pr-body`, "address the review
-feedback" for `pr-threads`, "is this ready" for `review`, "this is blocked by
+`pr-title`, "rewrite the PR description" for `pr-body`, "this is blocked by
 #123" for `issue-deps`, "rename this session" for `session-title`, "just
 decide" for `judgement-call` — and Claude's own tool calls. The PR skills split
 `mcp__github__create_pull_request` and `mcp__github__update_pull_request`
 between them, `pr-title` on a call that sets a `title`, `pr-body` on one that
 sets a `body`, `pr` on a create or on an update wider than either alone, with
 `gh pr create` / `gh pr edit` as a fallback on a harness that still reaches
-for them; `pr-threads` takes the reply and resolve tools and
-`get_review_comments`; `review` takes the moments before a branch is declared
-ready, marked non-draft, or sent to a reviewer; `issue-deps` takes the GitHub
-MCP's sub-issue and issue-read tools; `session-title` takes
-`mcp__Claude_Code_Remote__set_session_title`; and `judgement-call` takes
-`AskUserQuestion`. Those tool-call registers are the point: a convention that
-only fires when a human types a command quietly stops applying as more of the
-work runs without one.
+for them; `issue-deps` takes the GitHub MCP's sub-issue and issue-read tools;
+`session-title` takes `mcp__Claude_Code_Remote__set_session_title`; and
+`judgement-call` takes `AskUserQuestion`. Those tool-call registers are the
+point: a convention that only fires when a human types a command quietly stops
+applying as more of the work runs without one.
 
 Naming the MCP tools is also a stronger trigger than naming `gh pr create` is —
 an exact tool name where the fallback is, in effect, a regex over a bash
@@ -60,20 +54,17 @@ while the ambient token is present on both surfaces — and it exists only
 because the GitHub MCP exposes no blocked-by / blocking tool. Four endpoints
 hold it up, and it is deleted the day the MCP exposes them.
 
-`review` replaced four verbs — `/deep-review`, `/quick-review`, `/opinion`,
-and the session's own `/code-review` — which were four names for one activity,
-which is precisely why none of them was ever remembered. There is nothing left
-to choose: depth comes off the diff, and anything touching auth, crypto, IAM or
-a migration pulls in the security reviewer whatever its size. Two rules shape
-the rest of it. It never fires when a pull request is *opened*, because
-expensive skills must be pulled rather than pushed — output that always appears
-gets skimmed, and a draft PR opens the conversation rather than ending the
-work. And its poetry attaches only to the comment it posts, never to the
-findings: a finding someone has to act on is prose.
+Two skills that used to be here — `pr-threads` and `review` — no longer ship.
+They are in [`attic/skills/`](attic/), kept rather than deleted, because
+"possibly obsolete" is not the same judgement as "obsolete" and the second one
+is cheaper to make once the first has been lived with. Nothing under `attic/`
+is loaded, so retiring them costs nothing in context; bringing either back is
+a `git mv`.
 
-The panel it dispatches lives in [`agents/`](agents/) — `logic-reviewer`,
-`architecture-reviewer`, `security-reviewer`, `planning-fitness-reviewer` — and
-none of them pins a model. A pin ages into a cost decision nobody revisits.
+The reviewer panel `review` dispatched is still in [`agents/`](agents/) —
+`logic-reviewer`, `architecture-reviewer`, `security-reviewer`,
+`planning-fitness-reviewer` — dormant rather than deleted, and none of them
+pins a model. A pin ages into a cost decision nobody revisits.
 
 `judgement-call` is the odd one out: every other skill here fires on work
 about to be done, and this one fires on a question about to be asked. Its register is
@@ -99,7 +90,8 @@ claude-daily-driver/
 │   ├── plugin.json         the plugin, and the version releases bump
 │   └── marketplace.json    the pointer `claude plugin install` reads
 ├── .github/workflows/      CI, PR title check, infra, release automation
-├── agents/                 the reviewer panel the `review` skill dispatches
+├── agents/                 the reviewer panel, dormant while `review` is retired
+├── attic/                  kept but not shipped; nothing here is loaded
 ├── context/
 │   └── constitution.md     always-on rules, one file, read by both hooks
 ├── docs/                   decisions, and the measurements behind them
@@ -114,15 +106,9 @@ claude-daily-driver/
 │   ├── pr/SKILL.md
 │   ├── pr-title/SKILL.md
 │   ├── pr-body/SKILL.md
-│   ├── pr-threads/
-│   │   ├── SKILL.md
-│   │   └── scripts/        the comment-minimisation path the MCP lacks
 │   ├── issue-deps/
 │   │   ├── SKILL.md
 │   │   └── scripts/        plugin runtime, owned by the skill beside it
-│   ├── review/
-│   │   ├── SKILL.md
-│   │   └── references/     the review guidelines, passed to every agent
 │   ├── session-title/SKILL.md
 │   └── judgement-call/SKILL.md
 └── template/.claude/       copied into a repository to enable the plugin
