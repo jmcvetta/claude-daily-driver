@@ -111,7 +111,8 @@ claude-daily-driver/
 ├── attic/                  kept but not shipped; nothing here is loaded
 ├── context/
 │   └── constitution.md     always-on rules, one file, read by both hooks
-├── docs/                   decisions, and the measurements behind them
+├── docs/                   how this repository is meant to be used
+│   ├── notes/              surveys and choices, each saying who chose
 │   └── planning/           the plan, and the record of decisions made under it
 ├── evals/                  the trigger suites, and the constitution's live half
 ├── hooks/
