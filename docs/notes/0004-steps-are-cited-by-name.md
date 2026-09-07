@@ -4,9 +4,10 @@
 # A step is cited by its name, never by its number
 
 **Status:** decided, 2026-09-07.
-**Provenance:** chosen by an agent in the pull request resolving #83 — the
-same pull request as the change it justifies — and ratified by that merge, not
-by a separate call from the author.
+**Provenance:** chosen by an agent in
+[#86](https://github.com/jmcvetta/claude-daily-driver/pull/86) — the same pull
+request as the change it justifies — and ratified by that merge, not by a
+separate call from the author.
 **Resolves:** [#83](https://github.com/jmcvetta/claude-daily-driver/issues/83).
 
 Three skills lay out a numbered sequence — `undertake`'s eleven steps,
