@@ -19,7 +19,7 @@
 #   * nothing uncommitted, or the skill stops with "Local changes not pushed"
 #   * a non-empty diff against the base
 #
-# It also exercises both arms of the dispatch recorder, which is the suite's
+# It also exercises every arm of the dispatch recorder, which is the suite's
 # only instrument: a broken recorder reports a review that routed nowhere.
 #
 # Usage: scripts/check-eval-fixtures.sh
@@ -56,6 +56,50 @@ case_bounds() {
 fail() {
 	printf 'FAIL: %s: %s\n' "${1}" "${2}" >&2
 	return 1
+}
+
+# Exercise every arm of the dispatch recorder against the copy the sandbox would
+# actually get. It is invoked from a PreToolUse hook, where its failure is
+# invisible twice over: `|| true` in the hook command stops a broken recorder
+# from vetoing the call it watches, and an empty record then reads exactly like
+# a review that routed nowhere.
+#
+# Each event below is one thing the recorder has to get right, and each is a way
+# the instrument has actually been wrong:
+#
+#   * a subagent dispatch, which the planning route is graded on
+#   * a skill call, which every other route is graded on
+#   * the same call with the name slashed, which is what the CLI hands a hook
+#     when the model writes `/code-review` -- it strips the prefix only after
+#     the hook has seen the input, and SKILL.md writes the slash everywhere
+#   * a multi-line `args`, which must collapse to one line: the files are read
+#     with re.MULTILINE, so an uncollapsed argument writes records of its own
+probe_recorder() {
+	local name="$1" sandbox="$2" recorder="$2/.fixture/record-dispatch.py"
+
+	echo '{"tool_input":{"subagent_type":"check-eval-fixtures-probe"}}' |
+		python3 "${recorder}" ||
+		fail "${name}" "the recorder exited non-zero on a subagent event; in a run its hook would have nothing to record"
+	grep -qx 'check-eval-fixtures-probe' "${sandbox}/.fixture/dispatched.txt" ||
+		fail "${name}" "the recorder ran on a subagent event but wrote no roster line"
+
+	echo '{"tool_input":{"skill":"code-review","args":"check-eval-fixtures-probe"}}' |
+		python3 "${recorder}" ||
+		fail "${name}" "the recorder exited non-zero on a skill event; in a run its hook would have nothing to record"
+	grep -qx 'code-review check-eval-fixtures-probe' "${sandbox}/.fixture/invocations.txt" ||
+		fail "${name}" "the recorder ran on a skill event but wrote no invocation line"
+
+	echo '{"tool_input":{"skill":"/code-review","args":"slashed-probe"}}' |
+		python3 "${recorder}" ||
+		fail "${name}" "the recorder exited non-zero on a slashed skill name"
+	grep -qx 'code-review slashed-probe' "${sandbox}/.fixture/invocations.txt" ||
+		fail "${name}" "the recorder did not strip the leading slash, so every code-review criterion would miss"
+
+	printf '%s\n' '{"tool_input":{"skill":"probe-skill","args":"one\ncode-review max\n"}}' |
+		python3 "${recorder}" ||
+		fail "${name}" "the recorder exited non-zero on a multi-line argument"
+	grep -qx 'probe-skill one code-review max' "${sandbox}/.fixture/invocations.txt" ||
+		fail "${name}" "the recorder did not collapse a multi-line argument, so a payload can forge a record"
 }
 
 check_one() {
@@ -101,33 +145,17 @@ check_one() {
 		fail "${name}" "the topic branch changes nothing"
 
 	local observed
-	for observed in dispatched.txt code-review.txt; do
+	for observed in dispatched.txt invocations.txt; do
 		[ -f "${sandbox}/.fixture/${observed}" ] ||
 			fail "${name}" "no ${observed}; every file_matches_regex criterion would error on a missing file"
 		[ ! -s "${sandbox}/.fixture/${observed}" ] ||
 			fail "${name}" "${observed} is not empty before the agent has run"
 	done
 
-	# The recorder is invoked from a PreToolUse hook, where its failure is
-	# invisible twice over: `|| true` in the hook command stops a broken
-	# recorder from vetoing the call it watches, and an empty record then reads
-	# exactly like a review that routed nowhere. So both of its arms are
-	# exercised here, against the copy the sandbox would actually get, and the
-	# files are put back the way the agent must find them.
-	echo '{"tool_input":{"subagent_type":"check-eval-fixtures-probe"}}' |
-		python3 "${sandbox}/.fixture/record-dispatch.py" ||
-		fail "${name}" "the recorder exited non-zero on a subagent event; in a run its hook would have nothing to record"
-	grep -qx 'check-eval-fixtures-probe' "${sandbox}/.fixture/dispatched.txt" ||
-		fail "${name}" "the recorder ran on a subagent event but wrote no roster line"
-
-	echo '{"tool_input":{"skill":"code-review","args":"check-eval-fixtures-probe"}}' |
-		python3 "${sandbox}/.fixture/record-dispatch.py" ||
-		fail "${name}" "the recorder exited non-zero on a skill event; in a run its hook would have nothing to record"
-	grep -qx 'code-review check-eval-fixtures-probe' "${sandbox}/.fixture/code-review.txt" ||
-		fail "${name}" "the recorder ran on a skill event but wrote no invocation line"
+	probe_recorder "${name}" "${sandbox}"
 
 	: >"${sandbox}/.fixture/dispatched.txt"
-	: >"${sandbox}/.fixture/code-review.txt"
+	: >"${sandbox}/.fixture/invocations.txt"
 
 	local lines bounds min max
 	lines="$(git diff --numstat "${base}...HEAD" | awk '{a += $1 + $2} END {print a + 0}')"
