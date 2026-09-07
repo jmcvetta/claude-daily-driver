@@ -78,6 +78,10 @@ first." Then read the pull request through `mcp__github__pull_request_read`:
 | `get_status`, `get_check_runs` | CI, which the findings are read against |
 | `get_comments`, `get_reviews`, `get_review_comments` | what other reviewers already said |
 
+Read those last three rather than merely fetching them: do not re-report a
+finding a human, a bot or Claude Approvals has already raised, and where you
+disagree with one, say so rather than staying silent.
+
 **Local mode.** Run `git fetch`, then verify there is something to review:
 `git log origin/$BASE_BRANCH..HEAD --oneline`, and stop with "No commits ahead
 of origin/$BASE_BRANCH. Nothing to review." if it is empty. Assemble the same
@@ -85,6 +89,11 @@ data from git — `--name-status` for changed paths, `git diff
 origin/$BASE_BRANCH...HEAD` for the diff, `git log --format=%s` for subjects —
 and say explicitly that CI status, pull request conversation and review threads
 are unavailable, rather than treating an unread check as a passing one.
+
+**Either mode**: if the diff changes no files, stop with "No changed files.
+Nothing to review." A mode-only or empty commit is ahead of the base branch and
+still has nothing in it, and every classification below is vacuously true on an
+empty set of paths.
 
 
 Routing
@@ -97,13 +106,20 @@ touch decide *how hard* it looks.
 both planning-class and docs-only — so test them **in this order** and take the
 first that matches:
 
-1. **Planning-class** — every path is planning-class, and there is at least
-   one; a path is planning-class if it lives under `docs/planning/` or
-   `docs/proposals/`, or its basename is `README.md` or `CLAUDE.md` anywhere.
+1. **Planning-class** — every path is planning-class; a path is planning-class
+   if it lives under `docs/planning/` or `docs/proposals/`, or its basename is
+   `README.md` or `CLAUDE.md` anywhere.
 2. **Docs-only** — every path ends in `.md`, `.txt` or `.rst`, or is `LICENSE`.
-3. **Test-only** — every path matches `*_test.*`, `test_*.*`, `*.test.*`,
-   `*.spec.*`, or lives under `**/tests/**` or `**/__tests__/**`.
-4. **Code** — anything else.
+   A dependency manifest is never docs-only however it is spelled:
+   `requirements.txt` and `constraints.txt` are manifests wearing a `.txt`,
+   and they belong in Code.
+3. **Code** — anything else.
+
+Test paths get no bucket of their own. They would fall through to Code in any
+case, and a bucket that changes no answer is a rule to maintain for nothing —
+but the intent is worth stating: tests sit with code rather than with docs. A
+test that asserts the bug passes, and nothing about it being a test file makes
+that cheaper to miss.
 
 **Size.** Changed lines across non-generated files, ignoring lockfiles and
 vendored trees. The thresholds below are a prior, not a rule: a thirty-line
@@ -111,8 +127,10 @@ change to a lock ordering earns the verified level, and an eight-hundred-line
 rename does not.
 
 **The sensitive touch.** If any changed path or hunk touches the list below,
-the review runs at `max` **whatever the size**. This is the judgement a human
-forgets to make, made from the diff instead.
+the review runs at `max`. It is a **floor on the level**, applied after the
+table and on every non-planning route — so size cannot lower it and the
+docs-only row cannot dodge it. This is the judgement a human forgets to make,
+made from the diff instead.
 
 - authentication, authorization, sessions, tokens, passwords, OAuth, SAML, JWT
 - cryptography — ciphers, hashing, TLS, certificates, key material, randomness
@@ -123,26 +141,35 @@ forgets to make, made from the diff instead.
   tokens and permissions
 - request boundaries: handlers, routes, controllers, deserialization,
   file-path and URL handling
-- dependency manifests and lockfiles
+- dependency **manifests** — a dependency added, removed, or a constraint
+  changed. A lockfile that moved because a manifest moved is covered by the
+  manifest; a lockfile-only refresh is not a sensitive touch and routes on size
+  like anything else. There is no decision in a regenerated lockfile, and `max`
+  over one is the most expensive cell the built-in has, spent on nothing.
+
+**Take the first row that matches**, the way the kind buckets are read, then
+apply the sensitive touch as a floor on top of it.
 
 | Route | When | The analysis |
 | ----- | ---- | ------------ |
 | **Planning** | planning-class | `planning-fitness-reviewer`, under `references/planning-review.md`. No `/code-review`. |
+| **Verified** | a sensitive touch, on any non-planning route, at any size | `/code-review max` |
 | **Skim** | docs-only, or under ~50 changed lines | `/code-review low` |
-| **Standard** | the default — code or tests, under ~800 changed lines | `/code-review medium` |
-| **Full** | over ~800 changed lines, or the user asked for depth | `/code-review xhigh` |
-| **Verified** | a sensitive touch, at any size | `/code-review max` |
+| **Standard** | code, under ~800 changed lines | `/code-review medium` |
+| **Full** | over ~800 changed lines | `/code-review xhigh` |
 
-Tests sit with code rather than with docs: a test that asserts the bug passes,
-and nothing about it being a test file makes that cheaper to miss.
+Skim is `low` deliberately, and `low` caps findings hard — around four on most
+families. That is proportionate to fifty lines, or to prose. A small diff whose
+stakes exceed its size is exactly what the *prior, not a rule* clause above is
+for: name a higher level by hand rather than widening the row.
 
-The sensitive touch raises the level of whichever code row applied; it does not
-reclassify the diff. Planning-class is decided first and is not raised — a
-rollout plan that discusses IAM is still prose, and `max` on nine hundred lines
-of it buys findings about a document with no code in it.
+Planning-class is decided first and is never raised. A rollout plan that
+discusses IAM is still prose, and `max` over nine hundred lines of it buys
+findings about a document with no code in it.
 
-The user may still name a depth, and a named depth wins. Inference is the
-default, not a refusal.
+The user may still name a depth, and a named depth wins — but it changes the
+**level**, not the route. "Give this plan a full review" is still a planning
+review.
 
 
 The analysis
@@ -151,10 +178,22 @@ The analysis
 Non-planning routes
 -------------------
 
-Run the session's built-in **`/code-review`**, naming the effort level from the
-table explicitly. Do not let it fall back to the level it remembers: its own
-description says it "reuses the level you typed last", so an unnamed level
-makes the review depend on what happened earlier in the session.
+Run the session's built-in **`/code-review`**, naming both the level and the
+target:
+
+- **PR mode** — `/code-review <level> <PR number>`
+- **Local mode** — `/code-review <level> <$BASE_BRANCH>`
+
+Name the level, because `/code-review` "reuses the level you typed last" by its
+own description, so an unnamed level makes the review depend on what happened
+earlier in the session. Name the target, because unnamed it reviews the
+*working* diff — which on a branch whose work is committed is empty, and an
+empty diff comes back clean. That is the same failure as a missing reviewer,
+reached by a different route.
+
+Inside this skill `/code-review` is the analysis, not a trigger. The
+description fires this skill when someone reaches for the built-in *instead of*
+reviewing properly; it does not fire on this line.
 
 **What a level buys depends on the session's model family, and the difference
 is large.** `/code-review` resolves a model-family × effort cell — on Sonnet 5
@@ -166,13 +205,30 @@ repository's own model. `low`, `medium`, `xhigh` and `max` are distinct on
 every family, and `max` is the only one that verifies on all of them — which is
 why the sensitive touch selects it and nothing else does.
 
+One known gap at Standard, worth carrying while #35 is open: per `0001` the
+built-in's language-pitfall angle — the nearest thing it has to a
+swallowed-error hunt — does not run at `medium` on any family. Read the diff
+yourself for discarded returns, bare `except: pass` and errors logged in place
+of being handled. Whether that deserves an agent is #35's question, not this
+skill's.
+
+**On the security-shaped half of the sensitive list** — auth, crypto, IAM,
+`.github/workflows/`, request boundaries — also run the built-in
+**`/security-review`**. `max` buys verification, not a threat model, and those
+are different purchases. The rule that used to forbid this was an argument
+about duplicating `security-reviewer`, which no longer runs; with the panel
+dormant there is nothing left to duplicate. Migrations and dependency manifests
+get `max` alone — their risk is data loss and supply chain, which a threat-model
+pass does not address.
+
 See [`docs/decisions/0001-built-in-review-surface.md`](../../docs/decisions/0001-built-in-review-surface.md)
 for the full matrix and the CLI version it was read from. Re-confirm it when
 that version moves; the table above is downstream of it.
 
-If `/code-review` is not available in this session, say so in one line and
-review the diff directly against the rubric below. An absent reviewer must
-never be mistaken for a clean one.
+If `/code-review` is not available in this session, say so in one line, then
+read the diff yourself: grade against the **Severity** rubric below, and use
+the sensitive-touch list above as the checklist for what to look hardest at.
+An absent reviewer must never be mistaken for a clean one.
 
 The planning route
 ------------------
