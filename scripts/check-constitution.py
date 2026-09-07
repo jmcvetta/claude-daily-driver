@@ -436,7 +436,8 @@ def check_eval_token(errors: list[str], expected: str) -> None:
     `coder_eval` task is one file holding both, so the rule is now about where
     in a file the token sits, and it is enforced over every eval file rather
     than only over task prompts: some `success_criteria` block must name the
-    current token, and nothing else anywhere under `evals/` may — not a
+    current token, and no other text in any `.yaml`, `.yml`, `.md`, `.sh` or
+    `.py` file under `evals/` may — not a
     description, not an `agent.system_prompt`, not a `pre_run` command, not a
     fixture script, not this repository's own eval README. Staleness is a
     separate sweep, over whole files, because a retired token is just as dead

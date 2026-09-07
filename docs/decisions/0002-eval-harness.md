@@ -5,11 +5,13 @@
 [`0001`](0001-built-in-review-surface.md) and in `evals/README.md`, both of
 which take `claude plugin eval` as given.
 
-> **Read ["Corrected by the port"](#corrected-by-the-port) first.** Two claims
-> below about what `coder_eval` cannot do are wrong, and the correction changed
-> how much of the old suite had to be redesigned. They are left in place rather
-> than edited away: the decision was made on them, and what a decision was made
-> on is the thing a decision record is for.
+> **Read ["Corrected by the port"](#corrected-by-the-port) first.** Three claims
+> below about what `coder_eval` can and cannot do are wrong — two about
+> `command_executed` and `skill_triggered`, one about what a sandbox can be
+> given — and the corrections changed how much of the old suite had to be
+> redesigned. They are left in place rather than edited away: the decision was
+> made on them, and what a decision was made on is the thing a decision record
+> is for.
 
 `evals/` currently holds four suites written for `claude plugin eval`
 (`pr`, `pr-title`, `pr-body`, `constitution-reaches-subagent`). **None of them
@@ -209,8 +211,15 @@ against the JSON-serialised tool parameters; the Claude Code adapter records one
 telemetry row per `tool_use` block, `Agent` included. So `tool_used` on `Agent` —
 `input_match` and all — ports directly, and
 the constitution suite lost **one** grader to redesign, not
-three. The narrow claim that survives is about `skill_triggered`, which does
-count only `Skill` invocations.
+three. The narrow claim that survives is that `skill_triggered` is the
+only criterion that reads the `Skill` tool — and it is narrower than it sounds.
+`skill_triggered` *also* scans every string parameter of every tool for the
+substring `skills/<name>/`, so a `Read` of `skills/pr/SKILL.md` scores as
+engaging `pr` whether or not the read succeeded: telemetry records a `tool_use`
+block when it is generated, before any result. Any row expecting a skill NOT to
+fire has to remove the file tools with `disallowed_tools` — `allowed_tools` is
+a permission allowlist and leaves them offered — which is why every
+trigger-accuracy task under `evals/` carries one.
 
 That correction is also what makes the rebuilt `review-depth` suite possible on
 this harness: a criterion matching `"subagent_type": "security-reviewer"` inside

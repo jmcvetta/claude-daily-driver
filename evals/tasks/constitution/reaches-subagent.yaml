@@ -16,8 +16,10 @@
 # `command_pattern` against the JSON-serialised tool parameters. Claude Code's
 # adapter records one telemetry row per `tool_use` block, so `tool_used` on
 # `Agent` — including the `input_match` negative control — has an exact target
-# after all. Only `skill_triggered` is `Skill`-only; `command_executed` is the
-# generic tool-call criterion the decision record says does not exist.
+# after all: `command_executed` is the generic tool-call criterion the decision
+# record says does not exist. (`skill_triggered` is the only one that reads the
+# `Skill` tool — but it is not `Skill`-only either, since it also counts a
+# `skills/<name>/` path in any tool parameter. See `evals/README.md`.)
 #
 # The third grader did not port. `regex` on `last_message` has no deterministic
 # equivalent: nothing in `coder_eval` matches the agent's final message except

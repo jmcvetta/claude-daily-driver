@@ -244,7 +244,8 @@ dispatched" for a dispatch that happened. That silently zeroes a positive and
 tool-call summariser renders an `Agent` call as its `description`, a three-word
 label the model writes.
 
-So the observation is taken with a `PreToolUse` hook on `Agent`, wired through
+So the observation is taken with a `PreToolUse` hook matching `^(Agent|Task)$`
+— both names, because the harness has used both — wired through
 each task's `claude_settings` and recorded by
 `fixtures/review-depth/shared/record-dispatch.py`. It appends one
 `subagent_type` per
