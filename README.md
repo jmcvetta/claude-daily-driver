@@ -51,7 +51,7 @@ every subagent. Eleven sections:
 | GitHub | The GitHub MCP, `curl` where it cannot reach, and where the token comes from. |
 | Delegation | Plan first, delegate the implementation, batch the subagents, watch the quota. |
 | Skills | One line on each skill above, so a session knows what it has. |
-| Verification | How to prove the file arrived. |
+| Verification | Quoting the token at the end of the file proves the hook injected it. |
 
 **What belongs there** is the admission test the file states on itself: a rule
 lives here only if it changes behaviour in most sessions, hangs off a nameable
