@@ -91,7 +91,8 @@ check-constitution:
 # script rather than beside the caller's working directory.
 check-scripts:
 	shellcheck -x --source-path=SCRIPTDIR \
-		skills/*/scripts/*.sh scripts/*.sh evals/fixtures/*/*.sh
+		skills/*/scripts/*.sh scripts/*.sh \
+		evals/fixtures/*/shared/*.sh evals/fixtures/*/cases/*/*.sh
 
 # check-eval-fixtures: build every review-depth fixture repository and assert
 # it has the shape the `review` skill needs. Part of `check` because it needs

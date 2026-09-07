@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 # Not a case. The base-branch tree every case starts from, so the cases differ
 # only in the diff they put on top of it.
-#
-# No file here contains the substring `skills/`; see evals/README.md.
 
 fixture_write_base_tree() {
 	mkdir -p src tests docs/planning .github/workflows

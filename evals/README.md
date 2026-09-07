@@ -11,12 +11,14 @@ the `claude` binary, so there is no version to hold back.
 evals/
 ├── experiments/with-without.yaml   the ablation every case is measured under
 ├── tasks/
-│   ├── pr/                does `pr` fire when a PR is being opened, and only then?
-│   ├── pr-title/          … when a title is being written, and only then?
-│   ├── pr-body/           … when a body is being written, and only then?
-│   ├── constitution/      does the constitution reach a subagent?
-│   └── review-depth/      does `review` dispatch the right panel for the diff?
-└── fixtures/review-depth/ shell that builds a reviewable git repository
+│   ├── pr/              does `pr` fire when a PR is opened, and only then?
+│   ├── pr-title/        … when a title is written, and only then?
+│   ├── pr-body/         … when a body is written, and only then?
+│   ├── constitution/    does the constitution reach a subagent?
+│   └── review-depth/    does `review` send the right panel at the diff?
+└── fixtures/review-depth/
+    ├── shared/          builds the git repository every case starts from
+    └── cases/<name>/    one `case.sh`, mounted alone beside `shared/`
 ```
 
 ## Running them
@@ -135,7 +137,8 @@ substring `skills/<name>/`, so a `Read` of
 `skills/review/references/review-guidelines.md` counts as engaging `review`.
 That is deliberate — it is how the criterion scores agents with no `Skill` tool
 — but it means a row that grants file tools and expects a skill *not* to fire is
-only as sound as the paths that row can plausibly touch. `allowed_tools` is not the mitigation: it is a permission allowlist, the model
+only as sound as the paths that row can plausibly touch. `allowed_tools` is not
+the mitigation: it is a permission allowlist, the model
 is still offered `Read`, and telemetry records a `tool_use` block when it is
 generated — before any result — so a *denied* read of `skills/pr/SKILL.md`,
 which is what a model weighing two sibling skills reaches for, still scores as
@@ -153,7 +156,8 @@ engaged skills, plugin namespace stripped, so that class of near-miss is gone.
 
 Each `skill_triggered` row carries an `expected_skill`: the ground truth for
 that row, repeated on every criterion of that type. (`review-depth` 01–06 have
-none — they are graded entirely on the dispatch roster.) What it does today is set the polarity — a criterion passes
+none — they are graded entirely on the dispatch roster.) What it does today is
+set the polarity — a criterion passes
 when the skill's engagement matches whether `expected_skill` names it — and
 `none` is a legitimate value, which is what the "neither of these should fire"
 rows use.
@@ -277,21 +281,37 @@ would get and fails `make check` if it does not record.
 The hook also writes nothing to stdout, so it cannot contest the `updatedInput`
 returned by the plugin's own `PreToolUse` hook on the same event.
 
-**The reasoning is kept out of `fixtures/review-depth/`**, and that is
-deliberate: the whole directory — every case script, not just the one a task
-runs — is copied to `.fixture/` inside the sandbox, and the agent under test has
-`Read`, `Grep`, `Glob` and `Bash`. A comment there saying what a case expects is
-an answer key one `cat` away. So the fixtures carry mechanics and the claims
-live here and in the task YAML, neither of which the sandbox can see.
+### What the sandbox can see
 
-That reduces the disclosure; it does not remove it, and the residue is worth
-naming rather than pretending away. `record-dispatch.py` still *is* its
-mechanism — a reader can see it appends `subagent_type` to a file — and
-`.fixture/dispatched.txt` is writable by an agent that has `Bash`. Nothing here
-prevents a session that went looking from working out that it is watched, or
-from writing to the roster directly. Closing that properly needs the
-observation to live outside the sandbox, which needs a criterion that can see
-`subagent_type`; that is the same upstream fix as above.
+The fixtures are mounted at `.fixture/` inside the sandbox and the agent under
+test has `Read`, `Grep`, `Glob` and `Bash`, so anything there saying what a case
+expects is an answer key one `cat` away. Three things follow, and they are
+enforced rather than asked for:
+
+- **The fixtures carry mechanics, not claims.** The reasoning lives here and in
+  the task YAML. `evals/fixtures/review-depth/` is prose about `git`.
+- **A task mounts the shared scaffolding plus its own case, and nothing else** —
+  two `template_dir` sources at the same `mount_point`. The case script is
+  `case.sh` in every case, because its *filename* is copied into the sandbox too
+  and `sensitive-tiny.sh` names the routing rule being graded as loudly as any
+  comment would.
+- **No fixture file contains the substring `skills/`.**
+  `scripts/check-eval-fixtures.sh` greps for it, because `skill_triggered`
+  counts such a path in any tool parameter as engaging that skill — so a fixture
+  carrying one would score as a skill firing the moment the agent read the file.
+  (The check found its first offender immediately: a comment explaining the
+  rule.)
+
+**None of this is a boundary, and it should not be described as one.** The suite
+runs on the default `driver: tempdir`, where `coder_eval`'s own note is that
+"the agent under evaluation runs with the same filesystem view as the harness" —
+its anti-cheat permission window is a documented no-op outside a container. So a
+session with `Bash` can read this file, read the task YAML, and write to
+`.fixture/dispatched.txt` directly. What the rules above buy is that nothing
+*puts* the answer in front of a session going about its work; they buy nothing
+at all against one that goes looking. `sandbox: {driver: docker}` is what would
+make it a boundary, and moving the roster outside the sandbox needs the same
+upstream fix as everything else here.
 
 The upstream fixes that would retire this: make the truncation bound
 configurable, or render `subagent_type` in the judge's tool-call summary.
@@ -377,10 +397,11 @@ as a TIMEOUT before it can be graded. The headroom is the difference.
 
 `run_limits` caps turns and wall clock per task, but nothing caps the bill. The
 18 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
-and the fire half stops the moment the skill fires. `review-depth` is not — its six
-fire cases each dispatch a real reviewer panel over a real diff, twice (`bare`
-and `with-plugin`), five times each, and its no-fire case pays for a panel too
-on exactly the trajectory it is trying to catch. Run one suite at a time with
+and the fire half stops the moment the skill fires. `review-depth` is not: its six fire
+cases each dispatch a real reviewer panel over a real diff, five times, in the
+`with-plugin` arm — the `bare` arm has no skill and no agents, so it is cheap —
+and its no-fire case pays for a panel too, on exactly the trajectory it is
+trying to catch. Run one suite at a time with
 `TASKS=` while iterating, and keep `make evals-plan` between edits, where the
 mistakes are free.
 

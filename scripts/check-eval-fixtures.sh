@@ -25,6 +25,8 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FIXTURES="${REPO_ROOT}/evals/fixtures/review-depth"
+SHARED="${FIXTURES}/shared"
+CASES="${FIXTURES}/cases"
 
 # Changed-line bounds per case, as `<min> <max>` (`-` for no bound). These are
 # the thresholds each case sits against, not the counts it happens to have:
@@ -55,13 +57,22 @@ fail() {
 
 check_one() {
 	local script="$1" name sandbox
-	name="$(basename "${script}" .sh)"
+	# `<cases>/<name>/case.sh` — the case's name is its directory. The script
+	# itself is `case.sh` in every case, because its filename is copied into the
+	# sandbox and `sensitive-tiny.sh` would tell the agent what it is being
+	# graded on.
+	name="$(basename "$(dirname "${script}")")"
 	sandbox="$(mktemp -d)"
 	# shellcheck disable=SC2064  # expand $sandbox now, not at trap time
 	trap "rm -rf '${sandbox}'" RETURN
 
-	cp -R "${FIXTURES}" "${sandbox}/.fixture"
-	(cd "${sandbox}" && bash ".fixture/${name}.sh") ||
+	# Exactly what a task mounts: the shared scaffolding plus this one case,
+	# both at `.fixture`. Copying the whole tree here would test a layout no
+	# run ever gets.
+	mkdir -p "${sandbox}/.fixture"
+	cp -R "${SHARED}/." "${sandbox}/.fixture/"
+	cp -R "${CASES}/${name}/." "${sandbox}/.fixture/"
+	(cd "${sandbox}" && bash ".fixture/case.sh") ||
 		fail "${name}" "fixture script exited non-zero"
 
 	cd "${sandbox}"
@@ -123,18 +134,27 @@ check_one() {
 
 main() {
 	local script found=0
-	for script in "${FIXTURES}"/*.sh; do
-		case "$(basename "${script}")" in
-		lib.sh | _*) continue ;; # sourced, not a case
-		esac
+	for script in "${CASES}"/*/case.sh; do
 		found=$((found + 1))
 		check_one "${script}"
 	done
 
 	[ "${found}" -gt 0 ] || {
-		printf 'FAIL: no fixture case scripts found under %s\n' "${FIXTURES}" >&2
+		printf 'FAIL: no fixture case scripts found under %s\n' "${CASES}" >&2
 		exit 1
 	}
+
+	# The one invariant the fixture *content* has to hold, asserted rather than
+	# left to a comment. `skill_triggered` counts a `skills/<name>/` path in any
+	# tool parameter as engaging that skill, so a fixture file carrying one would
+	# score as a skill firing the moment the agent read it — including, as this
+	# check found the first time it ran, a comment explaining the rule.
+	local offenders
+	if offenders="$(grep -rln "skills/" "${SHARED}" "${CASES}")"; then
+		printf 'FAIL: fixture names a skills/ path, which skill_triggered would score as that skill firing:\n%s\n' \
+			"${offenders}" >&2
+		exit 1
+	fi
 	printf '\n%d review-depth fixture(s) build correctly.\n' "${found}"
 }
 

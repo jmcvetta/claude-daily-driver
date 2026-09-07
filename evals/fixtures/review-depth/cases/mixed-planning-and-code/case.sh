@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Adds a planning document and rewrites a source module.
-# shellcheck source=./lib.sh
+# shellcheck source=../../shared/lib.sh
 source "$(dirname "$0")/lib.sh"
-# shellcheck source=./_common_base.sh
+# shellcheck source=../../shared/_common_base.sh
 source "$(dirname "$0")/_common_base.sh"
 
 fixture_init

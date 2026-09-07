@@ -54,7 +54,13 @@ TOKEN_LINE = re.compile(r"^constitution-token: (\S+)$")
 # a `command_pattern` and never says the word, which is exactly the criterion
 # whose staleness matters most -- its `max_count: 0` would go on matching a
 # retired value and pass vacuously. So the guard goes by the token's shape.
-TOKEN_SHAPE = re.compile(r"\b[a-z]+(?:-[a-z]+)+-\d+\b")
+#
+# Four or more words then a number, which is one word more than any task id,
+# model name or branch name under `evals/` -- the sweep below reads whole files,
+# and a looser shape would flag `pr-body-01` and `claude-sonnet-5` on every run.
+# The coupling to the current token's shape is deliberate and guarded: a token
+# that stops matching this pattern fails the check below by name.
+TOKEN_SHAPE = re.compile(r"\b[a-z]+(?:-[a-z]+){3,}-\d+\b")
 
 # The tool names a subagent spawn can arrive under. `Agent` is current; `Task`
 # is what the same tool was called for years, and a matcher that admits only
@@ -444,35 +450,43 @@ def check_eval_token(errors: list[str], expected: str) -> None:
         )
 
     asserted = False
-    for path in sorted(EVALS.rglob("*.yaml")):
+    for path in sorted(EVALS.rglob("*")):
+        if not path.is_file() or path.suffix not in {".yaml", ".yml", ".md", ".sh", ".py"}:
+            continue
         text = path.read_text(encoding="utf-8")
         where = path.relative_to(ROOT)
-        blocks = top_level_blocks(text)
-        criteria = blocks.get("success_criteria", "")
-        prompt = blocks.get("initial_prompt", "")
 
-        stale = sorted(set(TOKEN_SHAPE.findall(criteria)) - {expected})
+        # Staleness, over the whole file. A retired token is just as dead in an
+        # `agent.system_prompt`, a `pre_run` command or a prose paragraph, and
+        # those are places the criteria/prompt split below never looks.
+        stale = sorted(set(TOKEN_SHAPE.findall(text)) - {expected})
         if stale:
             errors.append(
                 f"{where}: names {', '.join(stale)}, which is not the "
                 f"token that ships ({expected}); the live suite would be "
                 f"testing a token that no longer exists"
             )
-        elif expected in criteria:
-            asserted = True
-        elif "constitution-token" in criteria:
-            errors.append(
-                f"{where}: talks about the constitution token without "
-                f"naming the current one ({expected})"
-            )
 
-        if expected in prompt:
-            # A prompt that spells the token out hands the parent the answer,
-            # and a live run that then "passes" has measured nothing.
+        if expected not in text:
+            continue
+
+        # The token may appear in exactly one place: a task's success_criteria.
+        # Under `claude plugin eval` that rule was about directories -- prompts
+        # in one file, graders in another. A `coder_eval` task is one file, so
+        # it is now about which top-level key the token sits under, and
+        # everything that is not a task YAML is off limits outright.
+        criteria = top_level_blocks(text).get("success_criteria", "") if path.suffix in {".yaml", ".yml"} else ""
+        if expected in criteria:
+            asserted = True
+        leaked = text.replace(criteria, "")
+        if expected in leaked:
+            # Anywhere else is the session being handed the answer: a prompt
+            # that spells the token out, a fixture that writes it to disk, a
+            # README that quotes it into a copy-pasteable command.
             errors.append(
-                f"{where}: initial_prompt contains the token itself. Only "
-                f"success_criteria may name it; a prompt that does is telling "
-                f"the session what the subagent was supposed to have been told."
+                f"{where}: names the token outside success_criteria. Only a "
+                f"criterion may name it; anywhere else is telling the session "
+                f"what the subagent was supposed to have been told."
             )
 
     if not asserted:

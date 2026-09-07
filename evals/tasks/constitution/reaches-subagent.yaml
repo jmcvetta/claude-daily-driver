@@ -46,13 +46,22 @@ description: >-
 tags: [constitution, delivery]
 
 # Deliberately no file-READING tools. The token is nonsense, so the only routes
-# to it are the hook and `context/constitution.md`; withholding Read, Grep and
-# Glob closes the second, for the parent and the subagent alike. `Write` has to
-# be open — the subagent reports through a file now — and `allowed_tools` is a
-# session-wide list, so it reaches the subagent only by reaching both. Both
-# names for the subagent tool are listed because the harness has used both.
+# to it are the hook and `context/constitution.md`; closing the second, for the
+# parent and the subagent alike, is what makes the token's return mean
+# something. `Write` has to stay open — the subagent reports through a file —
+# and these lists are session-wide, so they reach the subagent by reaching both.
+#
+# The closing is done by `disallowed_tools`, not by the short `allowed_tools`
+# list beside it. `allowed_tools` is a permission allowlist: the model is still
+# offered `Read` and merely denied at the check, which is not a closed route,
+# only a noisy one. `disallowed_tools` is the field that removes a tool from
+# what the model is offered at all.
+#
+# Both names for the subagent tool are allowed because the harness has used
+# both.
 agent:
   allowed_tools: [Agent, Task, Write]
+  disallowed_tools: [Read, Grep, Glob, Bash, Edit, NotebookEdit]
 
 run_limits:
   max_turns: 8

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Adds a long planning document under docs/planning/.
-# shellcheck source=./lib.sh
+# shellcheck source=../../shared/lib.sh
 source "$(dirname "$0")/lib.sh"
-# shellcheck source=./_common_base.sh
+# shellcheck source=../../shared/_common_base.sh
 source "$(dirname "$0")/_common_base.sh"
 
 fixture_init

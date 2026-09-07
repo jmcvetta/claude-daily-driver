@@ -5,13 +5,21 @@ description: >-
 tags: [review-depth, routing, fire]
 
 sandbox:
+  # Two sources, both mounted at `.fixture`, so the sandbox gets the shared
+  # scaffolding plus THIS case and nothing else. Mounting the whole fixture
+  # tree would put every case's script — and its name — in front of the
+  # agent under test, which has Bash and Read; `sensitive`, `planning` and
+  # `over-800-lines` are the vocabulary of the table being graded.
   template_sources:
     - type: template_dir
-      path: ../../fixtures/review-depth
+      path: ../../fixtures/review-depth/shared
+      mount_point: .fixture
+    - type: template_dir
+      path: ../../fixtures/review-depth/cases/planning-over-800-lines
       mount_point: .fixture
 
 pre_run:
-  - command: bash .fixture/planning-over-800-lines.sh
+  - command: bash .fixture/case.sh
     timeout: 60
 
 agent:
