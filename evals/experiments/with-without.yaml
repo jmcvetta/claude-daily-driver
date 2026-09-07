@@ -68,7 +68,13 @@ variants:
   # working directory, so **run `coder-eval` from `evals/`** (`make evals-plan`
   # and `make evals-run` do). Pointed one level deeper the SDK loads nothing,
   # with no error, and every positive row scores 0 exactly as if the skills
-  # never fired; `plan` prints the resolved path, so read it.
+  # never fired.
+  #
+  # Nothing catches that at `plan` time. Plugin paths are resolved in the agent,
+  # at `run` time, so `plan` neither prints the path nor checks it; the "no
+  # skills/ subdirectory" warning appears in the run log, once the money is
+  # committed. `make evals-run` is the guard, because it is the only entry point
+  # that guarantees the working directory this path is relative to.
   - variant_id: with-plugin
     description: The same session with the daily-driver plugin loaded.
     agent:

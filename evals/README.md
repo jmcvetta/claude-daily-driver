@@ -1,6 +1,6 @@
 # Evals
 
-Four suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
+Five suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
 than by `claude plugin eval`. The reasoning for the harness is
 [`docs/decisions/0002-eval-harness.md`](../docs/decisions/0002-eval-harness.md);
 the short version is that the built-in cannot be run on this account, is
@@ -76,8 +76,9 @@ repository README. Its credential-free half is
 `review-depth/` asks whether `review` sends the *right panel* at the right
 diff. Every case is anchored on something a person would notice if routing
 broke — a security reviewer that never ran on the file holding the publishing
-token, a full panel billed to a two-line typo fix — rather than on a restated
-line from `skills/review/SKILL.md`. A suite that restates the spec catches
+token, a rewritten README judged for correctness bugs, a full panel billed to
+every pull request opened — rather than on a restated line from
+`skills/review/SKILL.md`. A suite that restates the spec catches
 drift away from the depth table and can never catch the depth table being
 wrong.
 
@@ -134,10 +135,16 @@ substring `skills/<name>/`, so a `Read` of
 `skills/review/references/review-guidelines.md` counts as engaging `review`.
 That is deliberate — it is how the criterion scores agents with no `Skill` tool
 — but it means a row that grants file tools and expects a skill *not* to fire is
-only as sound as the paths that row can plausibly touch. The trigger-accuracy
-rows dodge it by allowing `Skill` and nothing else; `review-depth`'s no-fire row
-allows file tools, and relies on the `pr` skill having no reason to name a path
-under `skills/review/` — which it does not.
+only as sound as the paths that row can plausibly touch. `allowed_tools` is not the mitigation: it is a permission allowlist, the model
+is still offered `Read`, and telemetry records a `tool_use` block when it is
+generated — before any result — so a *denied* read of `skills/pr/SKILL.md`,
+which is what a model weighing two sibling skills reaches for, still scores as
+engaging `pr`. The trigger rows therefore carry an explicit `disallowed_tools`,
+which is the field that actually removes a tool. `review-depth`'s no-fire row
+needs file tools and keeps them, and relies instead on the `pr` skill having no
+reason to name a path under `skills/review/` — which it does not — with the
+empty-roster criterion beside it as the check that does not depend on paths at
+all.
 
 `skill_triggered` also improved a detail. The old graders matched the skill
 name out of the tool input as a regex, so `pr` had to be written `(:|")pr"` to
@@ -164,6 +171,13 @@ actually reading; not worth doing to make a sentence in this file true.
 distractor is armed bare (`stop_early: {}`) — a misfire has already lost the
 row, so there is nothing left to pay for — **and so is the positive criterion
 beside it**, which is the part that is easy to get backwards.
+
+On the trigger suites this is free. On `review-depth`'s no-fire row it is not,
+and that row says so: the fail-stop is deferred while the pass-capable `pr`
+criterion is undecided, so on the very trajectory the row exists to catch —
+`review` fires, `pr` never does — nothing decides it, the stop never comes, and
+the run pays for a full reviewer panel up to its turn cap. Recall is worth that
+there; `max_turns` is what bounds the bill.
 
 Arming the positive cannot truncate anything: a bare `stop_early: {}` leaves
 `on_pass` at its default `continue`. What it does is put the criterion in the
@@ -263,12 +277,21 @@ would get and fails `make check` if it does not record.
 The hook also writes nothing to stdout, so it cannot contest the `updatedInput`
 returned by the plugin's own `PreToolUse` hook on the same event.
 
-**None of this reasoning lives in `fixtures/review-depth/`**, and that is
-deliberate: that directory is mounted at `.fixture/` inside the sandbox, and the
-agent under test has `Read`, `Grep`, `Glob` and `Bash`. A comment there saying
-what a case expects is an answer key one `cat` away. The fixtures carry
-mechanics; the claims live here and in the task YAML, neither of which the
-sandbox can see.
+**The reasoning is kept out of `fixtures/review-depth/`**, and that is
+deliberate: the whole directory — every case script, not just the one a task
+runs — is copied to `.fixture/` inside the sandbox, and the agent under test has
+`Read`, `Grep`, `Glob` and `Bash`. A comment there saying what a case expects is
+an answer key one `cat` away. So the fixtures carry mechanics and the claims
+live here and in the task YAML, neither of which the sandbox can see.
+
+That reduces the disclosure; it does not remove it, and the residue is worth
+naming rather than pretending away. `record-dispatch.py` still *is* its
+mechanism — a reader can see it appends `subagent_type` to a file — and
+`.fixture/dispatched.txt` is writable by an agent that has `Bash`. Nothing here
+prevents a session that went looking from working out that it is watched, or
+from writing to the roster directly. Closing that properly needs the
+observation to live outside the sandbox, which needs a criterion that can see
+`subagent_type`; that is the same upstream fix as above.
 
 The upstream fixes that would retire this: make the truncation bound
 configurable, or render `subagent_type` in the judge's tool-call summary.
@@ -354,9 +377,10 @@ as a TIMEOUT before it can be graded. The headroom is the difference.
 
 `run_limits` caps turns and wall clock per task, but nothing caps the bill. The
 18 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
-and the fire half stops the moment the skill fires. `review-depth` is not — each
-of its 7 cases dispatches a real reviewer panel over a real diff, twice
-(`bare` and `with-plugin`), five times each. Run one suite at a time with
+and the fire half stops the moment the skill fires. `review-depth` is not — its six
+fire cases each dispatch a real reviewer panel over a real diff, twice (`bare`
+and `with-plugin`), five times each, and its no-fire case pays for a panel too
+on exactly the trajectory it is trying to catch. Run one suite at a time with
 `TASKS=` while iterating, and keep `make evals-plan` between edits, where the
 mistakes are free.
 

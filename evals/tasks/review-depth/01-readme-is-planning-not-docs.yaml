@@ -1,7 +1,8 @@
 task_id: review-depth-readme-is-planning-not-docs
 description: >-
-  A twenty-line rewrite of the root README routes to the planning panel, not to
-  the docs skim.
+  A rewrite of the root README routes to the planning panel, not to the docs
+  skim. Sized past the fifty-line skim threshold on purpose, so kind is what
+  decides; `scripts/check-eval-fixtures.sh` holds the bound.
 tags: [review-depth, routing, fire]
 
 # `review` needs a repository: a base branch, a topic branch ahead of it, and a

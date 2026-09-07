@@ -6,6 +6,17 @@ tags: [trigger-accuracy, pr-body, fire]
 
 initial_prompt: "The PR body is thin. Add the engineering detail a reviewer would want."
 
+agent:
+  # `allowed_tools` is a permission allowlist, not a tool filter: the model is
+  # still offered `Read` and friends and merely denied at the permission check.
+  # That is not enough here. Telemetry records a `tool_use` block when it is
+  # generated, before any result, and `skill_triggered` counts a `skills/<name>/`
+  # path in ANY tool parameter as engaging that skill — so a *denied* read of
+  # `skills/pr/SKILL.md`, which is exactly what a model weighing two sibling
+  # skills reaches for, would fail a no-fire row. `disallowed_tools` is the one
+  # that actually removes a tool, so the path can never be typed.
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
 run_limits:
   max_turns: 5
   task_timeout: 300
