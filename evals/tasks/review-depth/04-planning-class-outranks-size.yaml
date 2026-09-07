@@ -1,0 +1,51 @@
+task_id: review-depth-planning-class-outranks-size
+description: >-
+  Nine hundred lines of planning document still route to the planning panel,
+  not to the full code panel the size alone would buy.
+tags: [review-depth, routing, fire]
+
+sandbox:
+  template_sources:
+    - type: template_dir
+      path: ../../fixtures/review-depth
+      mount_point: .fixture
+
+pre_run:
+  - command: bash .fixture/planning-over-800-lines.sh
+    timeout: 60
+
+agent:
+  allowed_tools: [Bash, Read, Grep, Glob, Skill, Agent, Task]
+
+run_limits:
+  max_turns: 30
+  task_timeout: 900
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 900
+
+initial_prompt: "Review this branch before I merge it."
+
+success_criteria:
+  - type: skill_triggered
+    description: "`review` fires on an explicit review request"
+    expected_skill: review
+    skill_name: review
+
+  - type: command_executed
+    description: The planning-fitness reviewer was dispatched
+    tool_name: Agent
+    command_pattern: '"subagent_type":\s*"(?:[^"]*:)?planning-fitness-reviewer"'
+    min_count: 1
+    weight: 2
+
+  # The size threshold reading kind off the wrong axis is what this catches. A
+  # rollout schedule is prose at any length, and a security reviewer reading
+  # nine hundred lines of it is money spent on a document with no code in it —
+  # the failure a person notices on the bill rather than in the findings.
+  - type: command_executed
+    description: The security reviewer was not dispatched
+    tool_name: Agent
+    command_pattern: '"subagent_type":\s*"(?:[^"]*:)?security-reviewer"'
+    min_count: 0
+    max_count: 0

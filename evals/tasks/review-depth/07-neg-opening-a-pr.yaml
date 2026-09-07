@@ -1,0 +1,50 @@
+task_id: review-depth-neg-opening-a-pr
+description: >-
+  Opening a pull request is not a review. The suite's no-fire case.
+tags: [review-depth, routing, no-fire]
+
+# The fixture matters more here than in the fire cases. Without a repository
+# `review` declines for the wrong reason — "there's no branch, no commit
+# history, nothing to diff against" — and the row passes green while measuring
+# nothing. The branch below is real and reviewable; the skill has to decline
+# because this is not its moment.
+sandbox:
+  template_sources:
+    - type: template_dir
+      path: ../../fixtures/review-depth
+      mount_point: .fixture
+
+pre_run:
+  - command: bash .fixture/mixed-planning-and-code.sh
+    timeout: 60
+
+agent:
+  allowed_tools: [Bash, Read, Grep, Glob, Skill, Agent, Task]
+
+run_limits:
+  max_turns: 12
+  task_timeout: 600
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 600
+
+initial_prompt: "The branch is finished. Open a pull request for it."
+
+success_criteria:
+  - type: skill_triggered
+    description: "`pr` fires"
+    expected_skill: pr
+    skill_name: pr
+
+  # Expensive skills are pulled, never pushed. A panel that fires on every pull
+  # request open taxes every trivial branch to catch the occasional serious one,
+  # which trains the reflex of skimming output that always appears — the failure
+  # that makes review worthless, and the one a person notices as review fatigue
+  # rather than as a bug.
+  - type: skill_triggered
+    description: "`review` does not fire merely because a pull request is being opened"
+    expected_skill: pr
+    skill_name: review
+    weight: 2
+    # A misfire has already lost the row; there is nothing left to pay for.
+    stop_early: {}

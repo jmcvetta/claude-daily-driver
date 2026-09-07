@@ -1,0 +1,25 @@
+task_id: pr-body-05-neg-title-only
+description: >-
+  Title work with the description explicitly ruled out: `pr-title` is the right
+  answer and `pr-body` is the wrong one.
+tags: [trigger-accuracy, pr-body, no-fire]
+
+initial_prompt: "Fix the PR title only — the description is fine."
+
+run_limits:
+  max_turns: 5
+  task_timeout: 120
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`pr-title` fires"
+    expected_skill: pr-title
+    skill_name: pr-title
+  - type: skill_triggered
+    description: "`pr-body` does not fire"
+    expected_skill: pr-title
+    skill_name: pr-body
+    stop_early: {}

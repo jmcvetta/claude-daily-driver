@@ -1,0 +1,24 @@
+task_id: pr-03-mcp-create-pull-request
+description: >-
+  The user names the MCP call rather than the workflow. The skill has to fire
+  on Claude's own route to opening a pull request, not only on the English one.
+tags: [trigger-accuracy, pr, fire]
+
+initial_prompt: >-
+  Raise the pull request on GitHub for this branch — call
+  mcp__github__create_pull_request yourself rather than asking me to.
+
+run_limits:
+  max_turns: 5
+  task_timeout: 120
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`pr` fires when mcp__github__create_pull_request is named"
+    expected_skill: pr
+    skill_name: pr
+    stop_early:
+      on_pass: stop

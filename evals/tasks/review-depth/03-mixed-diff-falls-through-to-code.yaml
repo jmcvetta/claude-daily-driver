@@ -1,0 +1,53 @@
+task_id: review-depth-mixed-diff-falls-through-to-code
+description: >-
+  A branch carrying a planning document AND a source change is code, not
+  planning.
+tags: [review-depth, routing, fire]
+
+sandbox:
+  template_sources:
+    - type: template_dir
+      path: ../../fixtures/review-depth
+      mount_point: .fixture
+
+pre_run:
+  - command: bash .fixture/mixed-planning-and-code.sh
+    timeout: 60
+
+agent:
+  allowed_tools: [Bash, Read, Grep, Glob, Skill, Agent, Task]
+
+run_limits:
+  max_turns: 30
+  task_timeout: 900
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 900
+
+initial_prompt: "Review this branch before I merge it."
+
+success_criteria:
+  - type: skill_triggered
+    description: "`review` fires on an explicit review request"
+    expected_skill: review
+    skill_name: review
+
+  # Planning-class requires EVERY path to be planning-class. One `src/` file
+  # means the branch falls through to code, and the sign-handling fix here is
+  # exactly the kind of change a planning rubric has nothing to say about.
+  - type: command_executed
+    description: The logic reviewer was dispatched
+    tool_name: Agent
+    command_pattern: '"subagent_type":\s*"(?:[^"]*:)?logic-reviewer"'
+    min_count: 1
+    weight: 2
+
+  # The other half of the same claim, and the half that fails loudly if "every
+  # path" quietly becomes "any path": a code change reviewed only for planning
+  # fitness has not been reviewed.
+  - type: command_executed
+    description: The planning-fitness reviewer was not dispatched
+    tool_name: Agent
+    command_pattern: '"subagent_type":\s*"(?:[^"]*:)?planning-fitness-reviewer"'
+    min_count: 0
+    max_count: 0

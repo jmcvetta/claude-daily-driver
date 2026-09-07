@@ -1,0 +1,36 @@
+task_id: pr-body-06-neg-summarise-diff
+description: >-
+  Prose about a diff, in chat, with GitHub explicitly excluded. The work
+  `pr-body` does, minus the artifact it does it to.
+tags: [trigger-accuracy, pr-body, no-fire]
+
+initial_prompt: >-
+  Summarise this diff for me here in chat. No PR, no GitHub — just tell me what
+  changed.
+
+run_limits:
+  max_turns: 5
+  task_timeout: 120
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 120
+
+# As with the commit-message case, `expected_skill: none`: the row passes only
+# if all three stay silent. `pr-title` is the criterion the ported suite did not
+# have.
+success_criteria:
+  - type: skill_triggered
+    description: "`pr-body` does not fire on a chat-only summary"
+    expected_skill: none
+    skill_name: pr-body
+    stop_early: {}
+  - type: skill_triggered
+    description: "`pr` does not fire on a chat-only summary"
+    expected_skill: none
+    skill_name: pr
+    stop_early: {}
+  - type: skill_triggered
+    description: "`pr-title` does not fire on a chat-only summary"
+    expected_skill: none
+    skill_name: pr-title
+    stop_early: {}

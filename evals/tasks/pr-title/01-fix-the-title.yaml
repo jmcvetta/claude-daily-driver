@@ -1,0 +1,20 @@
+task_id: pr-title-01-fix-the-title
+description: The plain request, naming the convention rather than the skill.
+tags: [trigger-accuracy, pr-title, fire]
+
+initial_prompt: "Fix the PR title — it does not follow our convention."
+
+run_limits:
+  max_turns: 5
+  task_timeout: 120
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`pr-title` fires"
+    expected_skill: pr-title
+    skill_name: pr-title
+    stop_early:
+      on_pass: stop

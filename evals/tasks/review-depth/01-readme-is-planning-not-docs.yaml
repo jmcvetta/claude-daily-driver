@@ -1,0 +1,50 @@
+task_id: review-depth-readme-is-planning-not-docs
+description: >-
+  A twenty-line rewrite of the root README routes to the planning panel, not to
+  the docs skim.
+tags: [review-depth, routing, fire]
+
+# `review` needs a repository: a base branch, a topic branch ahead of it, and a
+# remote to diff against. `pre_run` builds one inside the sandbox before the
+# agent starts, and aborts the evaluation if it cannot — see
+# `../../fixtures/review-depth/lib.sh`.
+sandbox:
+  template_sources:
+    - type: template_dir
+      path: ../../fixtures/review-depth
+      mount_point: .fixture
+
+pre_run:
+  - command: bash .fixture/readme-only.sh
+    timeout: 60
+
+agent:
+  allowed_tools: [Bash, Read, Grep, Glob, Skill, Agent, Task]
+
+run_limits:
+  max_turns: 30
+  task_timeout: 900
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 900
+
+initial_prompt: "Review this branch before I merge it."
+
+success_criteria:
+  - type: skill_triggered
+    description: "`review` fires on an explicit review request"
+    expected_skill: review
+    skill_name: review
+
+  # The routing signal, and the only one worth grading: WHICH agents were
+  # dispatched. `README.md` is planning-class and docs-only both, and the
+  # buckets are tested in order — so a routing table that lost that ordering
+  # skims this diff mechanically and the planning reviewer never runs. What a
+  # person notices is a rewritten README reviewed for correctness bugs instead
+  # of for whether the plan in it is any good.
+  - type: command_executed
+    description: The planning-fitness reviewer was dispatched
+    tool_name: Agent
+    command_pattern: '"subagent_type":\s*"(?:[^"]*:)?planning-fitness-reviewer"'
+    min_count: 1
+    weight: 2

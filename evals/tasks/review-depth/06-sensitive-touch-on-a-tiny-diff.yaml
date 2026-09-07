@@ -1,0 +1,43 @@
+task_id: review-depth-sensitive-touch-on-a-tiny-diff
+description: >-
+  Eleven lines of release workflow still get a security reviewer.
+tags: [review-depth, routing, fire]
+
+sandbox:
+  template_sources:
+    - type: template_dir
+      path: ../../fixtures/review-depth
+      mount_point: .fixture
+
+pre_run:
+  - command: bash .fixture/sensitive-tiny.sh
+    timeout: 60
+
+agent:
+  allowed_tools: [Bash, Read, Grep, Glob, Skill, Agent, Task]
+
+run_limits:
+  max_turns: 30
+  task_timeout: 900
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 900
+
+initial_prompt: "Review this branch before I merge it."
+
+success_criteria:
+  - type: skill_triggered
+    description: "`review` fires on an explicit review request"
+    expected_skill: review
+    skill_name: review
+
+  # The whole reason depth stopped being a thing a human chose. This diff is
+  # eleven lines, which is a skim by every size signal there is, and it widens
+  # the permissions on the job that holds the publishing token. Nobody
+  # remembers to ask for a security review on eleven lines; that is the point.
+  - type: command_executed
+    description: The security reviewer was dispatched
+    tool_name: Agent
+    command_pattern: '"subagent_type":\s*"(?:[^"]*:)?security-reviewer"'
+    min_count: 1
+    weight: 2

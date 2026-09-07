@@ -149,10 +149,11 @@ credential requirement starts:
   that the subagent's prompt is *exactly* the main session's context plus the
   original prompt, which is the assertion that catches drift between the two
   injection points. No model, no credentials.
-- **`claude plugin eval evals/`** runs the live half, which is the R2
-  experiment itself: a subagent is asked for a token nobody put in its prompt.
-  Only a real session can prove the harness honours `updatedInput`, and a
-  credentialed run is the price of asking.
+- **`make evals-run TASKS='tasks/constitution/*.yaml'`** runs the live half,
+  which is the R2 experiment itself: a subagent is asked for a token nobody put
+  in its prompt. Only a real session can prove the harness honours
+  `updatedInput`, and a credentialed run is the price of asking. See
+  [`evals/README.md`](evals/README.md).
 
 They fail for different reasons and deserve to fail separately: the first
 tests this plugin, the second tests an assumption about the harness that a

@@ -1,0 +1,24 @@
+task_id: pr-body-03-mcp-update-body
+description: >-
+  The MCP route. The same call as `pr-title`'s MCP case, pointed at the other
+  field.
+tags: [trigger-accuracy, pr-body, fire]
+
+initial_prompt: >-
+  Update the body of the open pull request — call mcp__github__update_pull_request
+  yourself.
+
+run_limits:
+  max_turns: 5
+  task_timeout: 120
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`pr-body` fires when mcp__github__update_pull_request is named for a body"
+    expected_skill: pr-body
+    skill_name: pr-body
+    stop_early:
+      on_pass: stop

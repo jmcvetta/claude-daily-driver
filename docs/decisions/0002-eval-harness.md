@@ -1,9 +1,15 @@
 # The eval harness: `coder_eval`, not `claude plugin eval`
 
-**Status:** decided, 2026-09-07. Nothing ported yet.
+**Status:** decided, 2026-09-07; ported, 2026-09-07.
 **Supersedes:** the harness assumptions in
 [`0001`](0001-built-in-review-surface.md) and in `evals/README.md`, both of
 which take `claude plugin eval` as given.
+
+> **Read ["Corrected by the port"](#corrected-by-the-port) first.** Two claims
+> below about what `coder_eval` cannot do are wrong, and the correction changed
+> how much of the old suite had to be redesigned. They are left in place rather
+> than edited away: the decision was made on them, and what a decision was made
+> on is the thing a decision record is for.
 
 `evals/` currently holds four suites written for `claude plugin eval`
 (`pr`, `pr-title`, `pr-body`, `constitution-reaches-subagent`). **None of them
@@ -188,3 +194,38 @@ that as reported-not-preserved.
 - CI gating stays out of scope for now, but is no longer foreclosed: it was only
   ever blocked by CI having no credentials, which is a separate decision from
   which harness runs the cases.
+
+
+## Corrected by the port
+
+The port (issue #37) contradicted this page twice. Both corrections are in
+`coder_eval` 0.11.6, read off the source rather than inferred from the docs.
+
+**`command_executed` is the generic tool-call criterion.** This page says it
+"matches shell commands off command telemetry, so it cannot see a `Skill` call
+at all", and concludes that `tool_used` on `Agent` has no equivalent. It filters
+on `tool_name` for **any** tool and, off `Bash`, matches `command_pattern`
+against the JSON-serialised tool parameters; the Claude Code adapter records one
+telemetry row per `tool_use` block, `Agent` included. So `tool_used` on `Agent` —
+`input_match` and all — ports directly, and
+`evals/constitution-reaches-subagent/` lost **one** grader to redesign, not
+three. The narrow claim that survives is about `skill_triggered`, which does
+count only `Skill` invocations.
+
+That correction is also what makes the rebuilt `review-depth` suite possible on
+this harness: a criterion matching `"subagent_type": "security-reviewer"` inside
+an `Agent` call grades the dispatch itself, which is precisely the thing the
+dropped draft failed to grade.
+
+**A sandbox can be given a git repository.** This page records a `tempdir` with
+no repository as the reason the verification task scored 0 in both arms, and
+issue #37 carries the shape of the repository as its main unknown.
+`TaskDefinition.pre_run` answers it: a shell command run inside the sandbox
+after setup and before the agent, which aborts the evaluation on a non-zero
+exit. `git init`, a bare `origin` on local disk, a base branch and a pushed
+topic branch are all reachable from there, and a fixture that fails to build
+stops the run instead of scoring a misleading 0.
+
+**Unchanged:** `regex` on `last_message` still has no deterministic equivalent,
+and that is what forced the one genuine redesign — the subagent now writes its
+answer to a file, read by `file_matches_regex`.

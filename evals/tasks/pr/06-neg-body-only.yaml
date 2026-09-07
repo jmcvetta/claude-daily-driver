@@ -1,0 +1,25 @@
+task_id: pr-06-neg-body-only
+description: >-
+  Body work: `pr-body` is the right answer and `pr` is the wrong one, on a
+  phrasing that shares every noun with `pr`'s own cases.
+tags: [trigger-accuracy, pr, no-fire]
+
+initial_prompt: "Rewrite the description on the pull request. Nothing else changes."
+
+run_limits:
+  max_turns: 5
+  task_timeout: 120
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`pr-body` fires"
+    expected_skill: pr-body
+    skill_name: pr-body
+  - type: skill_triggered
+    description: "`pr` does not fire"
+    expected_skill: pr-body
+    skill_name: pr
+    stop_early: {}

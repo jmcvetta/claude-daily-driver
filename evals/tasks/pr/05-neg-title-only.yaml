@@ -1,0 +1,30 @@
+task_id: pr-05-neg-title-only
+description: >-
+  Title work, drawn from the adjacent skill rather than from unrelated work:
+  `pr-title` is the right answer and `pr` is the wrong one.
+tags: [trigger-accuracy, pr, no-fire]
+
+initial_prompt: >-
+  The PR title says "stuff". Fix just the title — leave the description alone.
+
+run_limits:
+  max_turns: 5
+  task_timeout: 120
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`pr-title` fires"
+    expected_skill: pr-title
+    skill_name: pr-title
+    # Not armed: a pass here must not truncate the run, or `pr` firing
+    # afterwards would go unobserved and the row would score green.
+  - type: skill_triggered
+    description: "`pr` does not fire"
+    expected_skill: pr-title
+    skill_name: pr
+    # Armed. A misfire has already lost the row, so there is nothing left to
+    # pay for.
+    stop_early: {}

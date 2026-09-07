@@ -1,0 +1,35 @@
+task_id: pr-title-06-neg-commit-message
+description: >-
+  A commit message. Adjacent enough to be tempting — it is a one-line summary
+  of a change, under a convention — and none of the three skills owns it.
+tags: [trigger-accuracy, pr-title, no-fire]
+
+initial_prompt: "Write a git commit message for the changes I have staged."
+
+run_limits:
+  max_turns: 5
+  task_timeout: 120
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 120
+
+# `expected_skill: none` names no skill in this plugin, so every criterion below
+# is a distractor and the row passes only in silence. The third one is new
+# against the ported suite: `pr-body` was never asserted absent here, and a
+# commit message is exactly the prose-writing request it might reach for.
+success_criteria:
+  - type: skill_triggered
+    description: "`pr-title` does not fire on a commit message"
+    expected_skill: none
+    skill_name: pr-title
+    stop_early: {}
+  - type: skill_triggered
+    description: "`pr` does not fire on a commit message"
+    expected_skill: none
+    skill_name: pr
+    stop_early: {}
+  - type: skill_triggered
+    description: "`pr-body` does not fire on a commit message"
+    expected_skill: none
+    skill_name: pr-body
+    stop_early: {}

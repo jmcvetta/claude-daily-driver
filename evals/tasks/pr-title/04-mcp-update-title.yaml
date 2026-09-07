@@ -1,0 +1,24 @@
+task_id: pr-title-04-mcp-update-title
+description: >-
+  The MCP route. `mcp__github__update_pull_request` sets the title and the body
+  alike, so naming it settles nothing on its own — the request does.
+tags: [trigger-accuracy, pr-title, fire]
+
+initial_prompt: >-
+  Set the title on the open pull request — call mcp__github__update_pull_request
+  yourself with the corrected title.
+
+run_limits:
+  max_turns: 5
+  task_timeout: 120
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`pr-title` fires when mcp__github__update_pull_request is named for a title"
+    expected_skill: pr-title
+    skill_name: pr-title
+    stop_early:
+      on_pass: stop

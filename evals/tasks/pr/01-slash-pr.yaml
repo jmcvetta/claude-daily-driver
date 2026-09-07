@@ -1,0 +1,22 @@
+task_id: pr-01-slash-pr
+description: The literal slash command. Nothing else is being asked for.
+tags: [trigger-accuracy, pr, fire]
+
+initial_prompt: "/pr"
+
+run_limits:
+  max_turns: 5
+  task_timeout: 120
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`pr` fires on the literal /pr"
+    expected_skill: pr
+    skill_name: pr
+    # Nothing left to observe once it has fired, and this row has no
+    # distractor whose absence still needs the rest of the run to establish.
+    stop_early:
+      on_pass: stop

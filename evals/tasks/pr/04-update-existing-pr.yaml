@@ -1,0 +1,24 @@
+task_id: pr-04-update-existing-pr
+description: >-
+  An existing pull request being brought up to date — still `pr`'s moment, and
+  the phrasing closest to `pr-body`'s.
+tags: [trigger-accuracy, pr, fire]
+
+initial_prompt: >-
+  There is already a PR open for this branch. Bring it up to date with what is
+  on the branch now.
+
+run_limits:
+  max_turns: 5
+  task_timeout: 120
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`pr` fires when an open pull request is being updated"
+    expected_skill: pr
+    skill_name: pr
+    stop_early:
+      on_pass: stop

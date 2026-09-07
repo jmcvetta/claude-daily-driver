@@ -11,7 +11,7 @@ credential requirement actually starts, and this is the half below that line:
   credentials. It catches every cause listed under R1: a bad path, an empty or
   unreadable constitution, malformed event JSON, a nonzero exit, output that
   is not JSON.
-- **`evals/constitution-reaches-subagent/`**: the live half. Only a real
+- **`evals/tasks/constitution/`**: the live half. Only a real
   session can prove the harness *honours* `updatedInput`, which is the R2
   finding proper, and only a real model can be asked what it was told.
 
@@ -50,9 +50,9 @@ TOKEN_LINE = re.compile(r"^constitution-token: (\S+)$")
 
 # A *stale* token is by definition not the one that ships, so the guard that
 # hunts for one cannot go by the token's value, and it must not go by the
-# `constitution-token:` label either: the control grader embeds the bare token
-# in `input_match` and never says the word, which is exactly the file whose
-# staleness matters most -- its `max: 0` leak control would go on matching a
+# `constitution-token:` label either: the leak control embeds the bare token in
+# a `command_pattern` and never says the word, which is exactly the criterion
+# whose staleness matters most -- its `max_count: 0` would go on matching a
 # retired value and pass vacuously. So the guard goes by the token's shape.
 TOKEN_SHAPE = re.compile(r"\b[a-z]+(?:-[a-z]+)+-\d+\b")
 
@@ -385,13 +385,49 @@ def check_one_loud_failure(errors: list[str], label: str, content: bytes | None)
                 )
 
 
+def top_level_blocks(text: str) -> dict[str, str]:
+    """Split a task YAML into its top-level keys, without a YAML parser.
+
+    `check_eval_token` needs exactly two things out of a case file — the prompt
+    the model is sent, and the criteria it is scored by — and those are two
+    column-0 keys. A real parser would be more correct and would cost this
+    script the "no third-party imports" property that lets it run identically
+    from a Makefile, from CI and from a web worker. Recognising a top-level key
+    is a job for a regex.
+
+    Text before the first top-level key is the file's comment header, and is
+    dropped deliberately: a comment is not sent to a model, so the rule about
+    prompts naming the token has nothing to say about it.
+    """
+    blocks: dict[str, str] = {}
+    key: str | None = None
+    lines: list[str] = []
+    for line in text.splitlines(keepends=True):
+        match = re.match(r"^([A-Za-z_][A-Za-z0-9_]*):", line)
+        if match:
+            if key is not None:
+                blocks[key] = "".join(lines)
+            key, lines = match.group(1), [line]
+        elif key is not None:
+            lines.append(line)
+    if key is not None:
+        blocks[key] = "".join(lines)
+    return blocks
+
+
 def check_eval_token(errors: list[str], expected: str) -> None:
     """The live half asserts on the same token this half reads.
 
     The token is written twice by necessity — once in the constitution, once in
-    the grader that looks for it coming back — and two copies of a constant is
-    how the live suite comes to be quietly testing last month's token. Any eval
-    file that talks about the token has to name the current one.
+    the criterion that looks for it coming back — and two copies of a constant
+    is how the live suite comes to be quietly testing last month's token. Any
+    eval file that talks about the token has to name the current one.
+
+    Under `claude plugin eval` the prompt and the graders were separate files,
+    so "only a grader may name the token" was a rule about directories. A
+    `coder_eval` task is one file holding both, so it is now a rule about which
+    top-level key the token appears under: `success_criteria` must name it,
+    `initial_prompt` must not.
     """
     if not EVALS.is_dir():
         errors.append(
@@ -408,37 +444,41 @@ def check_eval_token(errors: list[str], expected: str) -> None:
         )
 
     asserted = False
-    for path in sorted(EVALS.rglob("*.md")):
+    for path in sorted(EVALS.rglob("*.yaml")):
         text = path.read_text(encoding="utf-8")
         where = path.relative_to(ROOT)
-        if path.parent.name == "graders":
-            stale = sorted(set(TOKEN_SHAPE.findall(text)) - {expected})
-            if stale:
-                errors.append(
-                    f"{where}: names {', '.join(stale)}, which is not the "
-                    f"token that ships ({expected}); the live suite would be "
-                    f"testing a token that no longer exists"
-                )
-            elif expected in text:
-                asserted = True
-            elif "constitution-token" in text:
-                errors.append(
-                    f"{where}: talks about the constitution token without "
-                    f"naming the current one ({expected})"
-                )
-        elif expected in text:
+        blocks = top_level_blocks(text)
+        criteria = blocks.get("success_criteria", "")
+        prompt = blocks.get("initial_prompt", "")
+
+        stale = sorted(set(TOKEN_SHAPE.findall(criteria)) - {expected})
+        if stale:
+            errors.append(
+                f"{where}: names {', '.join(stale)}, which is not the "
+                f"token that ships ({expected}); the live suite would be "
+                f"testing a token that no longer exists"
+            )
+        elif expected in criteria:
+            asserted = True
+        elif "constitution-token" in criteria:
+            errors.append(
+                f"{where}: talks about the constitution token without "
+                f"naming the current one ({expected})"
+            )
+
+        if expected in prompt:
             # A prompt that spells the token out hands the parent the answer,
             # and a live run that then "passes" has measured nothing.
             errors.append(
-                f"{where}: contains the token itself. Only the graders may "
-                f"name it; a case prompt that does is telling the session "
-                f"what the subagent was supposed to have been told."
+                f"{where}: initial_prompt contains the token itself. Only "
+                f"success_criteria may name it; a prompt that does is telling "
+                f"the session what the subagent was supposed to have been told."
             )
 
     if not asserted:
         errors.append(
-            f"no grader under {EVALS.relative_to(ROOT)}/ asserts on the "
-            f"constitution token, so the live half proves nothing"
+            f"no success_criteria under {EVALS.relative_to(ROOT)}/ asserts on "
+            f"the constitution token, so the live half proves nothing"
         )
 
 

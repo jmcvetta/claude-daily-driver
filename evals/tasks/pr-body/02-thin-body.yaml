@@ -1,0 +1,22 @@
+task_id: pr-body-02-thin-body
+description: >-
+  The complaint rather than the instruction: what is wrong with the body, with
+  the fix left implicit.
+tags: [trigger-accuracy, pr-body, fire]
+
+initial_prompt: "The PR body is thin. Add the engineering detail a reviewer would want."
+
+run_limits:
+  max_turns: 5
+  task_timeout: 120
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`pr-body` fires on a thin body"
+    expected_skill: pr-body
+    skill_name: pr-body
+    stop_early:
+      on_pass: stop

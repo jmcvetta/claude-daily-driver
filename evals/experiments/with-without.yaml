@@ -1,0 +1,74 @@
+# The ablation every suite here is measured under: this plugin loaded, against
+# the same session without it.
+#
+# **Pass it with `-e` every time.** A wheel install of `coder-eval` resolves its
+# `--experiment` default to the *packaged* `default_experiment.yaml` and never
+# looks in the working directory, so an experiment file left un-named is an
+# experiment that does not run: the tasks execute as a single unlabelled arm on
+# `coder-eval`'s own stale defaults, and the ablation silently is not measured.
+# `make evals-plan` / `make evals-run` pass it.
+#
+# Every criterion is scored in **both** variants. That is the point, and it is
+# what the old `arm: both` frontmatter existed to force: a fire case's delta is
+# the whole signal — 1 with the plugin, 0 without it, because without it there
+# is no skill to fire. A harness that scored only the treated arm would report
+# a number with nothing to compare it to.
+
+experiment_id: with-without
+description: >-
+  Trigger accuracy, constitution delivery and review-depth routing, with the
+  daily-driver plugin loaded and without it.
+
+defaults:
+  # Their default is 1. One replicate of a non-deterministic agent is an
+  # anecdote: 3/3 — the old suites' `runs: 3` — still only supports a ~[0.37,
+  # 1.0] confidence interval on the rate. 5 is the floor at which the
+  # per-replicate scores in the report are worth reading.
+  repeats: 5
+
+  run_limits:
+    # A per-task ceiling, not a target; every task restates both timeouts with
+    # what it actually needs. `turn_timeout` is the one that binds — for a
+    # single-shot task it IS the agent's budget, and a larger `task_timeout`
+    # cannot extend it — so the two are kept equal wherever they appear.
+    max_turns: 30
+    task_timeout: 600
+    turn_timeout: 600
+
+  agent:
+    type: claude-code
+
+    # `coder-eval` 0.11.6 defaults this to `claude-sonnet-4-6`, which is stale.
+    # Pinned so a report says which model produced it, and so the arms differ
+    # only in whether the plugin is loaded.
+    model: claude-sonnet-5
+
+    permission_mode: acceptEdits
+
+    # Deliberately narrow, and widened per task. Trigger accuracy is about
+    # which skill loads, so `Skill` alone is the whole surface those tasks
+    # need; the review-depth tasks that must drive git and dispatch a panel
+    # restate this field with what they actually use.
+    allowed_tools: [Skill]
+
+variants:
+  # The baseline. Nothing loaded — the skills, the agents and the
+  # constitution-delivery hooks are all absent, so every positive criterion
+  # here is expected to score 0. That is the control, not a failure.
+  - variant_id: bare
+    description: A session with no plugin loaded.
+    agent:
+      plugins: []
+
+  # The treated arm. `path` must be the PLUGIN ROOT — the directory holding
+  # `skills/`, `agents/` and `hooks/` — and it is resolved against the process
+  # working directory, so **run `coder-eval` from `evals/`** (`make evals-plan`
+  # and `make evals-run` do). Pointed one level deeper the SDK loads nothing,
+  # with no error, and every positive row scores 0 exactly as if the skills
+  # never fired; `plan` prints the resolved path, so read it.
+  - variant_id: with-plugin
+    description: The same session with the daily-driver plugin loaded.
+    agent:
+      plugins:
+        - type: local
+          path: ".."

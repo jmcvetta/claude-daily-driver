@@ -1,0 +1,27 @@
+task_id: pr-title-05-neg-body-only
+description: >-
+  Body work with the title explicitly ruled out: `pr-body` is the right answer
+  and `pr-title` is the wrong one.
+tags: [trigger-accuracy, pr-title, no-fire]
+
+initial_prompt: >-
+  The PR description is thin — add the engineering detail. The title is fine as
+  it stands.
+
+run_limits:
+  max_turns: 5
+  task_timeout: 120
+  # The agent's real budget for a single-shot task is `turn_timeout`; a larger
+  # `task_timeout` cannot extend it. Kept equal so one number means one thing.
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`pr-body` fires"
+    expected_skill: pr-body
+    skill_name: pr-body
+  - type: skill_triggered
+    description: "`pr-title` does not fire"
+    expected_skill: pr-body
+    skill_name: pr-title
+    stop_early: {}
