@@ -1,16 +1,18 @@
 ---
 name: judgement-call
 description: >-
-  This skill should be used at the moment the user is about to be asked to
-  choose between options — on Claude's own use of `AskUserQuestion`, and on any
-  reply about to open with "Would you like me to…", "Which approach do you
-  prefer?", "Should I…, or…?" or a numbered menu of alternatives — and when the
-  user says "/judgement-call", "just decide", "you pick", "use your judgement"
-  or "stop asking me". Supplies the test that separates a question only the
-  user can answer from one Claude can answer himself, and the rule that answers
-  the second kind. It never waives a confirmation the constitution or another
-  skill requires, and never covers an irreversible, destructive or
-  outward-facing action.
+  This skill should be used at the moment a choice between ways of doing the
+  same task is about to be put to the user — on Claude's own use of
+  `AskUserQuestion`, on a reply about to offer alternatives where one is
+  quicker or less complete than another ("fix it properly, or leave a TODO?"),
+  and when the user hands such a choice back ("which is it?", "properly or a
+  TODO?"). It also fires on "/judgement-call", "just decide", "you pick", "use
+  your judgement" and "stop asking me". Supplies the test that separates a
+  question only the user can answer from one Claude can answer himself, and the
+  rule that answers the second kind. Not on a confirmation another rule already
+  requires — `issue-deps`'s edge confirmation, `review`'s walkthrough offer,
+  the constitution's discussion before a workaround — and never on an
+  irreversible, destructive or outward-facing action.
 ---
 
 # Judgement Call
@@ -32,6 +34,10 @@ Before asking the user to choose, answer one question first:
 
 Where the answer is yes, make it, say which way it went in a line, and carry
 on. There was no question — only a decision waiting to be taken.
+
+The moment arrives from either direction: a menu about to be offered, or one
+the user has already offered — "properly, or a TODO?" is the same choice, and
+the same test settles it.
 
 
 The rule
@@ -84,8 +90,9 @@ genuinely does not settle it:
   skill. They are confirmed, every time.
 - **Scope.** Doing materially more, less, or other than what was asked.
 - **A confirmation another rule requires.** `issue-deps` writes an edge only on
-  confirmation; the constitution discusses an unavoidable workaround before
-  writing it. This skill does not override any of them.
+  confirmation, `review` offers its walkthrough before applying anything, and
+  the constitution discusses an unavoidable workaround before writing it. This
+  skill overrides none of them.
 
 Its failure mode is the mirror of the one it exists to fix: deciding something
 that was the user's to decide, quietly, and reporting it as done. When the

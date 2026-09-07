@@ -21,7 +21,7 @@ hook — plus skills that fire on activity:
 | `pr-threads` | The review-thread lifecycle for any reviewer: reply with a verdict, resolve, re-resolve a repeat finding, never leave a thread open silently — plus the comment minimisation the GitHub MCP does not expose. |
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
 | `review` | Reviews a branch or pull request with a panel of reviewer agents, infers how deep to go from the diff itself, walks the findings through with you, and posts the result in verse. |
-| `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. What survives the gate is intent, a real trade-off, and anything irreversible. |
+| `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. What survives the gate is intent, a real trade-off, scope, and anything irreversible. |
 
 Three PR skills rather than one because skill names are flat within a plugin,
 so siblings can be triggered independently: a decision to rewrite a PR body
@@ -41,9 +41,9 @@ fallback on a harness that still reaches for them; `pr-threads` takes the reply
 and resolve tools and `get_review_comments`; `review` takes the moments before
 a branch is declared ready, marked non-draft, or sent to a reviewer;
 `issue-deps` takes the GitHub MCP's sub-issue and issue-read tools; and
-`judgement-call` takes `AskUserQuestion`. That last register is the point: a
-convention that only fires when a human types a command quietly stops applying
-as more of the work runs without one.
+`judgement-call` takes `AskUserQuestion`. Those tool-call registers are the
+point: a convention that only fires when a human types a command quietly stops
+applying as more of the work runs without one.
 
 Naming the MCP tools is also a stronger trigger than naming `gh pr create` is —
 an exact tool name where the fallback is, in effect, a regex over a bash
@@ -68,12 +68,13 @@ gets skimmed, and a draft PR opens the conversation rather than ending the
 work. And its poetry attaches only to the comment it posts, never to the
 findings: a finding someone has to act on is prose.
 
-`judgement-call` is the odd one out: it fires on Claude being about to speak
-rather than on a tool being about to run. Its register is `AskUserQuestion` and
-the sentences that precede it — "Would you like me to…", "Which approach do you
-prefer?" — because the thing it exists to stop is a menu of one correct option
-and several hacks, which costs a round trip to answer with the standard that
-was never in doubt. The rule it applies is the constitution's own — correct
+`judgement-call` is the odd one out: it fires on a question about to be asked
+rather than on a repository operation about to run. Its register is
+`AskUserQuestion` and the sentences that stand in for it, because the thing it
+exists to stop is a menu of one correct option and several hacks, which costs a
+round trip to answer with the standard that was never in doubt. The register is
+deliberately not every offer of next steps — an offer to do *more* is a scope
+question, and scope is the user's. The rule it applies is the constitution's own — correct
 beats quick, no workarounds — and the boundary is the interesting half: intent,
 a genuine trade-off, scope, and anything irreversible still go to the user, and
 no confirmation another skill requires is waived by it.
@@ -112,13 +113,13 @@ claude-daily-driver/
 │   ├── pr-threads/
 │   │   ├── SKILL.md
 │   │   └── scripts/        the comment-minimisation path the MCP lacks
-│   ├── judgement-call/SKILL.md
 │   ├── issue-deps/
 │   │   ├── SKILL.md
 │   │   └── scripts/        plugin runtime, owned by the skill beside it
-│   └── review/
-│       ├── SKILL.md
-│       └── references/     the review guidelines, passed to every agent
+│   ├── review/
+│   │   ├── SKILL.md
+│   │   └── references/     the review guidelines, passed to every agent
+│   └── judgement-call/SKILL.md
 └── template/.claude/       copied into a repository to enable the plugin
 ```
 
