@@ -429,8 +429,8 @@ Boundaries
   The description fires this skill before a draft is marked ready; where the
   diff being marked ready is one this skill has already reviewed, that reading
   is done. Commits made since only to answer findings, threads or a red check
-  do not make it a new diff — commits that change what the code does, do. This
-  is the other half of the rule `implement` states at its step 9; both files
-  say it so that neither reading leaves the branch reviewed twice.
+  do not make it a new diff — commits that change what the code does, do.
+  `implement` states the same rule at its step 9, so that a branch it drove is
+  not reviewed twice on the day this skill comes back from the attic.
 - Never post to GitHub during the analysis and display phases.
 - Reading project files, and read-only commands over them, need no permission.

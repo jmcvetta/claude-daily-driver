@@ -21,7 +21,7 @@ hook — plus skills that fire on activity:
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
 | `session-title` | Names the session in the Claude web and mobile lists: a forty-character budget, chosen rather than measured, `#123 shortened issue title` while an issue is in hand, a short noun phrase otherwise. |
 | `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. What survives the gate is intent, a real trade-off, scope, and any confirmation another rule requires. |
-| `implement` | Takes an issue from its description to a pull request ready for review: the order of the nine steps, the gates between them, and the rule that stops the branch being reviewed twice. Invokes the skills above, directly or through `pr`, and holds nothing they hold. |
+| `implement` | Takes an issue from its description to a pull request ready for review: the order of the nine steps, the gates between them, and the rule that stops the branch being reviewed twice. Invokes the skills above, directly or through `pr`, and leans on the built-in `/code-review` where `review` used to sit. |
 
 Three PR skills rather than one because skill names are flat within a plugin,
 so siblings can be triggered independently: a decision to rewrite a PR body
