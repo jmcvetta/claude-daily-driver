@@ -121,10 +121,14 @@ After step 2 rather than before it, because the edges decide whether there is
 anything to claim: a blocked issue stops at step 2, and a claim on work that
 is not starting is a false record.
 
-Beyond the claim itself the comment carries two things, both read from
-`mcp__Claude_Code_Remote__get_session` — the call `session-title` documents,
-on the one surface it says supplies it:
+Beyond the claim itself the comment carries three things:
 
+- **The branch** the work will be committed on, named before it is cut. A
+  reader of the issue can otherwise reach the session but not the code: until
+  the pull request opens at step 7 nothing on GitHub ties the issue to a
+  branch, and the whole implementation happens inside that window. Step 4 owns
+  where the name comes from; this step announces it, and step 4 is bound to
+  what was announced.
 - **The model that served the turn** — `external_metadata.last_served_model`,
   which is what actually ran and moves with a fallback that leaves the rest of
   the session untouched. Where `session_context.model` or `configured_model`
@@ -136,9 +140,14 @@ on the one surface it says supplies it:
   call's session id. The identifier is what the reader needs; the link is that
   identifier and somewhere to go with it.
 
+The model and the session are read from `mcp__Claude_Code_Remote__get_session`
+— the call `session-title` documents, on the one surface it says supplies it —
+and so is the branch, where the harness designated one.
+
 Where that call is unavailable the comment still goes up, and says the surface
 supplied neither. `session-title` stops there because a title it cannot set is
-nothing; a claim that names no model is still a claim.
+nothing; a claim that names no model is still a claim. The branch is not lost
+with them: step 4's third source needs nothing but the issue.
 
 **Once per session, not once per run.** A sequence re-entered — its blocker
 cleared, the issue handed over again — does not claim what it has claimed
@@ -154,6 +163,24 @@ Off the base branch, never off whatever happens to be checked out. `pr` guards
 against opening a pull request from `master`; the guard belongs *here* too,
 before a line of code is written rather than after — a branch cut from the
 wrong place is cheap to fix at step 4 and expensive at step 7.
+
+The *name* is settled one step earlier, because step 3 announced it. This step
+uses the announced name and does not choose a fresh one — a claim naming a
+branch nobody pushed to is worse than a claim naming none. Three sources, in
+this order:
+
+1. **The branch the harness designated for this session**, where it designated
+   one. `mcp__Claude_Code_Remote__get_session` reports it at
+   `session_context.outcomes[].git_repository.git_info.branches`. Nothing is
+   chosen here: a web worker refuses a push anywhere else.
+   `external_metadata.current_branches` is a different field and answers a
+   different question — what is checked out, which before this step need not
+   be the designated branch.
+2. **The project's own convention**, where it documents one.
+3. **`issue-<number>-<slug>`**, failing both. The number leads for the reason
+   `session-title` gives it the lead in a session title: it is the identifier
+   a reader matches a branch against. The slug is two or three words from the
+   issue title.
 
 5 — Implement
 -------------
