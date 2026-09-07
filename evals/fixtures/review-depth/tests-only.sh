@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
-# Test files and nothing else, and comfortably over the fifty-line Skim
-# threshold so that *kind* is what decides the depth. Under fifty lines this
-# case would route to Skim on size no matter which bucket tests land in, and
-# would measure nothing.
+# Rewrites the test module. Nothing else changes.
 # shellcheck source=./lib.sh
 source "$(dirname "$0")/lib.sh"
 # shellcheck source=./_common_base.sh

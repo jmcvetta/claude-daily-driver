@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# A planning document AND a source file. Not every path is planning-class, so
-# the kind falls through to Code — and the diff is over fifty lines, so the
-# depth is decided by that fall-through rather than by size.
+# Adds a planning document and rewrites a source module.
 # shellcheck source=./lib.sh
 source "$(dirname "$0")/lib.sh"
 # shellcheck source=./_common_base.sh

@@ -91,6 +91,19 @@ check_one() {
 	[ ! -s "${sandbox}/.fixture/dispatched.txt" ] ||
 		fail "${name}" "the dispatch roster is not empty before the agent has run"
 
+	# The recorder is invoked from a PreToolUse hook, where its failure is
+	# invisible twice over: `|| true` in the hook command stops a broken
+	# recorder from vetoing the dispatch it watches, and an empty roster then
+	# reads exactly like a routing table that dispatched nobody. So it is
+	# exercised here, against the copy the sandbox would actually get, and the
+	# roster is put back the way the agent must find it.
+	echo '{"tool_input":{"subagent_type":"check-eval-fixtures-probe"}}' |
+		python3 "${sandbox}/.fixture/record-dispatch.py" ||
+		fail "${name}" "the dispatch recorder exited non-zero; in a run its hook would have nothing to record"
+	grep -qx 'check-eval-fixtures-probe' "${sandbox}/.fixture/dispatched.txt" ||
+		fail "${name}" "the dispatch recorder ran but wrote no roster line"
+	: >"${sandbox}/.fixture/dispatched.txt"
+
 	local lines bounds min max
 	lines="$(git diff --numstat "${base}...HEAD" | awk '{a += $1 + $2} END {print a + 0}')"
 	bounds="$(case_bounds "${name}")"

@@ -28,11 +28,14 @@ defaults:
 
   run_limits:
     # A per-task ceiling, not a target; every task restates both timeouts with
-    # what it actually needs. `turn_timeout` is the one that binds — for a
-    # single-shot task it IS the agent's budget, and a larger `task_timeout`
-    # cannot extend it — so the two are kept equal wherever they appear.
+    # what it actually needs. They are two different clocks and must not be set
+    # equal: `turn_timeout` is the agent's budget, while `task_timeout` is a
+    # watchdog armed before the turn starts that is still running when the
+    # criteria are checked. Equal, a turn that spends its budget is SIGKILLed
+    # as a TIMEOUT before it can be graded. The 180s gap is the grading window,
+    # and it is inherited by any task that omits this block.
     max_turns: 30
-    task_timeout: 600
+    task_timeout: 780
     turn_timeout: 600
 
   agent:

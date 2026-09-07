@@ -144,8 +144,9 @@ name out of the tool input as a regex, so `pr` had to be written `(:|")pr"` to
 avoid matching `pr-title`. `skill_name` is an exact match against the set of
 engaged skills, plugin namespace stripped, so that class of near-miss is gone.
 
-Each row carries an `expected_skill`: the ground truth for that row, repeated
-on every criterion. What it does today is set the polarity — a criterion passes
+Each `skill_triggered` row carries an `expected_skill`: the ground truth for
+that row, repeated on every criterion of that type. (`review-depth` 01–06 have
+none — they are graded entirely on the dispatch roster.) What it does today is set the polarity — a criterion passes
 when the skill's engagement matches whether `expected_skill` names it — and
 `none` is a legitimate value, which is what the "neither of these should fire"
 rows use.
@@ -240,6 +241,34 @@ the argument it passed to the tool.
 The roster is created empty by the fixture, so a `must_match: false` criterion
 reads "nothing was dispatched" instead of erroring on a missing file — which is
 the entire `bare` arm.
+
+**What it proves, exactly.** `PreToolUse` fires before the tool resolves
+`subagent_type`, so a roster line is a dispatch *requested*, not a subagent
+confirmed to have run. A `review` that asks for `security-reviewer` under a name
+the session cannot resolve records the line anyway. That is the routing decision
+— which is what these cases grade — but it is not proof the reviewer ran, and no
+criterion here claims otherwise. The old `command_executed`-on-`Agent` shape had
+the same property, for the same reason.
+
+**Two things the hook must never do**, both guarded rather than asserted in
+prose. A `PreToolUse` hook that exits non-zero *blocks* the tool call, so a
+recorder that failed would not merely lose the roster — it would veto every
+dispatch, in both arms, and report a routing table that dispatched nobody. The
+hook command is therefore absolute (via `$CLAUDE_PROJECT_DIR`, which Claude Code
+puts in every hook's environment) and ends in `|| true`. And because `|| true`
+would then hide a genuinely broken recorder behind an empty roster,
+`scripts/check-eval-fixtures.sh` runs the recorder against the copy the sandbox
+would get and fails `make check` if it does not record.
+
+The hook also writes nothing to stdout, so it cannot contest the `updatedInput`
+returned by the plugin's own `PreToolUse` hook on the same event.
+
+**None of this reasoning lives in `fixtures/review-depth/`**, and that is
+deliberate: that directory is mounted at `.fixture/` inside the sandbox, and the
+agent under test has `Read`, `Grep`, `Glob` and `Bash`. A comment there saying
+what a case expects is an answer key one `cat` away. The fixtures carry
+mechanics; the claims live here and in the task YAML, neither of which the
+sandbox can see.
 
 The upstream fixes that would retire this: make the truncation bound
 configurable, or render `subagent_type` in the judge's tool-call summary.

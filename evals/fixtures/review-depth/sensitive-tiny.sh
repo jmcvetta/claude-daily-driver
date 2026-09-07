@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Eleven lines of release workflow. Small, and it holds the token that publishes
-# the package.
+# Rewrites the release workflow under .github/workflows/.
 # shellcheck source=./lib.sh
 source "$(dirname "$0")/lib.sh"
 # shellcheck source=./_common_base.sh

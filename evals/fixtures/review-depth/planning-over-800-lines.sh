@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# A planning document long enough to trip the size threshold on its own. Kind
-# is read before size, and prose is prose at any length.
+# Adds a long planning document under docs/planning/.
 # shellcheck source=./lib.sh
 source "$(dirname "$0")/lib.sh"
 # shellcheck source=./_common_base.sh

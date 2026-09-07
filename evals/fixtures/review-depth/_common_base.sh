@@ -2,9 +2,11 @@
 # Not a case. The base-branch tree every case starts from, so the cases differ
 # only in the diff they put on top of it.
 #
-# Nothing here contains the substring `skills/` or the name of any reviewer
-# agent: both would be read back out of tool telemetry by the criteria and
-# scored as a skill engagement or a dispatch that never happened.
+# Nothing here contains the substring `skills/`. `skill_triggered` scans every
+# string parameter of every tool for `skills/<name>/`, so a fixture file naming
+# such a path would be scored as engaging that skill the moment the agent read
+# it. Reviewer names are safe — the roster is written from `subagent_type`, not
+# matched out of file content — but there is no reason to put them here either.
 
 fixture_write_base_tree() {
 	mkdir -p src tests docs/planning .github/workflows

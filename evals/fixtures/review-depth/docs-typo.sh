@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# One word in one documentation file: the smallest diff this suite has, and the
-# one a named depth has to be able to outrank.
+# Changes one word in one file under docs/.
 # shellcheck source=./lib.sh
 source "$(dirname "$0")/lib.sh"
 # shellcheck source=./_common_base.sh

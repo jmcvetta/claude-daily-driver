@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
-# A rewrite of the root README and nothing else. `README.md` is planning-class
-# and docs-only both; the buckets are tested in order, so planning-class wins.
-#
-# Over fifty changed lines, deliberately. Under it the diff matches the depth
-# table's Skim row on size as well as its Planning row on kind, so a run that
-# skimmed would be indistinguishable from the bucket-ordering regression this
-# case exists to catch -- the same reason 02 and 03 are sized as they are.
+# Rewrites the root README. Nothing else changes.
 # shellcheck source=./lib.sh
 source "$(dirname "$0")/lib.sh"
 # shellcheck source=./_common_base.sh
