@@ -230,11 +230,11 @@ successfully — so the trigger-accuracy suites remove those tools with
 `disallowed_tools`, which is the field that actually removes one
 (`allowed_tools` is a permission allowlist and leaves them offered). Where a row
 needs the file tools, as `review-depth`'s no-fire case does, the answer is a
-second criterion that does not read paths at all: there, an empty dispatch
-roster.
+second criterion that does not depend on paths in tool parameters at all:
+there, an empty dispatch roster.
 
-That correction is also what makes the rebuilt `review-depth` suite possible on
-this harness: a criterion matching `"subagent_type": "security-reviewer"` inside
+The `command_executed` correction is also what makes the rebuilt `review-depth`
+suite possible on this harness: a criterion matching `"subagent_type": "security-reviewer"` inside
 an `Agent` call grades the dispatch itself, which is precisely the thing the
 dropped draft failed to grade.
 
