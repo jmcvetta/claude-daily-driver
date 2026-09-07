@@ -223,25 +223,34 @@ applies to two agents reading a diff for one dimension does not apply here.
 
 It is also tuned for precision over recall in a way `/code-review` is not:
 "Only flag issues where you're >80% confident of actual exploitability", and a
-`FALSE POSITIVE FILTERING` pass — 17 items, run as parallel sub-tasks over the
-first pass's findings — that drops anything below confidence 8. Its
-`EXCLUSIONS` decline three classes outright: denial of service, secrets stored
-on disk, and rate limiting or resource exhaustion. A diff whose risk is one of
-those is not covered by running it.
+`FALSE POSITIVE FILTERING` pass — run as parallel sub-tasks over the first
+pass's findings — that drops anything below confidence 8. Its `EXCLUSIONS`
+decline three classes outright: denial of service, secrets stored on disk, and
+rate limiting or resource exhaustion. A diff whose risk is one of those is not
+covered by running it.
 
-**Two filter items are worth knowing before routing CI configuration to it**,
-because they discount by name the file class a caller is most likely to send:
+The filtering pass is three numbered lists, not one — roughly thirty entries of
+"not a vulnerability" and "only if concrete", then four questions every
+surviving finding must answer. Two entries narrow what a Verified review buys
+beyond the workflow pair below: *"Files that
+are only unit tests or only used as part of running tests"*, and *"Insecure
+documentation. Do not report any findings in documentation files such as
+markdown files."*
 
-> 6. Input sanitization concerns for GitHub Action workflows unless they are
->    clearly triggerable via untrusted input.
->
-> 7. Most vulnerabilities in github action workflows are not exploitable in
->    practice. Before validating a github action workflow vulnerability ensure
->    it is concrete and has a very specific attack path.
+**Two of those entries discount by name the file class a caller is most likely
+to send it.** They sit in different lists — the first is item 6 of the first,
+the second is item 7 of the second — which is why neither reads as a headline:
+
+> Input sanitization concerns for GitHub Action workflows unless they are
+> clearly triggerable via untrusted input.
+
+> Most vulnerabilities in github action workflows are not exploitable in
+> practice. Before validating a github action workflow vulnerability ensure it
+> is concrete and has a very specific attack path.
 
 That is a deliberate precision choice, not a gap — the triggerable case
-survives both items — but it means a `.github/workflows/` diff buys much less
-from `/security-review` than its category list suggests.
+survives both — but it means a `.github/workflows/` diff buys much less from
+`/security-review` than its category list suggests.
 
 **It takes no target.** Where `/code-review` accepts a working diff, a PR
 number, a branch or a path, `/security-review` hard-codes its inputs in the

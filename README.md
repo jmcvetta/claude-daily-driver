@@ -43,8 +43,8 @@ for them; `issue-deps` takes the GitHub MCP's sub-issue and issue-read tools;
 `judgement-call` takes `AskUserQuestion`; and `review` takes the moments a
 branch is declared finished — `draft: false`, requesting a reviewer, or
 reaching for `/code-review` or `/security-review` directly — but deliberately
-*not* pull request open, which is `pr`'s moment and opens the conversation rather than ending the
-work. Those tool-call registers are the
+*not* pull request open, which is `pr`'s moment and opens the conversation
+rather than ending the work. Those tool-call registers are the
 point: a convention that only fires when a human types a command quietly stops
 applying as more of the work runs without one.
 
@@ -115,7 +115,7 @@ claude-daily-driver/
 │   ├── plugin.json         the plugin, and the version releases bump
 │   └── marketplace.json    the pointer `claude plugin install` reads
 ├── .github/workflows/      CI, PR title check, infra, release automation
-├── agents/                 `planning-fitness-reviewer`, live; three others dormant
+├── agents/                 `planning-fitness-reviewer` live; three dormant
 ├── attic/                  kept but not shipped; nothing here is loaded
 ├── context/
 │   └── constitution.md     always-on rules, one file, read by both hooks

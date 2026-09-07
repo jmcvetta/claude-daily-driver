@@ -331,7 +331,8 @@ runs on the default `driver: tempdir`, where `coder_eval`'s own note is that
 "the agent under evaluation runs with the same filesystem view as the harness" —
 its anti-cheat permission window is a documented no-op outside a container. So a
 session with `Bash` can read this file, read the task YAML, and write to
-`.fixture/dispatched.txt` and `.fixture/invocations.txt` directly. What the rules above buy is that nothing
+`.fixture/dispatched.txt` and `.fixture/invocations.txt` directly. What the
+rules above buy is that nothing
 *puts* the answer in front of a session going about its work; they buy nothing
 at all against one that goes looking. `sandbox: {driver: docker}` is what would
 make it a boundary, and moving the recorder's output outside the sandbox needs
@@ -346,8 +347,8 @@ every row — the final message has no deterministic matcher — which would put
 scored model judgment, and its cost, on seven cases whose whole point is that
 they are deterministic. Dispatch is the outcome; the mode line is the narration
 of it, and the narration is what PR #36's draft was dropped for grading. If the
-announced depth is ever worth asserting on its own, the way in is the recorder's:
-observe it where it is complete, not through a judge.
+announced depth is ever worth asserting on its own, the way in is the
+recorder's: observe it where it is complete, not through a judge.
 
 **Every case size is load-bearing and none should be "tidied".** The depth table
 turns on ~50 and ~800 changed lines, so a case that drifts across a threshold

@@ -99,8 +99,8 @@ empty set of paths.
 Routing
 =======
 
-Read off the diff. Kind decides *which* review runs; size and the sensitive
-touch decide *how hard* it looks.
+Read off the diff. Kind and the sensitive touch decide *which* review runs;
+size decides *how hard* it looks.
 
 **Kind.** Classify the changed paths. The buckets overlap — a `README.md` is
 both planning-class and docs-only — so test them **in this order** and take the
@@ -121,11 +121,11 @@ vendored trees. The thresholds below are a prior, not a rule: a thirty-line
 change to a lock ordering earns the verified level, and an eight-hundred-line
 rename does not.
 
-**The sensitive touch.** If any changed path or hunk touches the list below,
-the diff takes the Verified route whatever its size — on any non-planning
-route. This is the judgement a
-human forgets to make, made from the diff instead. The five marked **§** are
-the security-shaped half, which the analysis treats differently.
+**The sensitive touch.** If any changed path or hunk on a non-planning route
+touches the list below, the diff takes the Verified route whatever its size.
+This is the judgement a human forgets to make, made from the diff instead. The
+five marked **§** are the security-shaped half, which the analysis treats
+differently.
 
 - **§** authentication, authorization, sessions, tokens, passwords, OAuth,
   SAML, JWT
@@ -215,8 +215,9 @@ skill's.
 On the **§** half of the sensitive list, also run the built-in
 **`/security-review`**. The two do not overlap — `0001` §5 reads both out of
 the binary: no cell of the `/code-review` matrix runs a security angle at any
-level, and `/security-review` examines injection, authorization, unsafe
-deserialization and data exposure. `max` buys verification, not a threat model.
+level, and `/security-review` examines input validation, authentication and
+authorization, crypto and secrets, injection and code execution, and data
+exposure. `max` buys verification, not a threat model.
 Migrations and manifests get `max` alone; data loss and supply chain are
 outside every category it hunts, and it declines denial of service, secrets on
 disk and resource exhaustion outright.
@@ -230,8 +231,8 @@ Two constraints follow from the same section. **It takes no target**: it diffs
 the checked-out branch against `origin/HEAD` and nothing else. Run it only
 where the diff under review *is* the checked-out branch — not when a pull
 request number was supplied for another branch, and not where `origin/HEAD` was
-unresolvable in Pre-flight, since there it reads an empty diff and reports
-clean. Skip it in a stated line rather than silently.
+unresolvable in Pre-flight, where its diff commands have nothing to resolve
+against. Skip it in a stated line rather than silently.
 
 **Merge its findings into the one list.** Its report grades HIGH / MEDIUM /
 LOW: map those onto 🔴 / 🟡 / 🟢, de-duplicate against `/code-review`'s findings
