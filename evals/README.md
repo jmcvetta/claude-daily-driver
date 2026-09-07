@@ -88,11 +88,11 @@ and a mood, which is the harder one. See "The two moods" below.
 issue` opens one for work that has none, so an issue reference no longer has to
 be present for the skill to fire — and what fires it is now either an issue
 handed over or the skill named. Three of the four cases are the three ways that
-can
-go wrong. `01` is the slash command, which resolves the skill by name and so
-tests the plumbing rather than the description. `02` names the skill in prose
-on work with no issue: the description is the only thing saying an issue is
-optional, so a drift back to requiring one fails here and nowhere else. `03` is
+can go wrong. `01` is the slash command, which resolves the skill by name and
+so tests the plumbing rather than the description. `02` names the skill in
+prose on work with no issue: the description is the only thing saying an issue
+is optional, so a drift back to requiring one fails here and nowhere else.
+`03` is
 `Implement #191.` — the half of the register that predates `Open the issue`,
 and the half a description rewritten around the invocation alone would silently
 drop.

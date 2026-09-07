@@ -275,9 +275,8 @@ then the gear. There is no settings page and no direct URL.
    Then repeat **Ask it what it got** and read the version off the cache
    directory. The script's verification line cannot do this for you — it greps
    for the plugin key and globs the cache for *any* version, so a bump that
-   failed to fetch
-   anything new satisfies it, exits 0, and snapshots itself looking exactly
-   like a bump that worked.
+   failed to fetch anything new satisfies it, exits 0, and snapshots itself
+   looking exactly like a bump that worked.
 
 [docs/bootstrapping-a-repository.md](docs/bootstrapping-a-repository.md) has
 the mechanism under all of this — where an install puts its state, the three

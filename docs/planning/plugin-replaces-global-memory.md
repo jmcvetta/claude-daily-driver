@@ -961,7 +961,7 @@ premature decision that produced ten commands nobody remembers.
 
 ## Sequencing
 
-1. **Settle R2.** ~~Empirically.~~ **Done** — see R2. The answer requires a
+1. ~~**Settle R2** empirically.~~ **Done** — see R2. The answer requires a
    second hook, folded into **The constitution and its hooks** below.
 2. **The constitution and its hooks.** Draft the constitution plus *both*
    delivery hooks — `SessionStart` for the main session, `PreToolUse` on
