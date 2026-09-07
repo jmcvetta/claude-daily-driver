@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.3.1...v0.4.0) (2026-09-07)
+
+
+### Features
+
+* **skills:** split the Conventional Commits type decision out of pr-title ([#61](https://github.com/jmcvetta/claude-daily-driver/issues/61)) ([4faae8d](https://github.com/jmcvetta/claude-daily-driver/commit/4faae8d91f6c363c0104325d972b910cbc0476e8))
+
 ## [0.3.1](https://github.com/jmcvetta/claude-daily-driver/compare/v0.3.0...v0.3.1) (2026-09-07)
 
 
