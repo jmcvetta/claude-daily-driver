@@ -86,7 +86,7 @@ names it themselves and unambiguously. No rule in this file selects it on the
 reader's behalf: that spends the author's quota on a decision the author did
 not make.
 
-[`0001`](../../docs/decisions/0001-built-in-review-surface.md) is the matrix
+[`0001`](../../docs/notes/0001-built-in-review-surface.md) is the matrix
 behind all three, and the model family is the axis it insists on: the level
 names mean different things row to row, and it is pinned to CLI 2.1.263
 besides. Re-read the row for the session's own model before treating a cell as

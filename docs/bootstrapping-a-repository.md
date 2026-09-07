@@ -214,7 +214,7 @@ handle trust.
 A review rule that only one repository's toolchain makes correct goes in that
 repository's own `CLAUDE.md` — which every surface reads, and which reaches a
 reviewer subagent. There is no plugin-side mechanism to configure, and
-[`decisions/0003`](decisions/0003-repo-local-review-rules.md) is why.
+[`notes/0003`](notes/0003-repo-local-review-rules.md) is why.
 
 Two such rules used to ship globally. Paste them into the `CLAUDE.md` of a
 repository that runs Yor, Checkov, or both:

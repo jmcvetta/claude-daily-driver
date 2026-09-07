@@ -193,7 +193,7 @@ precision argument for preferring the built-in over narrow agents only holds
 where verification actually runs; where it does not, the judgment tier is
 carrying more weight than this section assumes.
 
-See [`docs/decisions/0001-built-in-review-surface.md`](../../docs/decisions/0001-built-in-review-surface.md)
+See [`docs/notes/0001-built-in-review-surface.md`](../../../docs/notes/0001-built-in-review-surface.md)
 for the full matrix and the version it was read from.
 
 If `/code-review` is not available in this session, fall back in order:
@@ -243,11 +243,11 @@ place of* the standard four-tier rubric.
 > that shrinks as the single reviewer gets stronger. The crossover point moves;
 > this panel was designed on the far side of it and nobody has re-measured.
 > Settle it with a measurement, not by inheritance — see
-> [`0002`](../../docs/decisions/0002-eval-harness.md) for which harness. Until
+> [`0002`](../../../docs/notes/0002-eval-harness.md) for which harness. Until
 > then the two roles stand, and this note is the reason they are worth
 > re-examining.
 >
-> [`0001`](../../docs/decisions/0001-built-in-review-surface.md) surveys what the
+> [`0001`](../../../docs/notes/0001-built-in-review-surface.md) surveys what the
 > built-in does today and finds the crossover is **per model family**, not
 > global: on Sonnet 5 this panel sits on top of a verified multi-agent panel,
 > while on Opus 5 at Standard or Full depth it sits on top of a single

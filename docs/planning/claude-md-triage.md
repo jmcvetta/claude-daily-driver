@@ -119,7 +119,7 @@ says so.
   the thread-reply and minimise recipes, and the node-ID formats
   (`IC_kwDO…`, `PRRT_…`) those recipes depend on.
 - **#19, `review`** — **amended in part by
-  [`decisions/0003`](../decisions/0003-repo-local-review-rules.md).** The
+  [`notes/0003`](../notes/0003-repo-local-review-rules.md).** The
   Terraform review checklist (331–336) still goes where the
   `Terraform/OpenTofu` row above sends it — a language-style reference, loaded
   when Terraform is open and costing nothing when it is not. What 0003 forbids

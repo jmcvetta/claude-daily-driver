@@ -1,6 +1,11 @@
 # The eval harness: `coder_eval`, not `claude plugin eval`
 
 **Status:** decided, 2026-09-07; ported, 2026-09-07.
+**Provenance:** chosen by an agent in
+[#36](https://github.com/jmcvetta/claude-daily-driver/pull/36), which recorded the choice
+without acting on it; the port it calls for landed separately in
+[#38](https://github.com/jmcvetta/claude-daily-driver/pull/38), citing this file as already
+settled. Ratified by those merges, not by a separate call from the author.
 **Supersedes:** the harness assumptions in
 [`0001`](0001-built-in-review-surface.md) and in `evals/README.md`, both of
 which take `claude plugin eval` as given.

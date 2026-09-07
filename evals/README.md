@@ -2,7 +2,7 @@
 
 Eight suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
 than by `claude plugin eval`. The reasoning for the harness is
-[`docs/decisions/0002-eval-harness.md`](../docs/decisions/0002-eval-harness.md);
+[`docs/notes/0002-eval-harness.md`](../docs/notes/0002-eval-harness.md);
 the short version is that the built-in cannot be run on this account, is
 publicly undocumented, announces no changes, and — decisively — ships inside
 the `claude` binary, so there is no version to hold back.
