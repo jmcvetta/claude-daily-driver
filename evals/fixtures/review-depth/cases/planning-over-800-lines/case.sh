@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
-# Adds a long planning document under docs/planning/.
-#
-# The plan deliberately discusses IAM roles, rotating credentials and the
-# release workflow. Those are three entries on the sensitive-touch list, so the
-# document is prose that reads sensitive — which is the interaction the routing
-# rule exists to settle, and which nothing exercised while the filler was
-# cache-warming boilerplate. Planning-class is decided first and is never
-# raised: a rollout plan that discusses IAM is still a plan.
+# Adds a long planning document that also discusses IAM roles, credential
+# rotation and the release workflow.
 # shellcheck source=../../shared/lib.sh
 source "$(dirname "$0")/lib.sh"
 # shellcheck source=../../shared/_common_base.sh

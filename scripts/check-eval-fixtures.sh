@@ -72,6 +72,8 @@ fail() {
 #   * the same call with the name slashed, which is what the CLI hands a hook
 #     when the model writes `/code-review` -- it strips the prefix only after
 #     the hook has seen the input, and SKILL.md writes the slash everywhere
+#   * the same again behind a leading space, which shields the slash from the
+#     strip unless the whitespace collapse runs first
 #   * a multi-line `args`, which must collapse to one line: the files are read
 #     with re.MULTILINE, so an uncollapsed argument writes records of its own
 probe_recorder() {
@@ -94,6 +96,12 @@ probe_recorder() {
 		fail "${name}" "the recorder exited non-zero on a slashed skill name"
 	grep -qx 'code-review slashed-probe' "${sandbox}/.fixture/invocations.txt" ||
 		fail "${name}" "the recorder did not strip the leading slash, so every code-review criterion would miss"
+
+	echo '{"tool_input":{"skill":" /code-review","args":"spaced-probe"}}' |
+		python3 "${recorder}" ||
+		fail "${name}" "the recorder exited non-zero on a space-then-slash skill name"
+	grep -qx 'code-review spaced-probe' "${sandbox}/.fixture/invocations.txt" ||
+		fail "${name}" "leading whitespace shielded the slash from the strip; collapse must run before removeprefix"
 
 	printf '%s\n' '{"tool_input":{"skill":"probe-skill","args":"one\ncode-review max\n"}}' |
 		python3 "${recorder}" ||

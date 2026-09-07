@@ -73,8 +73,14 @@ def main() -> int:
             # argument to any skill would write extra lines that a criterion
             # scores as records of their own. The instrument must not be
             # forgeable by the payload it observes.
-            line = f"{skill.lstrip('/')} {args}"
-            _append(INVOCATIONS, " ".join(line.split()))
+            #
+            # Collapse runs first: the other order lets a stray leading space
+            # shield the slash from the strip, which is the first bug wearing a
+            # different hat. `removeprefix` rather than `lstrip`, which would
+            # eat a run of slashes rather than the one the CLI accepts.
+            line = " ".join(f"{skill} {args}".split()).removeprefix("/")
+            if line:
+                _append(INVOCATIONS, line)
     except Exception:  # noqa: BLE001 -- never fail; see evals/README.md
         pass
     return 0
