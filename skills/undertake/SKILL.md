@@ -13,18 +13,18 @@ description: >-
   parser" and "fix this function", with neither an issue nor an invocation,
   are ordinary work and must NOT fire it. Supplies the order of the steps, the
   gates between them, and the ready gate the sequence ends on; the review round
-  at steps 7 and 8 is `review-cycle`'s. Not for merely reading, summarising or
+  at steps 8 and 9 is `review-cycle`'s. Not for merely reading, summarising or
   discussing an issue, since "what does #191 say" is a question rather than an
   assignment.
 ---
 
 # Undertake
 
-An issue in, a pull request ready for review out. Ten steps, and this skill is
-the order they run in — the first of them, step 0, skipped in the common case
-where the work already has an issue. Where it does not, step 0 opens one: an
-issue is what this skill takes in, and untracked work is what running without
-one leaves behind.
+An issue in, a pull request ready for review out. Eleven steps, and this skill
+is the order they run in — the first of them, step 0, skipped in the common
+case where the work already has an issue. Where it does not, step 0 opens one:
+an issue is what this skill takes in, and untracked work is what running
+without one leaves behind.
 
 It is an orchestrator, in the same shape as `pr`: **it invokes, it does not
 restate**. The title convention lives in `pr-title`, the pull request itself in
@@ -45,23 +45,23 @@ The sequence
 | 0 | Open the issue, where the work has none | this skill, `issue-deps` |
 | 1 | Title the session from the issue | `session-title` |
 | 2 | Read the issue and its edges | `mcp__github__issue_read`, `issue-deps` |
-| 3 | Branch off the base branch | this skill |
-| 4 | Implement | the constitution |
-| 5 | Run the project's gates | the constitution |
-| 6 | Push, and open the draft pull request | `pr` |
-| 7 | Review | `review-cycle` |
-| 8 | Fix, answer, resolve, push | `review-cycle` |
-| 9 | Ready for review | `mcp__github__update_pull_request` |
+| 3 | Claim the issue for this session | this skill |
+| 4 | Branch off the base branch | this skill |
+| 5 | Implement | the constitution |
+| 6 | Run the project's gates | the constitution |
+| 7 | Push, and open the draft pull request | `pr` |
+| 8 | Review | `review-cycle` |
+| 9 | Fix, answer, resolve, push | `review-cycle` |
+| 10 | Ready for review | `mcp__github__update_pull_request` |
 
 0 — An issue, where there is none
 ---------------------------------
 
 Skipped where an issue is already in hand — handed over in the request, which
 is the common case, whether or not this skill was named. Where there is none,
-this step is what supplies one, and the nine after it are
-unchanged: what would otherwise happen is a branch, a review and a merge with
-no record of why any of it was wanted, and a pull request body with nothing to
-close.
+this step is what supplies one, and the ten after it are unchanged: what would
+otherwise happen is a branch, a review and a merge with no record of why any of
+it was wanted, and a pull request body with nothing to close.
 
 **Search before writing.** `mcp__github__search_issues` over the repository's
 open issues first: work described in a prompt has often been described in an
@@ -81,7 +81,7 @@ intent: an issue that guesses at what "done" means is worse than no issue,
 because the guess then reads as settled.
 
 Edges are `issue-deps`' business, and its confirm-before-write rule *does*
-bite here — unlike the closing reference at step 6, a parent or a blocker for
+bite here — unlike the closing reference at step 7, a parent or a blocker for
 a new issue is inferred from evidence rather than given by the assignment.
 
 1 — Title the session
@@ -105,28 +105,70 @@ blocked by an open one is a stop, not a start** — say which issue blocks it
 and wait. Reading the graph is free and needs no confirmation; `issue-deps`
 says so.
 
-3 — Branch
+The comments too, because step 3 needs to know whether the issue is claimed
+already — by this session, which means the sequence is being re-entered, or by
+another.
+
+3 — Claim the issue
+-------------------
+
+One comment on the issue with `mcp__github__add_issue_comment`, saying that
+this session has taken the work. It goes up before the branch is cut, because
+an issue carrying no claim reads as unstarted, and two agents starting the same
+issue is the waste the claim exists to prevent.
+
+After step 2 rather than before it, because the edges decide whether there is
+anything to claim: a blocked issue stops at step 2, and a claim on work that
+is not starting is a false record.
+
+Beyond the claim itself the comment carries two things, both read from
+`mcp__Claude_Code_Remote__get_session` — the call `session-title` documents,
+on the one surface it says supplies it:
+
+- **The model that served the turn** — `external_metadata.last_served_model`,
+  which is what actually ran and moves with a fallback that leaves the rest of
+  the session untouched. Where `session_context.model` or `configured_model`
+  disagrees with it, name that too: the gap between what a session was set to
+  run and what ran is the half of the record worth having. Never a name
+  recalled instead of read — a provenance record that guesses is worse than
+  one that says nothing.
+- **The session**, as `https://claude.ai/code/session_…` built from the same
+  call's session id. The identifier is what the reader needs; the link is that
+  identifier and somewhere to go with it.
+
+Where that call is unavailable the comment still goes up, and says the surface
+supplied neither. `session-title` stops there because a title it cannot set is
+nothing; a claim that names no model is still a claim.
+
+**Once per session, not once per run.** A sequence re-entered — its blocker
+cleared, the issue handed over again — does not claim what it has claimed
+already, and step 2's read of the comments is what shows it. A claim from a
+*different* session is not suppressed: that collision is the thing the claim
+exists to make visible, and it is worth a line to the user before the branch
+is cut.
+
+4 — Branch
 ----------
 
 Off the base branch, never off whatever happens to be checked out. `pr` guards
 against opening a pull request from `master`; the guard belongs *here* too,
 before a line of code is written rather than after — a branch cut from the
-wrong place is cheap to fix at step 3 and expensive at step 6.
+wrong place is cheap to fix at step 4 and expensive at step 7.
 
-4 — Implement
+5 — Implement
 -------------
 
 The constitution governs, under *While I write code*, *Before I commit* and
 *When I hit a wall*. Nothing about how to write or commit the code is decided
 here.
 
-5 — Gates
+6 — Gates
 ---------
 
 The constitution's *Before I call it done*, run at this point rather than
 after the pull request, so that the draft opens green.
 
-6 — Push, and open the draft pull request
+7 — Push, and open the draft pull request
 -----------------------------------------
 
 Push the branch, then invoke `pr`: it owns the branch guard, the existing-PR
@@ -137,7 +179,7 @@ confirm-before-write rule does not bite here, because the edge is given by the
 assignment rather than inferred from evidence. The issue being implemented is
 the issue the pull request closes.
 
-7 and 8 — The review round
+8 and 9 — The review round
 --------------------------
 
 Invoke `review-cycle`. It owns the wait for CI on the pushed head, the built-in
@@ -146,22 +188,22 @@ resolved under, and the test for whether a later push has earned a second
 review.
 
 Two rows in the table above rather than one, because the ready gate tests them
-separately: green CI on the head step 8 pushed, and every finding step 7 raised
+separately: green CI on the head step 9 pushed, and every finding step 8 raised
 answered. One round, two things to be true of it.
 
 What is this skill's is where the round sits — after the draft is open, before
 the ready gate, and once. `review-cycle` decides whether it goes again, and it
-decides that from the head SHA it recorded, so step 9 never re-runs it and
+decides that from the head SHA it recorded, so step 10 never re-runs it and
 never needs to ask.
 
-9 — Ready for review
---------------------
+10 — Ready for review
+---------------------
 
 `mcp__github__update_pull_request` with `draft: false`. See the gate below
 first: this step is conditional.
 
 It does not review. Marking a draft ready is a natural moment to reach for one,
-and the branch was already reviewed at step 7 — whether that review is stale is
+and the branch was already reviewed at step 8 — whether that review is stale is
 `review-cycle`'s provenance test and is answered inside the round, not here.
 Where `review` is live rather than in `attic/skills/`, this is also what
 discharges the `draft: false` trigger in its description: it fires on exactly
@@ -186,7 +228,7 @@ pull request goes to ready only when **all** of these hold:
 - CI is green on the head commit. **Pending is not green** — wait for it,
   rather than treating an unreported check as either answer.
 - No review thread is unanswered or unresolved — from any reviewer, not only
-  from the round at step 7.
+  from the round at step 8.
 - Every finding that round raised has been fixed, or rejected with a reason on
   its thread, or deferred with the user's agreement.
 
@@ -207,17 +249,17 @@ stop it to report, and wait on something other than an answer.
   request too vague to write an issue for.** The constitution forbids guessing
   at intent; this is that rule, at steps 0 and 2.
 - **The approach failing mid-implementation** — the constitution's *When I hit
-  a wall*, at step 4. A pull request that documents a wrong turn is worse than
+  a wall*, at step 5. A pull request that documents a wrong turn is worse than
   no pull request.
-- **CI still running**, at step 9. A wait, not a question — nothing is asked,
+- **CI still running**, at step 10. A wait, not a question — nothing is asked,
   and nothing proceeds on a check that has not reported.
 
-The round at steps 7 and 8 has two stops of its own — its own wait on CI, and
+The round at steps 8 and 9 has two stops of its own — its own wait on CI, and
 a review finding whose fix is a real trade-off. Both are `review-cycle`'s, and
 the second is `judgement-call`'s gate applied inside it.
 
 Everything else runs through. No permission is asked to open the issue, to
-commit, to push, or to open the draft.
+claim it, to commit, to push, or to open the draft.
 
 
 Non-goals
@@ -231,10 +273,10 @@ Non-goals
   questions; answer them, and do not cut a branch.
 - **Does not fire on work it was not asked to undertake.** "Implement a retry
   loop", with neither an issue nor an invocation, is ordinary work, and running
-  ten steps and a review round over it would be the heaviest possible way to
-  write ten lines. Step 0 makes the issue reference optional; it does not make
-  it the only thing that was ever doing the separating. An issue handed over,
-  or this skill named — either fires it, and neither is ordinary work.
+  eleven steps and a review round over it would be the heaviest possible way
+  to write ten lines. Step 0 makes the issue reference optional; it does not
+  make it the only thing that was ever doing the separating. An issue handed
+  over, or this skill named — either fires it, and neither is ordinary work.
 - **Does not open an issue for anything but the work in hand.** Step 0 tracks
   what was asked for. A bug noticed in passing is worth reporting to the user;
   it is not this run's second issue.
