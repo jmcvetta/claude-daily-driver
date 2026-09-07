@@ -21,7 +21,7 @@ hook — plus skills that fire on activity:
 | `pr-threads` | The review-thread lifecycle for any reviewer: reply with a verdict, resolve, re-resolve a repeat finding, never leave a thread open silently — plus the comment minimisation the GitHub MCP does not expose. |
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
 | `review` | Reviews a branch or pull request with a panel of reviewer agents, infers how deep to go from the diff itself, walks the findings through with you, and posts the result in verse. |
-| `session-title` | Names the session in the Claude web and mobile lists: a forty-character budget the mobile UI can show whole, `#123 shortened issue title` while an issue is in hand, a short noun phrase otherwise. |
+| `session-title` | Names the session in the Claude web and mobile lists: a forty-character budget, chosen to survive the mobile list, `#123 shortened issue title` while an issue is in hand, a short noun phrase otherwise. |
 
 Three PR skills rather than one because skill names are flat within a plugin,
 so siblings can be triggered independently: a decision to rewrite a PR body

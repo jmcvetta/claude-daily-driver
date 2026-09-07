@@ -21,8 +21,8 @@ break is *which* one fires. Each suite therefore has two halves, and the
 second is the one that earns its keep:
 
 - **Fire cases** (`tags: [<skill>, fire]`) — four per skill, covering the
-  literal slash command, natural phrasings, and Claude's own use of the MCP
-  tool the skill claims: `mcp__github__create_pull_request` /
+  slash command where the skill has one, natural phrasings, and Claude's own
+  use of the MCP tool the skill claims: `mcp__github__create_pull_request` /
   `mcp__github__update_pull_request` for the PR skills,
   `mcp__Claude_Code_Remote__set_session_title` for `session-title`.
 - **No-fire cases** (`tags: [<skill>, no-fire]`) — two per skill, drawn from

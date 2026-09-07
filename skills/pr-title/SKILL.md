@@ -9,8 +9,8 @@ description: >-
   `mcp__github__update_pull_request` that sets a `title`, or to
   `gh pr edit --title` on a harness that still reaches for it. Supplies the
   Conventional Commits convention the title must conform to. Not for commit
-  messages, not for the PR body — that is `pr-body` — and not for the name of
-  the session itself, which is `session-title`.
+  messages, not for the PR body — that is `pr-body` — and not for the
+  session's own name — that is `session-title`.
 ---
 
 # PR Title

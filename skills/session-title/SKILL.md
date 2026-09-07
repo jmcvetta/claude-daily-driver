@@ -4,11 +4,11 @@ description: >-
   This skill should be used whenever the title of the current Claude session
   is being set or revised — including when the user says "/session-title",
   "set the session title", "rename this session", "name this session", or
-  "that session name is wrong", and on Claude's own initiative when work on a
+  "that session title is wrong", and on Claude's own initiative when work on a
   GitHub issue begins, when the session's subject changes materially, or on
   any call to `mcp__Claude_Code_Remote__set_session_title`. Supplies the
-  character budget the Claude mobile UI needs and the two forms a title may
-  take. Not the title of a pull request — that is `pr-title`.
+  character budget the Claude mobile list is read at, and the two forms a
+  title may take. Not the title of a pull request — that is `pr-title`.
 ---
 
 # Session title
@@ -42,25 +42,29 @@ The number leads because it is the identifier — the half that must survive any
 further clipping, and the half a reader matches against a branch name or a
 browser tab.
 
-Shortening is deletion, in this order, stopping as soon as the whole thing
-fits, and capitalising whatever word ends up first:
+Shortening is deletion, one word or phrase at a time, in this order —
+re-checking the fit after each and stopping the moment the whole thing fits.
+Capitalise whatever word ends up first.
 
 1. Drop a leading prefix written for the tracker rather than the reader: a
    Conventional Commits type (`feat:`, `fix(api):`), or a label (`New skill:`,
    `Bug:`, `RFC:`).
 2. Drop a trailing qualifier — a parenthesis, a clause after a dash.
-3. Drop the words carrying no information, wherever they sit: articles,
-   prepositions, an auxiliary verb, an adjective the title survives without.
-4. Only then cut whole words from the end, never part of one, and never the
-   noun naming the subject — which in an issue title is as often last as
-   first.
+3. Drop the words carrying no information, wherever they sit and least
+   informative first: articles, prepositions, an auxiliary verb, an adjective
+   the title survives without.
+4. Only then cut whole words from the end, never part of one. Where the last
+   word is the noun naming the subject — in an issue title it is as often last
+   as first — keep it and cut the word before it instead.
 
 Issue #40, *"New skill: set the Claude session title"*, needs step 1 alone:
-`#40 Set the Claude session title`.
+`#40 Set the Claude session title` — 32 characters.
 
 Issue #212, *"fix(storage): retry with exponential backoff for the S3 upload
-client"*, loses its type prefix, then `with`, `exponential`, `the` and
-`client`: `#212 Retry backoff for S3 upload`.
+client"*, loses its type prefix at step 1, then `with`, `exponential` and
+`the` at step 3, and fits at 39: `#212 Retry backoff for S3 upload client`.
+Step 4 never runs, and `client` — the noun the title is about — survives
+because of it.
 
 
 Not working on an issue
@@ -84,8 +88,8 @@ one that matters is this session's. Get it from
 describes the caller.
 
 Both tools exist only on the Claude Code Remote surface. Where they are
-absent — a laptop session — there is no way to set the title from here, and
-the skill says so and stops rather than reaching for a substitute.
+absent — a laptop session — there is no way to set the title from here: say
+so and stop, rather than reaching for a substitute.
 
 
 When to set it
