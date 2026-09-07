@@ -1,0 +1,27 @@
+task_id: undertake-03-implement-an-issue
+description: >-
+  An issue handed over with no invocation — the half of the trigger register
+  that predates step 0. It is here because step 0 is what put that half at
+  risk: a description rewritten around the invocation alone would stop firing
+  on exactly this, the phrasing the register has always advertised.
+tags: [trigger-accuracy, undertake, fire]
+
+initial_prompt: "Implement #191."
+
+agent:
+  # See 01: `disallowed_tools`, not `allowed_tools`, is what stops a denied read
+  # of `skills/undertake/SKILL.md` scoring as a fire.
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`undertake` fires on an issue handed over without an invocation"
+    expected_skill: undertake
+    skill_name: undertake
+    stop_early:
+      on_pass: stop

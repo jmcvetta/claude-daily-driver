@@ -1,0 +1,27 @@
+task_id: undertake-02-undertake-verb-no-issue
+description: >-
+  The skill named in prose rather than as a slash command, on work with no
+  issue. Unlike 01, the slash command cannot carry this row: the description is
+  the only thing saying an issue reference is optional, so a description that
+  drifts back to requiring one fails here and nowhere else.
+tags: [trigger-accuracy, undertake, fire]
+
+initial_prompt: "Undertake adding a retry loop to the release script."
+
+agent:
+  # See 01: `disallowed_tools`, not `allowed_tools`, is what stops a denied read
+  # of `skills/undertake/SKILL.md` scoring as a fire.
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`undertake` fires on a prose invocation that names no issue"
+    expected_skill: undertake
+    skill_name: undertake
+    stop_early:
+      on_pass: stop

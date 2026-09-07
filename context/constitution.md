@@ -175,8 +175,9 @@ supplies a scratchpad directory of its own, which wins.
 - `review-cycle` — one round on a pull request: the built-in `/code-review` at
   a level named rather than inherited, a verdict on every finding, and the
   test for whether a later push has earned a second round.
-- `undertake` — an issue to a pull request ready for review: the order the
-  skills above and this constitution run in, and the gates between them.
+- `undertake` — an issue to a pull request ready for review, opening the issue
+  first where the work has none: the order the skills above and this
+  constitution run in, and the gates between them.
 
 ## Verification
 

@@ -62,16 +62,36 @@ with `--comment`.
 Name the level
 --------------
 
-**Name it; never inherit the remembered one.** `high` by default, `max` where
-the diff is large or touches authentication, cryptography, access policy,
-migrations, or CI configuration. Naming it is what makes two rounds on one
-branch comparable — `/code-review` otherwise reuses whatever level was typed
-last, in some other session, about some other diff.
+**Name it; never inherit the remembered one.** On `claude-opus-5`, this
+repository's model: `medium` by default, `xhigh` where the diff is large or
+touches authentication, cryptography, access policy, migrations, or CI
+configuration. Naming it is what makes two rounds on one branch comparable —
+`/code-review` otherwise reuses whatever level was typed last, in some other
+session, about some other diff.
 
-[`0001`](../../docs/notes/0001-built-in-review-surface.md) has the
-model-family matrix behind the default: on Opus 5, `medium` and `high` resolve
-to the same cell and only `max` verifies. It is pinned to CLI 2.1.263 and says
-so; check the version before treating the cell as current.
+`medium` rather than `high` because on that model the two resolve to the same
+cell: `high` names a tier it does not deliver, and a default should say what it
+runs. **That reason is the model's, not the level's.** On every other row of
+`0001`'s matrix `high` is a distinct and deeper cell, so a session on another
+family reads its own row and names `high` — taking this file's `medium` there
+would buy a shallower review for a reason that does not hold in it. `xhigh` is
+the deepest level a rule may select on its own, on any family, so it is where
+the sensitive-touch escalation tops out: those are the diffs where a missed
+finding is expensive and hard to see.
+
+**`max` is not selectable here.** It is the only cell that dispatches a
+verified panel on every family — and on `claude-opus-5` the only one that
+verifies at all — and it is reserved for direct invocation by the author, who
+names it themselves and unambiguously. No rule in this file selects it on the
+reader's behalf: that spends the author's quota on a decision the author did
+not make.
+
+[`0001`](../../docs/notes/0001-built-in-review-surface.md) is the matrix
+behind all three, and the model family is the axis it insists on: the level
+names mean different things row to row, and it is pinned to CLI 2.1.263
+besides. Re-read the row for the session's own model before treating a cell as
+current — a rule written against a stale table, or against another family's
+row, names a tier it does not deliver.
 
 A reviewer, not a subagent
 --------------------------
@@ -84,9 +104,13 @@ reviewer, and `--comment` is what makes its findings survive the session.
 `--comment` is also what carries the findings out of the terminal and onto the
 pull request, where they remain the record of why the branch was judged ready.
 They arrive as **resolvable review threads**, inline on the diff under a
-submitted `COMMENT` review — measured on a live pull request, CLI 2.1.263,
-2026-09-07, and recorded in `0001` §4. Stage 2's reply-and-resolve is therefore
-the ordinary path rather than a hoped-for one.
+submitted `COMMENT` review — measured on live pull requests at `max` and again
+at `medium`, CLI 2.1.263, 2026-09-07, and recorded in `0001` §4. The level is
+part of that claim rather than incidental to it: `medium` and `high` dispatch
+`o5-bmin`, the one cell `0001` records as ignoring the output-contract selector
+every other cell threads through, so the default named above is measured rather
+than inherited from a deeper level's result. Stage 2's reply-and-resolve is
+therefore the ordinary path rather than a hoped-for one.
 
 Should a later CLI post plain issue comments instead, stage 2 degrades to
 reply-only: read them with `get_comments` rather than `get_review_comments`,
