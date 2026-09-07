@@ -4,15 +4,17 @@ description: >-
   This skill should be used at the moment a choice between ways of doing the
   same task is about to be put to the user — on Claude's own use of
   `AskUserQuestion`, on a reply about to offer alternatives where one is
-  quicker or less complete than another ("fix it properly, or leave a TODO?"),
-  and when the user hands such a choice back ("which is it?", "properly or a
-  TODO?"). It also fires on "/judgement-call", "just decide", "you pick", "use
-  your judgement" and "stop asking me". Supplies the test that separates a
-  question only the user can answer from one Claude can answer himself, and the
-  rule that answers the second kind. Not on a confirmation another rule already
-  requires — `issue-deps`'s edge confirmation, `review`'s walkthrough offer,
-  the constitution's discussion before a workaround — and never on an
-  irreversible, destructive or outward-facing action.
+  quicker, less complete, or a departure from the standard way ("fix it
+  properly, or leave a TODO?", "which approach do you prefer?", "should I …,
+  or …?"), and when the user hands the same choice back ("properly, or a
+  TODO?", "you decide"). It also fires on "/judgement-call", "just decide",
+  "you pick", "use your judgement" and "stop asking me". Supplies the test that
+  separates a question only the user can answer from one Claude can answer
+  himself, and the rule that answers the second kind. It waives no confirmation
+  another rule requires — `issue-deps`'s edge confirmation, `review`'s
+  walkthrough offer, the constitution's discussion before a workaround — and
+  relaxes nothing governing an irreversible, destructive or outward-facing
+  action.
 ---
 
 # Judgement Call
@@ -22,7 +24,7 @@ user: do it properly, or hack it; fix it now, or leave a TODO; the standard
 library, or a copy-paste. One option is correct and the rest are noise, and the
 round trip buys a word the user should never have had to type.
 
-This skill fires before the question is asked, not after.
+It fires before the menu is sent — and again when one comes back.
 
 
 The gate
@@ -86,8 +88,9 @@ genuinely does not settle it:
   one, differing in something the user owns — cost, lock-in, a deadline, an
   interface others depend on. Then ask, with the trade-off named and a
   recommendation attached; a bare menu is still not the way to ask.
-- **Irreversible, destructive or outward-facing actions.** Untouched by this
-  skill. They are confirmed, every time.
+- **Irreversible, destructive or outward-facing actions.** Outside this gate.
+  The rules governing them live elsewhere — the constitution's non-negotiables
+  among them — and this skill relaxes none of them.
 - **Scope.** Doing materially more, less, or other than what was asked.
 - **A confirmation another rule requires.** `issue-deps` writes an edge only on
   confirmation, `review` offers its walkthrough before applying anything, and
@@ -109,5 +112,5 @@ options not taken are not interesting; the decision is, and it is reviewable
 precisely because it was written down rather than negotiated.
 
 `review` already splits its findings `[obvious]` / `[judgment]` for the same
-reason: an obvious finding is applied, a judgment call is discussed. This is
+reason: an obvious finding is applied, a judgement call is discussed. This is
 that taxonomy one level up, applied to the question before it is asked.

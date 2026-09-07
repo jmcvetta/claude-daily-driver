@@ -68,20 +68,20 @@ gets skimmed, and a draft PR opens the conversation rather than ending the
 work. And its poetry attaches only to the comment it posts, never to the
 findings: a finding someone has to act on is prose.
 
+The panel it dispatches lives in [`agents/`](agents/) — `logic-reviewer`,
+`architecture-reviewer`, `security-reviewer`, `planning-fitness-reviewer` — and
+none of them pins a model. A pin ages into a cost decision nobody revisits.
+
 `judgement-call` is the odd one out: it fires on a question about to be asked
 rather than on a repository operation about to run. Its register is
 `AskUserQuestion` and the sentences that stand in for it, because the thing it
 exists to stop is a menu of one correct option and several hacks, which costs a
-round trip to answer with the standard that was never in doubt. The register is
+round trip to answer with the standard that was never in doubt. It is
 deliberately not every offer of next steps — an offer to do *more* is a scope
-question, and scope is the user's. The rule it applies is the constitution's own — correct
-beats quick, no workarounds — and the boundary is the interesting half: intent,
-a genuine trade-off, scope, and anything irreversible still go to the user, and
-no confirmation another skill requires is waived by it.
-
-The panel it dispatches lives in [`agents/`](agents/) — `logic-reviewer`,
-`architecture-reviewer`, `security-reviewer`, `planning-fitness-reviewer` — and
-none of them pins a model. A pin ages into a cost decision nobody revisits.
+question, and scope is the user's. The rule it applies is the constitution's
+own: correct beats quick, no workarounds. The boundary is the interesting
+half — intent, a genuine trade-off, scope and anything irreversible still go to
+the user, and no confirmation another skill requires is waived by it.
 
 ## Layout
 
