@@ -77,6 +77,9 @@ fail() {
 #   * a name that is only whitespace, and one that is only the slash: both
 #     empty once normalised, and neither may leave its `args` behind as a
 #     record, where a criterion would read them as the name
+#   * a doubled slash, which must keep one: `removeprefix` takes the single
+#     slash the CLI accepts, where `lstrip` would eat the run and turn a name
+#     the CLI never accepts into a record that scores
 #   * a multi-line `args`, which must collapse to one line: the files are read
 #     with re.MULTILINE, so an uncollapsed argument writes records of its own
 probe_recorder() {
@@ -114,6 +117,12 @@ probe_recorder() {
 		fail "${name}" "the recorder exited non-zero on a bare-slash skill name"
 	grep -q 'code-review max master' "${sandbox}/.fixture/invocations.txt" &&
 		fail "${name}" "an empty skill name promoted its arguments to the head of the line, where every criterion reads them as the name"
+
+	echo '{"tool_input":{"skill":"//code-review","args":"doubled-probe"}}' |
+		python3 "${recorder}" ||
+		fail "${name}" "the recorder exited non-zero on a doubled-slash skill name"
+	grep -qx '/code-review doubled-probe' "${sandbox}/.fixture/invocations.txt" ||
+		fail "${name}" "more than one leading slash was stripped; lstrip would turn a name the CLI never accepts into a clean record"
 
 	printf '%s\n' '{"tool_input":{"skill":"probe-skill","args":"one\ncode-review max\n"}}' |
 		python3 "${recorder}" ||

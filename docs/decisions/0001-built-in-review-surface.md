@@ -229,17 +229,18 @@ decline three classes outright: denial of service, secrets stored on disk, and
 rate limiting or resource exhaustion. A diff whose risk is one of those is not
 covered by running it.
 
-The filtering pass is three numbered lists, not one — roughly thirty entries of
-"not a vulnerability" and "only if concrete", then four questions every
-surviving finding must answer. Two entries narrow what a Verified review buys
-beyond the workflow pair below: *"Files that
+The filtering pass is three lists, not one: `HARD EXCLUSIONS` ("Automatically
+exclude findings matching these patterns", 17 numbered entries, one number
+reused), `PRECEDENTS` (12 more), and `SIGNAL QUALITY CRITERIA` ("For remaining
+findings, assess", four questions). Two entries narrow what a Verified review
+buys beyond the workflow pair below: *"Files that
 are only unit tests or only used as part of running tests"*, and *"Insecure
 documentation. Do not report any findings in documentation files such as
 markdown files."*
 
 **Two of those entries discount by name the file class a caller is most likely
-to send it.** They sit in different lists — the first is item 6 of the first,
-the second is item 7 of the second — which is why neither reads as a headline:
+to send it.** They sit in different lists — item 6 of `HARD EXCLUSIONS` and
+item 7 of `PRECEDENTS` — which is why neither reads as a headline:
 
 > Input sanitization concerns for GitHub Action workflows unless they are
 > clearly triggerable via untrusted input.
