@@ -1,6 +1,6 @@
 # Evals
 
-Five suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
+Six suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
 than by `claude plugin eval`. The reasoning for the harness is
 [`docs/decisions/0002-eval-harness.md`](../docs/decisions/0002-eval-harness.md);
 the short version is that the built-in cannot be run on this account, is
@@ -13,6 +13,8 @@ evals/
 ├── tasks/
 │   ├── pr/              does `pr` fire when a PR is opened, and only then?
 │   ├── pr-title/        … when a title is written, and only then?
+│   ├── conventional-commits-type/
+│   │                    … when a type is chosen, and never for a commit message?
 │   ├── pr-body/         … when a body is written, and only then?
 │   ├── constitution/    does the constitution reach a subagent?
 │   └── review-depth/    does `review` send the right panel at the diff?
@@ -56,10 +58,15 @@ Three things the Makefile does that a hand-typed `coder-eval` will not:
 
 ## What the suites are for
 
-The three trigger-accuracy suites exist because `pr`, `pr-title` and `pr-body`
+The trigger-accuracy suites exist because `pr`, `pr-title` and `pr-body`
 are siblings with overlapping vocabulary — every one of them has "PR" in its
-description — so the thing that can actually break is *which* one fires. Each
-has two halves, and the second is the one that earns its keep:
+description — so the thing that can actually break is *which* one fires.
+`conventional-commits-type` sits behind `pr-title` and is asked for without
+a title in hand, so its suite adds the delegation route — a title correction
+that must reach the type skill rather than decide the type in place — and
+the one adjacent request where a type is tempting and wrong: a commit
+message, which is prose by the constitution's rule. Each suite has two
+halves, and the second is the one that earns its keep:
 
 - **Fire cases** — four per skill, covering the literal `/pr`, natural
   phrasings, and Claude's own use of `mcp__github__create_pull_request` /
