@@ -310,12 +310,21 @@ proof of success either, and on the version measured the two coincided. On a
 cloud container it is worth reading, `installed_plugins.json` being the file
 the setup script's verification line greps.
 
+## What none of this covers
+
+A session, in a repository with no stanza, on a machine or in an environment
+where nothing is installed, with no laptop in reach. Nothing inside the plugin
+can report its own absence, and no command there will have anything to say.
+Only the habit above reaches that case at all — which is the argument for the
+template and for putting the setup script in the environment before it is
+needed, both of whose value is that the question is settled before anyone is in
+a position to ask it.
+
 ## Repo-local review rules
 
-The plugin's reviewers carry no rule that describes one repository. A rule that
-does — a convention only this repository's toolchain makes correct — goes in
-this repository's own `CLAUDE.md`, which every surface reads and which reaches
-a reviewer subagent. There is no plugin-side mechanism to configure, and
+A review rule that only one repository's toolchain makes correct goes in that
+repository's own `CLAUDE.md` — which every surface reads, and which reaches a
+reviewer subagent. There is no plugin-side mechanism to configure, and
 [`decisions/0003`](decisions/0003-repo-local-review-rules.md) is why.
 
 Two such rules used to ship globally. Paste them into the `CLAUDE.md` of a
@@ -330,16 +339,6 @@ repository that runs Yor, Checkov, or both:
 - **Checkov suppressions carry a reason.** Every `checkov:skip` comment must
   state why the check is suppressed.
 ```
-
-## What none of this covers
-
-A session, in a repository with no stanza, on a machine or in an environment
-where nothing is installed, with no laptop in reach. Nothing inside the plugin
-can report its own absence, and no command there will have anything to say.
-Only the habit above reaches that case at all — which is the argument for the
-template and for putting the setup script in the environment before it is
-needed, both of whose value is that the question is settled before anyone is in
-a position to ask it.
 
 ## Measurements
 

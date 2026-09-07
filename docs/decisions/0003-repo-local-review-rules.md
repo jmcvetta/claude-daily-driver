@@ -73,8 +73,19 @@ Removal is not deletion; the rules are needed where they apply, and a decision
 record is not where anyone bootstrapping a repository will look for them. The
 block to paste is in
 [`bootstrapping-a-repository.md`](../bootstrapping-a-repository.md) under
-*Repo-local review rules*, beside the enablement stanza — one copy, so the two
-cannot drift.
+*Repo-local review rules* — one copy, so the two cannot drift.
+
+## One residue, named rather than fixed
+
+`agents/planning-fitness-reviewer.md` routes on `docs/proposals/`, and so does
+the attic's `review` skill. That is a directory convention of the author's
+other repositories — not of this one, which uses `docs/planning/` and
+`docs/decisions/` — and it fails the same test the Yor rule failed. It is left
+standing here because moving it is not a placement change: the `review-depth`
+eval suite's planning-class case writes `docs/planning/cache-rollout.md` and
+expects it to route as planning-class, which the shipped rule does not do. That
+disagreement predates this decision and deciding it is a measurement question,
+not this one.
 
 ## What would change this
 
