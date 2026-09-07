@@ -21,27 +21,30 @@ hook — plus skills that fire on activity:
 | `pr-threads` | The review-thread lifecycle for any reviewer: reply with a verdict, resolve, re-resolve a repeat finding, never leave a thread open silently — plus the comment minimisation the GitHub MCP does not expose. |
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
 | `review` | Reviews a branch or pull request with a panel of reviewer agents, infers how deep to go from the diff itself, walks the findings through with you, and posts the result in verse. |
+| `session-title` | Names the session in the Claude web and mobile lists: a forty-character budget, chosen rather than measured, `#123 shortened issue title` while an issue is in hand, a short noun phrase otherwise. |
 
 Three PR skills rather than one because skill names are flat within a plugin,
 so siblings can be triggered independently: a decision to rewrite a PR body
 fires `pr-body` directly, without routing through `pr` to get there. The cost
 is two extra descriptions in context.
 
-Each skill carries its own trigger register: the literal slash command, natural
-phrasings — "open a PR" for `pr`, "fix the PR title" for `pr-title`, "rewrite
-the PR description" for `pr-body`, "address the review feedback" for
-`pr-threads`, "is this ready" for `review`, "this is blocked by #123" for
-`issue-deps` — and Claude's own tool calls. The PR skills split
+Each skill carries its own trigger register: the slash command where the skill
+has one, natural phrasings — "open a PR" for `pr`, "fix the PR title" for
+`pr-title`, "rewrite the PR description" for `pr-body`, "address the review
+feedback" for `pr-threads`, "is this ready" for `review`, "this is blocked by
+#123" for `issue-deps`, "rename this session" for `session-title` — and
+Claude's own tool calls. The PR skills split
 `mcp__github__create_pull_request` and `mcp__github__update_pull_request`
 between them, `pr-title` on a call that sets a `title`, `pr-body` on one that
 sets a `body`, `pr` on a create or on an update wider than either alone, with
-`gh pr create` / `gh pr edit` as a fallback on a harness that still reaches for
-them; `pr-threads` takes the reply and resolve tools and `get_review_comments`;
-`review` takes the moments before a branch is declared ready, marked
-non-draft, or sent to a reviewer; `issue-deps` takes the GitHub MCP's sub-issue
-and issue-read tools. That
-last register is the point: a convention that only fires when a human types a
-command quietly stops applying as more of the work runs without one.
+`gh pr create` / `gh pr edit` as a fallback on a harness that still reaches
+for them; `pr-threads` takes the reply and resolve tools and
+`get_review_comments`; `review` takes the moments before a branch is declared
+ready, marked non-draft, or sent to a reviewer; `issue-deps` takes the GitHub
+MCP's sub-issue and issue-read tools; `session-title` takes
+`mcp__Claude_Code_Remote__set_session_title`. That last register is the point:
+a convention that only fires when a human types a command quietly stops
+applying as more of the work runs without one.
 
 Naming the MCP tools is also a stronger trigger than naming `gh pr create` is —
 an exact tool name where the fallback is, in effect, a regex over a bash
@@ -103,9 +106,10 @@ claude-daily-driver/
 │   ├── issue-deps/
 │   │   ├── SKILL.md
 │   │   └── scripts/        plugin runtime, owned by the skill beside it
-│   └── review/
-│       ├── SKILL.md
-│       └── references/     the review guidelines, passed to every agent
+│   ├── review/
+│   │   ├── SKILL.md
+│   │   └── references/     the review guidelines, passed to every agent
+│   └── session-title/SKILL.md
 └── template/.claude/       copied into a repository to enable the plugin
 ```
 

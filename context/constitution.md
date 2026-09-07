@@ -165,6 +165,8 @@ supplies a scratchpad directory of its own, which wins.
   from the diff. Pulled, never pushed — not on opening a pull request.
 - `issue-deps` — GitHub issue relationships: blocked-by, sub-issue, and which
   pull request closes what.
+- `session-title` — naming this session for the Claude session lists: forty
+  characters, `#123 shortened issue title` when there is an issue.
 
 ## Verification
 
