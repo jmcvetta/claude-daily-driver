@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.5.0...v0.6.0) (2026-09-07)
+
+
+### Features
+
+* **undertake:** claim the issue before the branch is cut ([#79](https://github.com/jmcvetta/claude-daily-driver/issues/79)) ([8354f33](https://github.com/jmcvetta/claude-daily-driver/commit/8354f3391dacfc93d9932d39b3bf1feb86325f31))
+
+
+### Bug Fixes
+
+* **review-cycle:** name medium, escalate to xhigh, never select max ([#76](https://github.com/jmcvetta/claude-daily-driver/issues/76)) ([1397ad3](https://github.com/jmcvetta/claude-daily-driver/commit/1397ad33b8c1e51c2140e5a73d5aade7c81efa6c))
+
 ## [0.5.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.4.0...v0.5.0) (2026-09-07)
 
 
