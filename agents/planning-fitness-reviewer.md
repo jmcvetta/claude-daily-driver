@@ -33,12 +33,11 @@ You ask three questions, in this order:
 
 ## Severity Rubric
 
-Apply the planning-class severity rubric defined in the **Planning-Doc
-Reviews → Severity rubric for planning-class diffs** section of the
-`review` skill's `references/review-guidelines.md`. The skill passes
-that rubric to you at dispatch time; that copy is the canonical version.
-Do not use the standard code-oriented rubric — it does not apply to
-planning content.
+Apply the planning-class severity rubric defined in the **Severity
+rubric** section of the `review` skill's
+`references/planning-review.md`. The skill passes that file to you at
+dispatch time; that copy is the canonical version. Do not use the
+standard code-oriented rubric — it does not apply to planning content.
 
 ## Output Format
 
