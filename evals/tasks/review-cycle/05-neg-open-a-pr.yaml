@@ -1,0 +1,51 @@
+task_id: review-cycle-05-neg-open-a-pr
+description: >-
+  Drawn from the adjacent skill rather than from unrelated work: `pr` is the
+  right answer and `review-cycle` is the wrong one. The round starts from a
+  pull request that already exists.
+tags: [trigger-accuracy, review-cycle, no-fire]
+
+initial_prompt: >-
+  Branch'"'"'s done and pushed. Raise a pull request for it.
+
+agent:
+  # `allowed_tools` is a permission allowlist, not a tool filter: the model is
+  # still offered `Read` and friends and merely denied at the permission check.
+  # That is not enough here. Telemetry records a `tool_use` block when it is
+  # generated, before any result, and `skill_triggered` counts a `skills/<name>/`
+  # path in ANY tool parameter as engaging that skill — so a *denied* read of
+  # `skills/review-cycle/SKILL.md`, which is exactly what a model weighing two
+  # sibling skills reaches for, would fail a no-fire row. `disallowed_tools` is
+  # the one that actually removes a tool, so the path can never be typed.
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  # `turn_timeout` is the agent's budget; `task_timeout` is the watchdog around
+  # the whole evaluation, armed before the turn starts and still running while
+  # the criteria are checked. Equal values mean a turn that uses its budget is
+  # killed as a TIMEOUT before it can be graded, so `task_timeout` carries
+  # headroom on top. `plan` warns that the larger number cannot extend the
+  # turn; that is the point — it is not meant to.
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`pr` fires"
+    expected_skill: pr
+    skill_name: pr
+    # Armed. `stop_early: {}` leaves `on_pass` at its default `continue`, so
+    # this cannot cut the run short on a pass — what it does is put this
+    # criterion in the watcher'"'"'s pass-capable set, which defers the distractor'"'"'s
+    # fail-stop until recall has been decided. Left unarmed, a misfire would
+    # end the run before `pr` had a chance to fire, and the row would record a
+    # false negative the full run would not have produced.
+    stop_early: {}
+  - type: skill_triggered
+    description: "`review-cycle` does not fire on a pull request that does not exist yet"
+    expected_skill: pr
+    skill_name: review-cycle
+    # Armed. A misfire has already lost the row, so there is nothing left to
+    # pay for.
+    stop_early: {}
