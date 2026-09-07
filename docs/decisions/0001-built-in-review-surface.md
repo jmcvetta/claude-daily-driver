@@ -212,22 +212,36 @@ version**, because none of this is documented anywhere a release note would
 mention.
 
 **It is a different reviewer, not a second opinion.** Its `SECURITY CATEGORIES
-TO EXAMINE` are input validation (SQL, command, XXE, template and NoSQL
-injection, path traversal), authentication and authorization, and — further
-down the same list — unsafe deserialization and data exposure. Against the
-angle bundle in §2, which is "3 correctness angles + 3 cleanup angles + 1
-altitude angle + 1 conventions angle", plus D (language pitfalls) and E
-(wrapper/proxy correctness) at `xhigh` and `max`: **no cell of the
-`/code-review` matrix runs a security angle at any level.** The
-one-opinion-counted-twice objection that applies to two agents reading a diff
-for one dimension does not apply here.
+TO EXAMINE` are five headers verbatim: `Input Validation Vulnerabilities`,
+`Authentication & Authorization Issues`, `Crypto & Secrets Management`,
+`Injection & Code Execution`, and `Data Exposure`. Against the angle bundle in
+§2, which is "3 correctness angles + 3 cleanup angles + 1 altitude angle + 1
+conventions angle", plus D (language pitfalls) and E (wrapper/proxy
+correctness) at `xhigh` and `max`: **no cell of the `/code-review` matrix runs
+a security angle at any level.** The one-opinion-counted-twice objection that
+applies to two agents reading a diff for one dimension does not apply here.
 
 It is also tuned for precision over recall in a way `/code-review` is not:
 "Only flag issues where you're >80% confident of actual exploitability", and a
-sub-task pass that filters its own findings below confidence 8. It explicitly
-declines three classes — denial of service, secrets stored on disk, and rate
-limiting or resource exhaustion — so a diff whose risk is one of those is not
-covered by running it.
+`FALSE POSITIVE FILTERING` pass — 17 items, run as parallel sub-tasks over the
+first pass's findings — that drops anything below confidence 8. Its
+`EXCLUSIONS` decline three classes outright: denial of service, secrets stored
+on disk, and rate limiting or resource exhaustion. A diff whose risk is one of
+those is not covered by running it.
+
+**Two filter items are worth knowing before routing CI configuration to it**,
+because they discount by name the file class a caller is most likely to send:
+
+> 6. Input sanitization concerns for GitHub Action workflows unless they are
+>    clearly triggerable via untrusted input.
+>
+> 7. Most vulnerabilities in github action workflows are not exploitable in
+>    practice. Before validating a github action workflow vulnerability ensure
+>    it is concrete and has a very specific attack path.
+
+That is a deliberate precision choice, not a gap — the triggerable case
+survives both items — but it means a `.github/workflows/` diff buys much less
+from `/security-review` than its category list suggests.
 
 **It takes no target.** Where `/code-review` accepts a working diff, a PR
 number, a branch or a path, `/security-review` hard-codes its inputs in the
@@ -241,8 +255,12 @@ DIFF CONTENT:    !`git diff origin/HEAD...`
 It reviews the checked-out branch against `origin/HEAD` and nothing else. Two
 consequences for any caller: a pull request number cannot be passed to it, so
 on a session whose checkout is some other branch it reviews the wrong diff; and
-where `origin/HEAD` is unresolvable it reads an *empty* diff and reports clean,
-which is indistinguishable from a review that found nothing. Its declared
+where `origin/HEAD` is unresolvable those commands fail — `git diff
+origin/HEAD...` exits 128 — leaving the prompt's `DIFF CONTENT` section empty.
+*Inferred, not read:* the binary carries the commands, not the behaviour of the
+harness that interpolates them, so whether that surfaces as an error or as a
+review of nothing was not established. Either way a caller should not run it
+there. Its declared
 `allowed-tools` include `Task`, so it is a multi-agent run in its own right and
 is priced accordingly.
 

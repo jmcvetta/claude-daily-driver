@@ -122,7 +122,8 @@ change to a lock ordering earns the verified level, and an eight-hundred-line
 rename does not.
 
 **The sensitive touch.** If any changed path or hunk touches the list below,
-the diff takes the Verified route whatever its size. This is the judgement a
+the diff takes the Verified route whatever its size — on any non-planning
+route. This is the judgement a
 human forgets to make, made from the diff instead. The five marked **§** are
 the security-shaped half, which the analysis treats differently.
 
@@ -139,9 +140,10 @@ the security-shaped half, which the analysis treats differently.
 - database migrations and schema changes
 - a dependency added, removed, or a version or constraint moved — in a
   manifest or a lockfile alike. A `--upgrade-package` bump with no manifest
-  movement is still a supply-chain decision; a comment reflowed in a manifest,
-  or a lockfile regenerated without moving a version, is not a decision at all
-  and routes like the prose it is.
+  movement is still a supply-chain decision. Neither a comment reflowed in a
+  manifest nor a lockfile regenerated without moving a version is a decision at
+  all: the first is docs-only prose, and the second is Code that Size ignores.
+  Both are a Skim.
 
 **Take the first row that matches**, the way the kind buckets are read.
 
@@ -165,10 +167,12 @@ Planning-class is decided first and is never raised. A rollout plan that
 discusses IAM is still prose, and `max` over nine hundred lines of it buys
 findings about a document with no code in it.
 
-A depth the user names wins over the size rows, and cannot go under the
-Verified route. "Just skim it" on a diff that widens a workflow token is
-precisely the judgement this skill is here to make on their behalf; say that
-the sensitive touch is holding the level, and review it at `max`.
+A depth the user names replaces whichever of the last three rows the table
+picked — including a Skim reached on kind rather than on size. Planning is
+never raised and Verified is never lowered: "just skim it" on a diff that
+widens a workflow token is precisely the judgement this skill is here to make
+on their behalf, so say that the sensitive touch is holding the level and
+review it at `max`.
 
 
 The analysis
@@ -184,9 +188,10 @@ target:
 - **Local mode** — `/code-review <level> <$BASE_BRANCH>`
 
 Name the level, because `/code-review` reuses the last one typed in the session
-by its own description. Name the target, because unnamed it reviews the
-*working* diff — empty on a branch whose work is committed, and an empty diff
-comes back clean.
+by its own description. Name the target, because unnamed it diffs against the
+branch's upstream and falls back to the working tree — so on a branch that is
+committed and pushed, which is the state this skill insists on, it reviews
+nothing and reports it clean.
 
 Inside this skill `/code-review` and `/security-review` are the analysis, not
 triggers. The description fires this skill when someone reaches for a built-in
@@ -215,6 +220,13 @@ deserialization and data exposure. `max` buys verification, not a threat model.
 Migrations and manifests get `max` alone; data loss and supply chain are
 outside every category it hunts, and it declines denial of service, secrets on
 disk and resource exhaustion outright.
+
+One caveat worth carrying, from the same section: its false-positive filter
+discounts workflow findings by name — "most vulnerabilities in github action
+workflows are not exploitable in practice" — so on a `.github/workflows/` diff
+`max` is doing most of the work. It stays on the **§** half because injection
+that *is* triggerable by untrusted input is exactly the case it keeps, and that
+case is the expensive one to miss.
 
 Two constraints follow from the same section. **It takes no target**: it diffs
 the checked-out branch against `origin/HEAD` and nothing else. Run it only

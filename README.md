@@ -42,8 +42,8 @@ for them; `issue-deps` takes the GitHub MCP's sub-issue and issue-read tools;
 `session-title` takes `mcp__Claude_Code_Remote__set_session_title`;
 `judgement-call` takes `AskUserQuestion`; and `review` takes the moments a
 branch is declared finished — `draft: false`, requesting a reviewer, or
-reaching for `/code-review` directly — but deliberately *not* pull request
-open, which is `pr`'s moment and opens the conversation rather than ending the
+reaching for `/code-review` or `/security-review` directly — but deliberately
+*not* pull request open, which is `pr`'s moment and opens the conversation rather than ending the
 work. Those tool-call registers are the
 point: a convention that only fires when a human types a command quietly stops
 applying as more of the work runs without one.

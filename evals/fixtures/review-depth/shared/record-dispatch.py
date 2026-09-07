@@ -53,34 +53,33 @@ def main() -> int:
             _append(ROSTER, requested)
 
         skill = tool_input.get(SKILL_KEY)
-        if isinstance(skill, str) and skill:
+        # Normalise the name in one order, because each step sets up the next.
+        #
+        # `.strip()` first: the CLI hands a hook whatever the model typed, so a
+        # stray leading space would otherwise shield the slash below from
+        # `removeprefix`, and a whitespace-only name would collapse away
+        # entirely and promote `args` to the head of the line, where a
+        # criterion reads it as the name.
+        #
+        # `.removeprefix("/")` next: the CLI accepts `skill: "/code-review"`
+        # and strips the slash only *after* `checkPermissions` has returned the
+        # input, and `SKILL.md` writes the name with the slash everywhere,
+        # which is the likeliest thing for a model to copy. Left on, every
+        # criterion anchored `^(?:[A-Za-z0-9_.-]+:)?code-review` misses — in
+        # the direction that hides the failure, since the positives then read
+        # as a skill that never routed and the negatives pass while a review
+        # ran. `removeprefix` rather than `lstrip`, which would eat a run of
+        # slashes rather than the one the CLI accepts.
+        skill = skill.strip().removeprefix("/") if isinstance(skill, str) else ""
+        if skill:
             args = tool_input.get(ARGS_KEY)
             args = args if isinstance(args, str) else ""
-            # Two normalisations, both load-bearing.
-            #
-            # The leading slash: the CLI accepts `skill: "/code-review"` and
-            # strips it *after* `checkPermissions` has returned the input, so
-            # what a `PreToolUse` hook sees is whatever the model typed — and
-            # `SKILL.md` writes the name with the slash everywhere, which is
-            # the likeliest thing for it to copy. Unstripped, every criterion
-            # anchored on `^(?:[A-Za-z0-9_.-]+:)?code-review` misses, and it
-            # misses in the direction that hides the failure: the positives
-            # read as a skill that never routed, the negatives pass while a
-            # review ran.
-            #
-            # The whitespace collapse: `args` is arbitrary model-authored text
-            # and this file is read with `re.MULTILINE`, so a multi-line
-            # argument to any skill would write extra lines that a criterion
-            # scores as records of their own. The instrument must not be
-            # forgeable by the payload it observes.
-            #
-            # Collapse runs first: the other order lets a stray leading space
-            # shield the slash from the strip, which is the first bug wearing a
-            # different hat. `removeprefix` rather than `lstrip`, which would
-            # eat a run of slashes rather than the one the CLI accepts.
-            line = " ".join(f"{skill} {args}".split()).removeprefix("/")
-            if line:
-                _append(INVOCATIONS, line)
+            # `args` is arbitrary model-authored text and this file is read
+            # with `re.MULTILINE`, so a multi-line argument to any skill would
+            # write extra lines that a criterion scores as records of their
+            # own. The instrument must not be forgeable by the payload it
+            # observes.
+            _append(INVOCATIONS, " ".join(f"{skill} {args}".split()))
     except Exception:  # noqa: BLE001 -- never fail; see evals/README.md
         pass
     return 0

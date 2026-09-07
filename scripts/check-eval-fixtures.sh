@@ -74,6 +74,9 @@ fail() {
 #     the hook has seen the input, and SKILL.md writes the slash everywhere
 #   * the same again behind a leading space, which shields the slash from the
 #     strip unless the whitespace collapse runs first
+#   * a name that is only whitespace, and one that is only the slash: both
+#     empty once normalised, and neither may leave its `args` behind as a
+#     record, where a criterion would read them as the name
 #   * a multi-line `args`, which must collapse to one line: the files are read
 #     with re.MULTILINE, so an uncollapsed argument writes records of its own
 probe_recorder() {
@@ -101,7 +104,16 @@ probe_recorder() {
 		python3 "${recorder}" ||
 		fail "${name}" "the recorder exited non-zero on a space-then-slash skill name"
 	grep -qx 'code-review spaced-probe' "${sandbox}/.fixture/invocations.txt" ||
-		fail "${name}" "leading whitespace shielded the slash from the strip; collapse must run before removeprefix"
+		fail "${name}" "leading whitespace shielded the slash; the name must be stripped before removeprefix"
+
+	echo '{"tool_input":{"skill":"   ","args":"code-review max master"}}' |
+		python3 "${recorder}" ||
+		fail "${name}" "the recorder exited non-zero on a whitespace-only skill name"
+	echo '{"tool_input":{"skill":"/","args":"code-review max master"}}' |
+		python3 "${recorder}" ||
+		fail "${name}" "the recorder exited non-zero on a bare-slash skill name"
+	grep -q 'code-review max master' "${sandbox}/.fixture/invocations.txt" &&
+		fail "${name}" "an empty skill name promoted its arguments to the head of the line, where every criterion reads them as the name"
 
 	printf '%s\n' '{"tool_input":{"skill":"probe-skill","args":"one\ncode-review max\n"}}' |
 		python3 "${recorder}" ||
