@@ -320,6 +320,26 @@ template and for putting the setup script in the environment before it is
 needed, both of whose value is that the question is settled before anyone is in
 a position to ask it.
 
+## Repo-local review rules
+
+A review rule that only one repository's toolchain makes correct goes in that
+repository's own `CLAUDE.md` — which every surface reads, and which reaches a
+reviewer subagent. There is no plugin-side mechanism to configure, and
+[`decisions/0003`](decisions/0003-repo-local-review-rules.md) is why.
+
+Two such rules used to ship globally. Paste them into the `CLAUDE.md` of a
+repository that runs Yor, Checkov, or both:
+
+```markdown
+## Review
+
+- **Yor tags are not stale.** Never flag `yor_*` or `git_*` tags in Terraform
+  resources as outdated or needing update. Yor rewrites them during the
+  release process; the hardcoded values are expected and correct.
+- **Checkov suppressions carry a reason.** Every `checkov:skip` comment must
+  state why the check is suppressed.
+```
+
 ## Measurements
 
 Established against Claude Code 2.1.263 by running the CLI, rather than by

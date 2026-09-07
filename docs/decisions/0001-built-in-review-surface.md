@@ -8,6 +8,12 @@ phases 2–4") document `claude plugin eval` because nothing else does — **not
 an endorsement.** [`0002`](0002-eval-harness.md) decides against that tool, and
 retires the mode-line grading design those sections recommend. Read `0002`
 first.
+**Amended in part:** arms D and E below are configurations of
+`review-guidelines.md`, and
+[`0003`](0003-repo-local-review-rules.md) removed the repo-specific Yor and
+Checkov rules from that file. Both arms now carry a general checklist only, so
+neither measures whether repo-specific rules survive the move — which is the
+inference the E arm was added to prevent being drawn by assumption.
 **Method:** the session's own skill and tool listings, `claude <cmd> --help`, and
 `strings` over the bundled CLI binary. Where a claim comes from the binary the
 extracted string is quoted, because a minified bundle is evidence about *this*

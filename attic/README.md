@@ -21,7 +21,8 @@ rather than an archaeology session.
 
 `skills/review/` was here too, and came back — reshaped rather than restored.
 What returned is the half that never depended on the panel measurement:
-routing, the planning contract, and the walkthrough, with the built-in
-`/code-review` as the analysis. Three of the four reviewer agents stay dormant
+routing, the walkthrough, and the planning route — whose contract now lives in
+`planning-fitness-reviewer` itself, which ships and can be invoked without the
+skill. The built-in `/code-review` is the analysis. Three of the four reviewer agents stay dormant
 under `agents/` until that measurement is taken. This is the round trip the
 attic was built for: a `git mv` out, and a rewrite back.

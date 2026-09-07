@@ -134,7 +134,7 @@ disagreement is load-bearing:
 One hazard `skill_triggered` carries, which the criterion's name hides: besides
 the `Skill` tool call, it scans **every string parameter of every tool** for the
 substring `skills/<name>/`, so a `Read` of
-`skills/review/references/planning-review.md` counts as engaging `review`.
+`skills/review/SKILL.md` counts as engaging `review`.
 That is deliberate — it is how the criterion scores agents with no `Skill` tool
 — but it means a row that grants file tools and expects a skill *not* to fire is
 only as sound as the paths that row can plausibly touch. `allowed_tools` is not
@@ -240,15 +240,38 @@ ends in the built-in `/code-review` at a named effort level, so it is graded on
 the `Skill` call's arguments — the level *is* the routing decision, and the
 level is the whole of what the table above decides.
 
-**No criterion in `coder_eval` 0.11.6 can see `subagent_type`.**
+**No criterion in `coder_eval` 0.11.6 can be relied on to see `subagent_type`.**
 `command_executed` matches against `json.dumps(parameters)` truncated to 2000
-characters, and the `Agent` tool's schema orders its keys `description, prompt,
-subagent_type` — so the prompt carrying the diff pushes `subagent_type` past the
-window on every dispatch of consequence, and the criterion reports "not
-dispatched" for a dispatch that happened. That silently zeroes a positive and
-*inverts* a negative control. `llm_judge` and `agent_judge` are no help: their
-tool-call summariser renders an `Agent` call as its `description`, a three-word
-label the model writes.
+characters, so whether the field is inside the window depends on how long the
+prompt is and on where the key lands in the serialisation — neither of which the
+eval controls. When it falls outside, the criterion reports "not dispatched" for
+a dispatch that happened: it silently zeroes a positive and *inverts* a negative
+control, and both failures read exactly like a router that dispatched nothing.
+`llm_judge` and `agent_judge` are no help either: their tool-call summariser
+renders an `Agent` call as its `description`, a three-word label the model
+writes.
+
+**Measured, so the size of the risk is on the page rather than assumed.** Three
+live `review` dispatches (CLI 2.1.263, `coder_eval` 0.11.6, `claude-opus-5`,
+2026-09-07 — the three-agent panel over a 1,397-line diff) serialised to 1,437 /
+1,382 / 1,387 characters with `subagent_type` as the **first** key, comfortably
+inside the window: `review` hands its agents a summary and a file list, not the
+diff. So the truncation does not bite this skill today, and an earlier reading of
+this section — that key order is fixed at `description, prompt, subagent_type`
+and the prompt therefore pushes the field past the window on *every* dispatch of
+consequence — was wrong.
+
+That measurement was taken against the three-agent panel, which this suite no
+longer grades: `planning-fitness-reviewer` is the only agent `review`
+dispatches now, so the three numbers are an upper bound on a dispatch surface
+that has since shrunk. The other route is a `Skill` call, whose arguments are
+short by construction.
+
+The hook below stays regardless, and the measurement is why it is worth its
+weight rather than why it is unnecessary: argument order is the model's to
+choose call by call, prompt length is the skill's to change without telling
+anyone, and the failure mode is silent in the direction that looks like a
+result.
 
 So the observation is taken with a `PreToolUse` hook matching
 `^(Agent|Task|Skill)$` — the first two because the harness has used both names,

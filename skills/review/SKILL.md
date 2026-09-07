@@ -149,10 +149,10 @@ differently.
 
 | Route | When | The analysis |
 | ----- | ---- | ------------ |
-| **Planning** | planning-class | `planning-fitness-reviewer`, under `references/planning-review.md`. No `/code-review`. |
+| **Planning** | planning-class | `planning-fitness-reviewer`. No `/code-review`. |
 | **Verified** | a sensitive touch | `/code-review max`, plus `/security-review` on the **§** half |
 | **Skim** | docs-only, or under ~50 changed lines | `/code-review low` |
-| **Standard** | code, under ~800 changed lines | `/code-review medium` |
+| **Standard** | code, ~50 to ~800 changed lines | `/code-review medium` |
 | **Full** | over ~800 changed lines | `/code-review xhigh` |
 
 Skim is `low` deliberately: `low` caps findings hard — around four on most
@@ -169,10 +169,12 @@ findings about a document with no code in it.
 
 A depth the user names replaces whichever of the last three rows the table
 picked — including a Skim reached on kind rather than on size. Planning is
-never raised and Verified is never lowered: "just skim it" on a diff that
-widens a workflow token is precisely the judgement this skill is here to make
-on their behalf, so say that the sensitive touch is holding the level and
-review it at `max`.
+never raised: "give this plan a full review" is still a planning review.
+
+A named depth **can** go under Verified, but never costs the **§** analysis. A
+named Skim over a diff that widens a workflow token is a Skim *with*
+`/security-review`: the level is the user's to lower, and the security pass is
+the thing the sensitive touch exists to guarantee. Say which half you kept.
 
 
 The analysis
@@ -253,11 +255,11 @@ The planning route
 ------------------
 
 Dispatch **`planning-fitness-reviewer`** through the Agent tool, passing the
-diff, the changed paths, and
-[`references/planning-review.md`](references/planning-review.md) — which holds
-the contract and the severity rubric that replaces the four tiers below. Do not
-pass a `model` parameter: the agent inherits the session's. A pin ages into a
-cost decision nobody revisits.
+diff and the changed paths. It carries its own contract and its own four-tier
+rubric, which replaces the one below — the tier names are shared and the
+thresholds are not, so do not hand it the code rubric. Do not pass a `model`
+parameter either: the agent inherits the session's, and a pin ages into a cost
+decision nobody revisits.
 
 `/code-review` does not run on this route. The question a planning document
 faces is *"is this the right plan?"*, not *"is this ready to build?"*, and a
