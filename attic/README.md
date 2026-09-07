@@ -18,7 +18,10 @@ rather than an archaeology session.
 - `skills/pr-threads/` — the review-thread lifecycle: reply with a verdict,
   resolve, re-resolve a repeat finding, plus the comment minimisation the
   GitHub MCP does not expose. Retired 2026-09 as possibly obsolete.
-- `skills/review/` — the reviewer panel, with depth inferred from the diff.
-  Retired 2026-09 as possibly obsolete. The agents it dispatched are still
-  live under `agents/`; they are dormant, not deleted, because whether the
-  panel outlives the skill is a separate question.
+
+`skills/review/` was here too, and came back — reshaped rather than restored.
+What returned is the half that never depended on the panel measurement:
+routing, the planning contract, and the walkthrough, with the built-in
+`/code-review` as the analysis. Three of the four reviewer agents stay dormant
+under `agents/` until that measurement is taken. This is the round trip the
+attic was built for, and it cost a `git mv` in each direction.

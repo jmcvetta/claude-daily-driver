@@ -21,6 +21,7 @@ hook — plus skills that fire on activity:
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which PR closes what — proposing each edge from evidence and leaving the writing to a confirmation. |
 | `session-title` | Names the session in the Claude web and mobile lists: a forty-character budget, chosen rather than measured, `#123 shortened issue title` while an issue is in hand, a short noun phrase otherwise. |
 | `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. What survives the gate is intent, a real trade-off, scope, and any confirmation another rule requires. |
+| `review` | Routes a diff to the right review — planning documents to the planning contract, everything else to the built-in `/code-review` at an effort level read off the diff — then walks the findings, applying the obvious ones and discussing the rest. |
 
 Three PR skills rather than one because skill names are flat within a plugin,
 so siblings can be triggered independently: a decision to rewrite a PR body
@@ -31,14 +32,19 @@ Each skill carries its own trigger register: the slash command where the skill
 has one, natural phrasings — "open a PR" for `pr`, "fix the PR title" for
 `pr-title`, "rewrite the PR description" for `pr-body`, "this is blocked by
 #123" for `issue-deps`, "rename this session" for `session-title`, "just
-decide" for `judgement-call` — and Claude's own tool calls. The PR skills split
+decide" for `judgement-call`, "review this branch" for `review` — and Claude's
+own tool calls. The PR skills split
 `mcp__github__create_pull_request` and `mcp__github__update_pull_request`
 between them, `pr-title` on a call that sets a `title`, `pr-body` on one that
 sets a `body`, `pr` on a create or on an update wider than either alone, with
 `gh pr create` / `gh pr edit` as a fallback on a harness that still reaches
 for them; `issue-deps` takes the GitHub MCP's sub-issue and issue-read tools;
-`session-title` takes `mcp__Claude_Code_Remote__set_session_title`; and
-`judgement-call` takes `AskUserQuestion`. Those tool-call registers are the
+`session-title` takes `mcp__Claude_Code_Remote__set_session_title`;
+`judgement-call` takes `AskUserQuestion`; and `review` takes the moments a
+branch is declared finished — `draft: false`, requesting a reviewer, or
+reaching for `/code-review` directly — but deliberately *not* pull request
+open, which is `pr`'s moment and opens the conversation rather than ending the
+work. Those tool-call registers are the
 point: a convention that only fires when a human types a command quietly stops
 applying as more of the work runs without one.
 
@@ -54,17 +60,34 @@ while the ambient token is present on both surfaces — and it exists only
 because the GitHub MCP exposes no blocked-by / blocking tool. Four endpoints
 hold it up, and it is deleted the day the MCP exposes them.
 
-Two skills that used to be here — `pr-threads` and `review` — no longer ship.
-They are in [`attic/skills/`](attic/), kept rather than deleted, because
-"possibly obsolete" is not the same judgement as "obsolete" and the second one
-is cheaper to make once the first has been lived with. Nothing under `attic/`
-is loaded, so retiring them costs nothing in context; bringing either back is
-a `git mv`.
+One skill that used to be here — `pr-threads` — no longer ships. It is in
+[`attic/skills/`](attic/), kept rather than deleted, because "possibly
+obsolete" is not the same judgement as "obsolete" and the second one is cheaper
+to make once the first has been lived with. Nothing under `attic/` is loaded,
+so retiring it costs nothing in context; bringing it back is a `git mv`.
 
-The reviewer panel `review` dispatched is still in [`agents/`](agents/) —
-`logic-reviewer`, `architecture-reviewer`, `security-reviewer`,
-`planning-fitness-reviewer` — dormant rather than deleted, and none of them
-pins a model. A pin ages into a cost decision nobody revisits.
+`review` went to the attic beside it and came back reshaped. The built-in
+`/code-review` is now the analysis, and what the skill supplies is the three
+things it does not do: route the diff, apply the planning contract to a diff
+made of plans rather than code, and split the findings `[obvious]` /
+`[judgment]` so the mechanical ones are applied and the rest are discussed one
+at a time — a discrimination `/code-review --fix`, which applies every finding
+or none, does not have. The routing table names `low`, `medium`, `xhigh` and
+`max` and never `high`, because on `claude-opus-5` `high` and `medium` resolve
+to the same cell; a sensitive touch — auth, crypto, IAM, migrations,
+`.github/workflows/`, request boundaries, dependency manifests — selects `max`
+at any diff size, which is the only cell that verifies on every model family.
+See [`docs/decisions/0001-built-in-review-surface.md`](docs/decisions/0001-built-in-review-surface.md)
+for where those cells come from.
+
+Of the reviewer panel `review` used to dispatch, only
+`planning-fitness-reviewer` is still called: it carries the planning contract,
+which no built-in has an equivalent of. `logic-reviewer`,
+`architecture-reviewer` and `security-reviewer` stay in [`agents/`](agents/),
+dormant rather than deleted, until the measurement in
+[#35](https://github.com/jmcvetta/claude-daily-driver/issues/35) says whether
+they find anything the built-in does not. None of them pins a model; a pin ages
+into a cost decision nobody revisits.
 
 `judgement-call` is the odd one out: every other skill here fires on work
 about to be done, and this one fires on a question about to be asked. Its register is
@@ -90,7 +113,7 @@ claude-daily-driver/
 │   ├── plugin.json         the plugin, and the version releases bump
 │   └── marketplace.json    the pointer `claude plugin install` reads
 ├── .github/workflows/      CI, PR title check, infra, release automation
-├── agents/                 the reviewer panel, dormant while `review` is retired
+├── agents/                 `planning-fitness-reviewer`, live; three others dormant
 ├── attic/                  kept but not shipped; nothing here is loaded
 ├── context/
 │   └── constitution.md     always-on rules, one file, read by both hooks
@@ -110,7 +133,10 @@ claude-daily-driver/
 │   │   ├── SKILL.md
 │   │   └── scripts/        plugin runtime, owned by the skill beside it
 │   ├── session-title/SKILL.md
-│   └── judgement-call/SKILL.md
+│   ├── judgement-call/SKILL.md
+│   └── review/
+│       ├── SKILL.md
+│       └── references/     the planning contract, read only on a planning diff
 └── template/.claude/       copied into a repository to enable the plugin
 ```
 
