@@ -251,20 +251,26 @@ row records a false negative a full run would never have produced.
 grader that *is* the finding. It now has the subagent write its answer to a
 file, and `file_matches_regex` reads it. That keeps determinism, which is what
 a criterion carrying the whole result needs, and it changes what is exercised:
-a subagent that knows the token but cannot write now fails a test it used to
+a subagent that knows the answer but cannot write now fails a test it used to
 pass.
 
+The case no longer grades a token planted in the constitution for it to find.
+It grades a phrase the constitution says in its own prose, and every
+file-reading tool is closed, so the injected copy is the only route to it.
+`scripts/check-constitution.py` holds the two ends together: the phrase is
+still in the file, and no text outside a criterion may name it.
+
 Its negative control survives intact — `command_executed` on `Agent` with
-`max_count: 0` and the token as the pattern, asserting the parent did not hand
-the token over in the prompt it sent.
+`max_count: 0` and that phrase as the pattern, asserting the parent did not
+hand the answer over in the prompt it sent.
 
 One limitation is inherited rather than introduced. The parent holds the
-constitution too, so it could write the token itself instead of relaying it.
+constitution too, so it could write the answer itself instead of relaying it.
 The prompt forbids it, and no criterion can catch it: subagent tool calls
 bubble into the parent's telemetry tagged with `parent_tool_use_id`, and
 `command_executed` cannot filter on that, so nothing here tells a parent
 `Write` from a subagent `Write`. The `last_message` version had exactly the
-same hole — the parent could simply type the token. Closing it needs a token
+same hole — the parent could simply type the answer. Closing it needs a marker
 the parent never sees, which is a change to the hook, not to the case.
 
 ## The review-depth suite

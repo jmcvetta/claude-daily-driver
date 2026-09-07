@@ -128,6 +128,3 @@ requires them. Subagents touching different files run in the background in
 parallel, in their own worktrees, all launched before I start my own share of
 the plan.
 
----
-
-constitution-token: constitution-ok-marmoset-vellum-19

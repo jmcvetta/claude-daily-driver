@@ -56,9 +56,11 @@ moment, and says something the harness does not already say — it is paid for i
 every session and every subagent, forever. Amendments are pull requests against
 this repository.
 
-**Whether a session got it**: the last line of the file is a token.
-`scripts/check-constitution.py` drives both hooks and asserts the token comes
-back, and the `constitution-reaches-subagent` eval grades a subagent on it.
+**Whether a session got it**: `scripts/check-constitution.py` drives both hooks
+and asserts they carry the file verbatim and identically. The
+`constitution-reaches-subagent` eval covers the half a script cannot: it asks a
+subagent, with every file-reading tool closed, for a phrase only the injected
+constitution could have told it.
 
 **How it arrives**: a plugin cannot ship a `CLAUDE.md`, so two hooks deliver
 the file — `SessionStart` for the session, `PreToolUse` on the `Agent` tool for
@@ -126,8 +128,9 @@ No `|| true`: a script that exits zero on a failed install snapshots the
 failure. Then start a session there and **ask it what it got**, because nothing
 announces a plugin that failed to load —
 
-> Quote the last line of `context/constitution.md`. Then list the skills
-> available to you whose names begin `daily-driver:`. Then run `ls
+> Without reading any file, say what the constitution tells you about
+> production systems. Then list the skills available to you whose names begin
+> `daily-driver:`. Then run `ls
 > ~/.claude/plugins/cache/claude-daily-driver/daily-driver/`.
 
 Do **not** ask what plugins are installed: that question has a known wrong

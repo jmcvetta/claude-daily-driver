@@ -46,21 +46,16 @@ SCRIPT = ROOT / "hooks" / "inject-constitution.py"
 CONSTITUTION = ROOT / "context" / "constitution.md"
 EVALS = ROOT / "evals"
 
-TOKEN_LINE = re.compile(r"^constitution-token: (\S+)$")
-
-# A *stale* token is by definition not the one that ships, so the guard that
-# hunts for one cannot go by the token's value, and it must not go by the
-# `constitution-token:` label either: the leak control embeds the bare token in
-# a `command_pattern` and never says the word, which is exactly the criterion
-# whose staleness matters most -- its `max_count: 0` would go on matching a
-# retired value and pass vacuously. So the guard goes by the token's shape.
+# The live half needs one string that a session can only have got from the
+# constitution, and this is it: a phrase the file actually says, rather than a
+# token planted in it for the test to find. A session running without the
+# constitution cannot produce it, which is what makes the subagent's answer
+# evidence. The guard below keeps the two ends honest -- the phrase must still
+# be in the constitution, and only a grader may name it.
 #
-# Four or more words then a number, which is one word more than any task id,
-# model name or branch name under `evals/` -- the sweep below reads whole files,
-# and a looser shape would flag `pr-body-01` and `claude-sonnet-5` on every run.
-# The coupling to the current token's shape is deliberate and guarded: a token
-# that stops matching this pattern fails the check below by name.
-TOKEN_SHAPE = re.compile(r"\b[a-z]+(?:-[a-z]+){3,}-\d+\b")
+# The file wraps its prose, so the phrase can straddle a line break. Both the
+# guard and the grader compare against whitespace-collapsed text.
+MARKER = "White Horse Dialogue"
 
 # The tool names a subagent spawn can arrive under. `Agent` is current; `Task`
 # is what the same tool was called for years, and a matcher that admits only
@@ -152,23 +147,6 @@ def hook_specific(payload: dict, event_name: str, where: str) -> dict:
     return output
 
 
-def token() -> str:
-    """The last line of the constitution, which R1 makes checkable on purpose."""
-    text = CONSTITUTION.read_text(encoding="utf-8")
-    lines = [line for line in text.splitlines() if line.strip()]
-    if not lines:
-        raise Failed(f"{CONSTITUTION.relative_to(ROOT)} is empty")
-    match = TOKEN_LINE.match(lines[-1])
-    if not match:
-        raise Failed(
-            f"{CONSTITUTION.relative_to(ROOT)}: the last non-empty line is "
-            f"{lines[-1]!r}, not a `constitution-token: <token>` line. The "
-            f"token is how a session proves the constitution reached it "
-            f"(R1); without it the failure is silent again."
-        )
-    return match.group(1)
-
-
 def check_wiring(errors: list[str]) -> None:
     """hooks.json wires both events to the one script, and matches the right tool."""
     try:
@@ -251,7 +229,7 @@ def check_wiring(errors: list[str]) -> None:
         )
 
 
-def check_delivery(errors: list[str], expected_token: str) -> None:
+def check_delivery(errors: list[str]) -> None:
     """Both injection points carry the constitution, and carry the same one."""
     body = CONSTITUTION.read_text(encoding="utf-8").rstrip()
 
@@ -268,11 +246,6 @@ def check_delivery(errors: list[str], expected_token: str) -> None:
         errors.append(
             "SessionStart: additionalContext does not carry the constitution "
             "verbatim"
-        )
-    if expected_token not in context:
-        errors.append(
-            f"SessionStart: additionalContext does not carry the token "
-            f"{expected_token!r}"
         )
 
     agent = hook_specific(
@@ -293,11 +266,6 @@ def check_delivery(errors: list[str], expected_token: str) -> None:
     if ORIGINAL_PROMPT not in prompt:
         errors.append(
             "PreToolUse: updatedInput.prompt dropped the prompt Claude wrote"
-        )
-    if expected_token not in prompt:
-        errors.append(
-            f"PreToolUse: updatedInput.prompt does not carry the token "
-            f"{expected_token!r}"
         )
 
     # D12, asserted rather than asserted-to-be-true: the subagent gets the main
@@ -394,8 +362,8 @@ def check_one_loud_failure(errors: list[str], label: str, content: bytes | None)
 def top_level_blocks(text: str) -> dict[str, str]:
     """Split a task YAML into its top-level keys, without a YAML parser.
 
-    `check_eval_token` needs one thing out of a case file — the criteria it is
-    scored by, which is the only place the token may appear — and that is a
+    `check_eval_marker` needs one thing out of a case file — the criteria it is
+    scored by, which is the only place the marker may appear — and that is a
     column-0 key. A real parser would be more correct and would cost this
     script the "no third-party imports" property that lets it run identically
     from a Makefile, from CI and from a web worker. Recognising a top-level key
@@ -403,7 +371,7 @@ def top_level_blocks(text: str) -> dict[str, str]:
 
     Text before the first top-level key is the file's comment header and is not
     returned. That is not an exemption: the caller subtracts the criteria block
-    from the whole file and searches what is left, so a token planted in a
+    from the whole file and searches what is left, so the marker written into a
     header comment is still caught — it simply is not `success_criteria`, which
     is the only thing this function is asked to find.
     """
@@ -423,26 +391,34 @@ def top_level_blocks(text: str) -> dict[str, str]:
     return blocks
 
 
-def check_eval_token(errors: list[str], expected: str) -> None:
-    """The live half asserts on the same token this half reads.
+def collapse(text: str) -> str:
+    """Whitespace-collapsed text, so a phrase that straddles a line break matches."""
+    return " ".join(text.split())
 
-    The token is written twice by necessity — once in the constitution, once in
-    the criterion that looks for it coming back — and two copies of a constant
-    is how the live suite comes to be quietly testing last month's token. Any
-    eval file that talks about the token has to name the current one.
 
-    Under `claude plugin eval` the prompt and the graders were separate files,
-    so "only a grader may name the token" was a rule about directories. A
-    `coder_eval` task is one file holding both, so the rule is now about where
-    in a file the token sits, and it is enforced over every eval file rather
-    than only over task prompts: some `success_criteria` block must name the
-    current token, and no other text in any `.yaml`, `.yml`, `.md`, `.sh` or
-    `.py` file under `evals/` may — not a
-    description, not an `agent.system_prompt`, not a `pre_run` command, not a
-    fixture script, not this repository's own eval README. Staleness is a
-    separate sweep, over whole files, because a retired token is just as dead
-    wherever it is written.
+def check_eval_marker(errors: list[str]) -> None:
+    """The live half asserts on a phrase the constitution still says.
+
+    The marker is written in two places by necessity — once as prose in the
+    constitution, once in the criterion that looks for it coming back — and two
+    copies of a constant is how the live suite comes to be testing a sentence
+    that was edited away. So both ends are checked here: the phrase is still in
+    the constitution, and some `success_criteria` block still asserts on it.
+
+    Where the marker may appear is the other half of the rule. A `coder_eval`
+    task is one file holding the prompt and the graders, so only a criterion
+    may name it; no other text in any `.yaml`, `.yml`, `.md`, `.sh` or `.py`
+    file under `evals/` may — not a description, not an `agent.system_prompt`,
+    not a `pre_run` command, not a fixture script, not this repository's own
+    eval README. Anywhere else is handing the session the answer.
     """
+    if MARKER not in collapse(CONSTITUTION.read_text(encoding="utf-8")):
+        errors.append(
+            f"context/constitution.md no longer says {MARKER!r}, which the "
+            f"live half asserts a subagent got; pick a phrase the file does "
+            f"say and change MARKER and the grader together"
+        )
+
     if not EVALS.is_dir():
         errors.append(
             f"{EVALS.relative_to(ROOT)}/ is missing; the live half of the "
@@ -450,49 +426,25 @@ def check_eval_token(errors: list[str], expected: str) -> None:
         )
         return
 
-    if not TOKEN_SHAPE.search(expected):
-        errors.append(
-            f"context/constitution.md: the token {expected!r} is not the shape "
-            f"TOKEN_SHAPE knows, so a stale copy of it in a grader is invisible "
-            f"to the check below; teach the pattern the new format"
-        )
-
     asserted = False
     for path in sorted(EVALS.rglob("*")):
         if not path.is_file() or path.suffix not in {".yaml", ".yml", ".md", ".sh", ".py"}:
             continue
         text = path.read_text(encoding="utf-8")
         where = path.relative_to(ROOT)
-
-        # Staleness, over the whole file. A retired token is just as dead in an
-        # `agent.system_prompt`, a `pre_run` command or a prose paragraph, and
-        # those are places the criteria/prompt split below never looks.
-        stale = sorted(set(TOKEN_SHAPE.findall(text)) - {expected})
-        if stale:
-            errors.append(
-                f"{where}: names {', '.join(stale)}, which is not the "
-                f"token that ships ({expected}); the live suite would be "
-                f"testing a token that no longer exists"
-            )
-
-        if expected not in text:
+        if MARKER not in text:
             continue
 
-        # The token may appear in exactly one place: a task's success_criteria.
-        # Under `claude plugin eval` that rule was about directories -- prompts
-        # in one file, graders in another. A `coder_eval` task is one file, so
-        # it is now about which top-level key the token sits under, and
-        # everything that is not a task YAML is off limits outright.
-        criteria = top_level_blocks(text).get("success_criteria", "") if path.suffix in {".yaml", ".yml"} else ""
-        if expected in criteria:
+        criteria = (
+            top_level_blocks(text).get("success_criteria", "")
+            if path.suffix in {".yaml", ".yml"}
+            else ""
+        )
+        if MARKER in criteria:
             asserted = True
-        leaked = text.replace(criteria, "")
-        if expected in leaked:
-            # Anywhere else is the session being handed the answer: a prompt
-            # that spells the token out, a fixture that writes it to disk, a
-            # README that quotes it into a copy-pasteable command.
+        if MARKER in text.replace(criteria, ""):
             errors.append(
-                f"{where}: names the token outside success_criteria. Only a "
+                f"{where}: names the marker outside success_criteria. Only a "
                 f"criterion may name it; anywhere else is telling the session "
                 f"what the subagent was supposed to have been told."
             )
@@ -500,7 +452,7 @@ def check_eval_token(errors: list[str], expected: str) -> None:
     if not asserted:
         errors.append(
             f"no success_criteria under {EVALS.relative_to(ROOT)}/ asserts on "
-            f"the constitution token, so the live half proves nothing"
+            f"the marker {MARKER!r}, so the live half proves nothing"
         )
 
 
@@ -580,11 +532,10 @@ def bad_input_payload(errors: list[str], mode: str, stdin: str) -> dict | None:
 def main() -> int:
     errors: list[str] = []
     try:
-        expected = token()
         check_wiring(errors)
-        check_delivery(errors, expected)
+        check_delivery(errors)
         check_loud_failure(errors)
-        check_eval_token(errors, expected)
+        check_eval_marker(errors)
         check_bad_input(errors)
     except Failed as failure:
         errors.append(str(failure))
@@ -595,8 +546,8 @@ def main() -> int:
         return 1
     print(
         "constitution delivery holds: both hooks carry "
-        f"{CONSTITUTION.relative_to(ROOT)} (token {expected}), identically, "
-        "and fail loudly when it is missing"
+        f"{CONSTITUTION.relative_to(ROOT)} verbatim, identically, and fail "
+        "loudly when it is missing"
     )
     return 0
 
