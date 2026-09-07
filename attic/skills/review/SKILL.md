@@ -431,7 +431,7 @@ Boundaries
   is done. Commits made since to answer findings, threads or a red check do not
   make it a new diff, and neither does a merge from the base branch that leaves
   the pull request's own diff untouched — only a commit that changes what the
-  code does. `implement` states the same rule at its step 9, so that a branch
+  code does. `undertake` states the same rule at its step 9, so that a branch
   it drove is not reviewed twice on the day this skill comes back from the
   attic.
 - Never post to GitHub during the analysis and display phases.

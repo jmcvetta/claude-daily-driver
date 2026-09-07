@@ -169,7 +169,7 @@ supplies a scratchpad directory of its own, which wins.
   characters, `#123 shortened issue title` when there is an issue.
 - `judgement-call` — the gate before a choice is put to the user: the call is
   mine wherever the correct, standard way already answers it.
-- `implement` — an issue to a pull request ready for review: the order the
+- `undertake` — an issue to a pull request ready for review: the order the
   skills above, this constitution and the built-in `/code-review` run in, and
   the gates between them.
 

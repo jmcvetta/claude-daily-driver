@@ -7,7 +7,7 @@ evals/
 ├── pr/           does `pr` fire when a PR is being opened, and only then?
 ├── pr-title/     … when a title is being written, and only then?
 ├── pr-body/      … when a body is being written, and only then?
-└── implement/    … when an issue is being taken on, and only then?
+└── undertake/    … when an issue is being taken on, and only then?
 ```
 
 `evals/constitution-reaches-subagent/` sits beside them and is not a
@@ -29,14 +29,23 @@ one that earns its keep:
   message asserts that neither does. A suite that only proved a skill fires
   would be green with all three descriptions collapsed into one.
 
-`implement/` has the same two halves, with one extra case in each, and its
-no-fire cases carry a single grader rather than the pair. Both departures have
-the same cause: its confusable neighbour is not a sibling skill but a *mood*.
-An issue number in the prompt reads the same whether the issue is being taken
-on or merely asked about, so "what does #191 say", "summarise #191" and "is
-#191 still relevant" get a case each — and the right behaviour on all three is
-that **nothing** fires, which is why there is no positive counterpart to
-assert. Naming one anyway would be asserting a coincidence.
+`undertake/` has the same two halves, with more cases in each, and its no-fire
+cases carry a single grader rather than the pair. Both departures have the same
+cause: its confusable neighbours are not sibling skills but two *moods*, and
+against a mood there is no other skill to assert fired instead. The right
+behaviour is that **nothing** fires, so naming a positive counterpart would be
+asserting a coincidence.
+
+The first mood is reading rather than doing. An issue number reads the same
+whether the issue is being taken on or merely asked about, so "what does #191
+say", "summarise #191" and "is #191 still relevant" get a case each.
+
+The second is the verb without the issue. `undertake` is a heavyweight skill —
+nine steps and a review round — and "implement a retry loop with exponential
+backoff" is ten lines of ordinary work. `09-neg-implement-code` is the case
+that holds the line, and it is the reason the skill is not called
+`implement`: the trigger is a verb *plus an issue reference*, and a name that
+was itself the bare verb would have fought its own description.
 
 The extra fire case, `05-self-initiated`, is the closest the harness gets to
 the register the skill exists for — the move from having read an issue to
@@ -47,9 +56,9 @@ every other fire case hands over one that names the work. It asserts the skill
 fires on what is obviously to be done rather than on the word for it.
 
 The one collision a new sibling actually creates is tested from the other side
-too: `evals/pr/02-open-a-pr` now asserts that `implement` stays quiet when a
+too: `evals/pr/02-open-a-pr` now asserts that `undertake` stays quiet when a
 finished branch is being turned into a pull request. The reverse assertion is
-deliberately absent — `implement` *invokes* `pr` at its step 6, so `pr` firing
+deliberately absent — `undertake` *invokes* `pr` at its step 6, so `pr` firing
 on "take #7" is correct behaviour, not a collision.
 
 Graders are all `tool_used` on the `Skill` tool, matched against the skill name
@@ -75,7 +84,7 @@ claude plugin eval . --tag no-fire --runs 1           # just the no-fire half
 
 Neither selector — the `no-fire` tag above, nor a `--case '*neg*'` glob over
 case names — reaches the whole no-fire half: `evals/pr/02-open-a-pr` carries a
-no-fire assertion about `implement` while being, by its own name and tag, a
+no-fire assertion about `undertake` while being, by its own name and tag, a
 fire case for `pr`. The tag is the better habit of the two, since a case is
 renamed more often than it is retagged, but run the suite whole before
 trusting a green no-fire run.
