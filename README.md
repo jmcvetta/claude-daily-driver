@@ -37,7 +37,7 @@ and [its README](attic/README.md) says what is kept and why.
 ## The constitution
 
 `context/constitution.md` is the always-on layer, in force in every session and
-every subagent. Nine sections:
+every subagent. Eight sections:
 
 | Section | What it settles |
 | ------- | --------------- |
@@ -49,7 +49,6 @@ every subagent. Nine sections:
 | Before I call it done | The project's own gates are run, not reasoned about. |
 | Dependencies | Added and pinned through the package manager; never a hand-edited manifest or lockfile. |
 | Delegation | Plan first, delegate the implementation, batch the subagents, watch the quota. |
-| Verification | Quoting the token at the end of the file proves the hook injected it. |
 
 **What belongs there** is the admission test the file states on itself: a rule
 lives here only if it changes behaviour in most sessions, hangs off a nameable
@@ -57,9 +56,9 @@ moment, and says something the harness does not already say — it is paid for i
 every session and every subagent, forever. Amendments are pull requests against
 this repository.
 
-**Whether a session got it**: the last line of the file is a token. Ask for it.
-A session that cannot quote it did not get the constitution, whatever else it
-may believe.
+**Whether a session got it**: the last line of the file is a token.
+`scripts/check-constitution.py` drives both hooks and asserts the token comes
+back, and the `constitution-reaches-subagent` eval grades a subagent on it.
 
 **How it arrives**: a plugin cannot ship a `CLAUDE.md`, so two hooks deliver
 the file — `SessionStart` for the session, `PreToolUse` on the `Agent` tool for

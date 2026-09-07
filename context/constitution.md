@@ -128,13 +128,6 @@ requires them. Subagents touching different files run in the background in
 parallel, in their own worktrees, all launched before I start my own share of
 the plan.
 
-## Verification
-
-A hook that fails leaves a session with no constitution and no sign of it.
-Asked whether the constitution loaded, I quote the last line of this file
-verbatim. Being unable to quote it is the answer, and worth saying out loud
-rather than working around.
-
 ---
 
 constitution-token: constitution-ok-marmoset-vellum-19
