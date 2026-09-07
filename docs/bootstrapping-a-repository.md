@@ -7,7 +7,7 @@ loads nothing, and says nothing about it.
 
 Declares, not guarantees. The stanza below is necessary; whether it is
 *sufficient* is a measurement rather than a reading of the documentation, and
-on both versions measured it was not.
+on the version measured below it was not.
 
 That silence is the whole reason this page exists. There is no error, no
 warning, and no missing file to notice; the session simply behaves as though
@@ -112,9 +112,11 @@ from *this* repository's checkout precisely because it must not depend on the
 plugin being enabled in the repository it is fixing.
 
 **A genuinely cold start: copy the block above by hand.** No plugin, no
-checkout, no laptop — a cloud session and this page. It is the only route that
+checkout, no tooling — a session and this page. It is the only route that
 survives that, which is why it is written out in full even though nobody will
-use it twice.
+use it twice. It writes the enablement half only: in a cloud environment that
+half is the one already covered, and the cold start that matters there is the
+setup script below, which needs a browser rather than this page.
 
 Whichever route, commit the file. Enablement is a property of the repository,
 not of the machine — and it is the only half that is.
@@ -127,7 +129,7 @@ separately, with the same stanza, in an untrusted workspace:
 
 | Project-scope key | Untrusted | Trusted |
 | ----------------- | --------- | ------- |
-| `enabledPlugins` | honoured — all six skills loaded | honoured |
+| `enabledPlugins` | honoured — every skill in the plugin loaded | honoured |
 | `extraKnownMarketplaces` | ignored: `installPluginsForHeadless` logs `no marketplaces declared` | `installed marketplace claude-daily-driver` |
 
 The `enabledPlugins` row was measured with the marketplace already registered
@@ -155,13 +157,18 @@ Both halves were measured with headless `claude -p` sessions against a scratch
 release may make the install a no-op; re-run the third check below rather than
 inheriting this conclusion.
 
-**A cloud container is missing the cached half, not the enablement half.** The
-stanza is precisely the half it cannot supply: the repository can point at a
-marketplace, and cannot register or fetch one. Every repository worked in from
-the cloud still needs its own stanza — a laptop can enable the plugin once in
-`~/.claude/settings.json` and forget about it, and a cloud container has no
-such settings to inherit — but the stanza alone will not load it there. The
-environment has to install it, once, before Claude Code starts.
+**A cloud container is missing the cached half, not the enablement half.**
+The stanza is precisely the half it cannot supply: a repository can point at a
+marketplace, and can neither register nor fetch one. So the stanza alone loads
+nothing there, whatever it says; the environment has to install the plugin,
+once, before Claude Code starts.
+
+That install lands at user scope, in a `~/.claude` the environment keeps, so
+an environment is bootstrapped once rather than once per repository — the
+laptop's own measurement below, that a user-scope install loads the plugin in
+a repository carrying no stanza at all, was not repeated in the cloud. The
+stanza remains what travels between machines, and the only half a repository
+can own; it is not what makes the plugin load there.
 
 ## Cloud sessions: the environment's Setup script
 
@@ -235,7 +242,7 @@ with no marketplace, no install and no network:
 
 | Location | Scope | Trust required | Measured |
 | -------- | ----- | -------------- | -------- |
-| `~/.claude/skills/<name>/` | user | **no** | `Status: ✓ loaded`, all six skills |
+| `~/.claude/skills/<name>/` | user | **no** | `Status: ✓ loaded`, every skill |
 | `.claude/skills/<name>/` in the repo | project | **yes** | skipped: *"…was skipped because this workspace was not trusted when plugins were scanned"* |
 
 The second row is the only arrangement in which a repository genuinely carries
@@ -294,10 +301,12 @@ here, which is the reason for the preference above for asking the CLI.
 
 **`claude plugin list` reads one route only.** It reports
 `installed_plugins.json`, so it is honest about a plugin the setup script
-installed and blind to one arriving by stanza, which is served from
-`~/.claude/plugins/cache/` and never recorded. Its `No plugins installed` is
-therefore proof of nothing on a laptop, and worth reading on a cloud container
-— where it is the file the setup script's verification line greps.
+installed and says nothing about one arriving by stanza, which is served from
+`~/.claude/plugins/cache/` and never recorded there. Its `No plugins
+installed` is therefore not proof of failure on a laptop — though it is not
+proof of success either, and on the version measured the two coincided. On a
+cloud container it is worth reading, `installed_plugins.json` being the file
+the setup script's verification line greps.
 
 ## What none of this covers
 
@@ -336,7 +345,7 @@ then confirmed across two consecutive real cloud sessions:
 | Question | Answer |
 | -------- | ------ |
 | Where `--scope project` writes its state | `enabledPlugins` in the repository; marketplace and cache in `~/.claude` |
-| Project `enabledPlugins`, **untrusted**, marketplace already cached | honoured: all six skills loaded |
+| Project `enabledPlugins`, **untrusted**, marketplace already cached | honoured: every skill loaded |
 | Project `extraKnownMarketplaces`, **untrusted** | ignored: `no marketplaces declared` |
 | …the same, **trusted** | `installed marketplace claude-daily-driver` |
 | Startup installer, marketplace registered, nothing cached | `installed_plugins.json` stays empty; `Plugin "daily-driver" not cached` |

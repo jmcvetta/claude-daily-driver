@@ -161,6 +161,7 @@ credential requirement starts:
 They fail for different reasons and deserve to fail separately: the first
 tests this plugin, the second tests an assumption about the harness that a
 future release could withdraw without telling anyone.
+
 ## Enabling it, and installing it
 
 Two halves, and only one of them belongs to the repository. **Enablement is
@@ -175,8 +176,8 @@ runs without it and gives no sign of that.
 On a laptop the second half is a once-per-machine `claude plugin install`. In
 a Claude Code cloud session it is the environment's Setup script, the only
 writer that runs before the plugin scan: a cloud container's
-`hasTrustDialogAccepted` is permanently false, which is exactly what the
-stanza's marketplace half needs and the one thing it can never get.
+`hasTrustDialogAccepted` is permanently false, and the stanza's marketplace
+half is read only when it is true.
 
 [docs/bootstrapping-a-repository.md](docs/bootstrapping-a-repository.md) has
 the stanza to copy, the two names that are easy to get wrong, the three ways
