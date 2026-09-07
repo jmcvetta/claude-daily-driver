@@ -53,8 +53,10 @@ EVALS = ROOT / "evals"
 # evidence. The guard below keeps the two ends honest -- the phrase must still
 # be in the constitution, and only a grader may name it.
 #
-# The file wraps its prose, so the phrase can straddle a line break. Both the
-# guard and the grader compare against whitespace-collapsed text.
+# The constitution and the eval files wrap their prose, so the phrase can
+# straddle a line break there, and every search below collapses whitespace
+# first. The grader does not need to: the subagent reports on a single line,
+# which its prompt asks for and `file_matches_regex` reads as one.
 MARKER = "White Horse Dialogue"
 
 # The tool names a subagent spawn can arrive under. `Agent` is current; `Task`
@@ -432,7 +434,10 @@ def check_eval_marker(errors: list[str]) -> None:
             continue
         text = path.read_text(encoding="utf-8")
         where = path.relative_to(ROOT)
-        if MARKER not in text:
+        # Collapsed, because every file here is wrapped at about 79 columns and
+        # a leak is likeliest in prose, where the phrase straddles a line break.
+        # A raw search would miss exactly the form the leak arrives in.
+        if MARKER not in collapse(text):
             continue
 
         criteria = (
@@ -440,9 +445,9 @@ def check_eval_marker(errors: list[str]) -> None:
             if path.suffix in {".yaml", ".yml"}
             else ""
         )
-        if MARKER in criteria:
+        if MARKER in collapse(criteria):
             asserted = True
-        if MARKER in text.replace(criteria, ""):
+        if MARKER in collapse(text.replace(criteria, "")):
             errors.append(
                 f"{where}: names the marker outside success_criteria. Only a "
                 f"criterion may name it; anywhere else is telling the session "

@@ -108,9 +108,10 @@ says so.
 ## What the sibling issues inherit
 
 - **#15, constitution delivery** — `context/constitution.md` now holds real
-  content and ends with `constitution-ok-marmoset-vellum-19`. The acceptance
-  test can assert on that token instead of injecting a synthetic one, though
-  the fixture-repo method in that issue works either way.
+  content, and at the time this was written it ended with a token the
+  acceptance test could assert on instead of injecting a synthetic one. The
+  token was removed in #89; the test now asserts on a phrase the file says in
+  its own prose. The fixture-repo method in that issue works either way.
 - **#17, `pr` / `pr-title` / `pr-body`** — the constitution states the commit
   message convention and points at the skill for the PR-title half. Nothing
   from `CLAUDE.md` needs porting into these three; the existing `pr` skill

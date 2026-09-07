@@ -120,13 +120,16 @@ success_criteria:
   # it does — the row is built from the assistant message's `tool_use` block,
   # emitted before any hook runs.
   #
-  # Note which way it would break. If the trace ever started recording input
-  # after the rewrite, this control would NOT start failing: `command_executed`
-  # matches `json.dumps(parameters)` truncated to 2000 characters, and the
-  # injected constitution is over 8 KB, so the phrase would sit past the window
-  # and the criterion would pass vacuously forever. A control that cannot fail
-  # is worse than one that does, so the thing to re-check is the recording
-  # point, not this line's verdict.
+  # Note which way it would break, which inverted when the marker became prose.
+  # `command_executed` matches `json.dumps(parameters)` truncated to 2000
+  # characters, and the phrase sits at offset 1298 of the injected constitution
+  # — measured on this branch — so it is inside the window. If the trace ever
+  # started recording input after the rewrite, this control would fail loudly
+  # rather than pass vacuously, which is the right way round.
+  #
+  # What to re-check is therefore the offset, not the recording point: a
+  # section added ahead of Identity pushes the phrase past 2000 characters, and
+  # the control goes quietly vacuous the way the old token's did.
   - type: command_executed
     description: The parent did not supply the answer
     tool_name: Agent
