@@ -219,14 +219,14 @@ this order:
 5 — Implement
 -------------
 
-The constitution governs, under *While I write code*, *Before I commit* and
-*When I hit a wall*. Nothing about how to write or commit the code is decided
+The constitution governs, under *While you write code*, *Before you commit* and
+*When you hit a wall*. Nothing about how to write or commit the code is decided
 here.
 
 6 — Run the gates
 -----------------
 
-The constitution's *Before I call it done*, run at this point rather than
+The constitution's *Before you call it done*, run at this point rather than
 after the pull request, so that the draft opens green.
 
 7 — Open the draft

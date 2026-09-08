@@ -304,7 +304,7 @@ the parent never sees, which is a change to the hook, not to the case.
 ### `reply-is-concise`, the compliance half
 
 Reach is settled; whether an injected rule *lands* is not, and `reply-is-concise`
-is the first case here that asks. It picks the `Before I reply` rule because
+is the first case here that asks. It picks the `Before you reply` rule because
 compliance with it is countable — every other rule in the constitution needs a
 judgment about engineering, and this one needs a line count. That makes it the
 cheapest instrument in the repository for the general question, and a cheap

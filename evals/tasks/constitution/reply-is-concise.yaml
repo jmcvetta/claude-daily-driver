@@ -4,7 +4,7 @@
 # it asks a question whose honest answer is one line, and grades the length of
 # the answer.
 #
-# It exists because the `Before I reply` rule is the one rule in the
+# It exists because the `Before you reply` rule is the one rule in the
 # constitution whose compliance is countable. Every other rule needs a judgment
 # about engineering; this one needs a line count, which makes it the cheapest
 # thing in the file to measure and the natural place to find out whether an
