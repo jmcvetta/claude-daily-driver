@@ -301,26 +301,25 @@ commit leaves both intact.
 When it looks
 -------------
 
-At `Ready for review`, and then on a check-in every fifteen minutes: one
+At `Ready for review`, and then on a check-in every two minutes: one
 `mcp__Claude_Code_Remote__send_later` at a time, carrying the instruction to
 look again, and armed on the wake the previous one caused — the discipline
 `review-cycle`'s `The backstop` states for the same reason.
 
-**Fifteen minutes is not the base branch's rate, and it is not meant to be.**
-A busy `master` takes a commit every few minutes. A branch that merged each one
-would spend its life in CI: every merge moves the head, every moved head
-restarts the run, and a branch merging faster than CI reports never holds a
-green check long enough for anybody to read it. **The merge rate is bounded by
-the CI cycle, not by the base branch's** — so a check-in that finds the run
-from the last merge still going does nothing and waits for the next one. The
-branch rides a few commits behind between merges. That is the design, not a
-shortfall in it: what has to be current is the branch a reviewer reads and the
-branch that lands, and neither is harmed by a base commit that arrived four
-minutes ago.
+**Two minutes, the same interval `review-cycle` waits on CI with.** A busy
+`master` takes a commit every few minutes, so a slower check-in is a branch
+kept behind on purpose, and the merge itself costs a call and a CI run that
+this repository answers in seconds. Behind is the state to leave as briefly as
+the scheduler allows.
 
-A merge-conflict notice does not wait for the cadence. It is the case where
-behind has already cost something, and it is answered on the wake that reports
-it.
+**The one floor is a run in flight.** A check-in that finds CI from the last
+merge still going does nothing: merging again restarts the run it is waiting
+on. Where CI answers in seconds that floor almost never bites, and where it
+answers in twenty minutes it is what keeps the branch from never being green.
+
+A merge-conflict notice does not wait for the cadence either. It is the case
+where behind has already cost something, and it is answered on the wake that
+reports it.
 
 The check-ins end when the pull request is merged or closed, or when the user
 says to stop. A pull request nobody merges is not a reason to wake a session
