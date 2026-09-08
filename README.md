@@ -37,11 +37,12 @@ and [its README](attic/README.md) says what is kept and why.
 ## The constitution
 
 `context/constitution.md` is the always-on layer, in force in every session and
-every subagent. Eight sections:
+every subagent. Nine sections:
 
 | Section | What it settles |
 | ------- | --------------- |
-| Voice | Concision, and Simplified Technical English for prose written in my own voice. |
+| Voice | Simplified Technical English for prose written in my own voice. |
+| Before I reply | A four-line budget on a reply, the two things outside it, and the shape: the answer first, no preamble, no recap. |
 | Non-negotiables | Never a production system; dangerous commands in a sandbox or not at all; code without tests is broken; problems are fixed, never hidden. |
 | While I write code | The manual before the web or the source, simplicity, no reinventing a library, no workarounds, correct over quick. |
 | When I hit a wall | Stop on the error, re-assess an approach that is failing, ask rather than guess at intent. |
@@ -61,6 +62,12 @@ and asserts they carry the file verbatim and identically. The
 `constitution-reaches-subagent` eval covers the half a script cannot: it asks a
 subagent, with every file-reading tool closed, for a phrase only the injected
 constitution could have told it.
+
+**Whether it landed**: arriving and being obeyed are different questions, and
+the `constitution-reply-is-concise` eval asks the second. It puts a one-line
+answer under every pressure to write ten and counts the lines that come back.
+`Before I reply` is the rule it measures because that rule's compliance is
+countable; the rest of the file needs a judgment about engineering instead.
 
 **How it arrives**: a plugin cannot ship a `CLAUDE.md`, so two hooks deliver
 the file — `SessionStart` for the session, `PreToolUse` on the `Agent` tool for

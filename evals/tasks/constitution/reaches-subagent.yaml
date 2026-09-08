@@ -99,8 +99,11 @@ initial_prompt: |
 success_criteria:
   # The finding itself, and the reason this case exists. The baseline arm — no
   # plugin, no hook — is expected to score 0 here, and that delta is the
-  # measurement. Weight 2 so a run that gets the plumbing right and the answer
-  # wrong cannot average its way to a pass.
+  # measurement. Weight 2 because this criterion is what the case is about, so
+  # it should dominate `weighted_score`, which is the number the two arms are
+  # compared on. It does not gate anything the other criteria do not:
+  # `all_criteria_passed` tests every gating criterion against its own
+  # `pass_threshold`, so nothing averages its way to a pass at any weight.
   - type: file_matches_regex
     description: The subagent quoted the constitution's rule on admitting uncertainty
     path: subagent-report.txt
