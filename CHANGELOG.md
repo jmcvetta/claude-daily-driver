@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.12.0...v0.13.0) (2026-09-08)
+
+
+### Features
+
+* **constitution:** convert the rules to second person imperative ([#108](https://github.com/jmcvetta/claude-daily-driver/issues/108)) ([f3e869b](https://github.com/jmcvetta/claude-daily-driver/commit/f3e869bf2e53cc2990a639441dc23b365f7d33f4))
+
 ## [0.12.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.11.0...v0.12.0) (2026-09-08)
 
 
