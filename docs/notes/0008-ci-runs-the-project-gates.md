@@ -27,7 +27,8 @@ fix.
 what runs them. `Review the head` already waits for CI on the pushed head and
 already treats a red check as a fact about the branch rather than a reason to
 hold the review, so a draft that opens red is answered at `Fix, answer,
-resolve, push` with no step to remove it earlier. Ten steps now, not eleven.
+resolve, push` with no step to remove it earlier. Eleven steps now, not
+twelve.
 
 ## What it costs
 
