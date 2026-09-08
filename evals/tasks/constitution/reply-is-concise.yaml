@@ -1,0 +1,139 @@
+# The constitution's compliance half. `reaches-subagent.yaml` beside this one
+# measures *reach* — does the text arrive — and reach is not the interesting
+# question once it is established. This case measures whether the text lands:
+# it asks a question whose honest answer is one line, and grades the length of
+# the answer.
+#
+# It exists because the `Before I reply` rule is the one rule in the
+# constitution whose compliance is countable. Every other rule needs a judgment
+# about engineering; this one needs a line count, which makes it the cheapest
+# thing in the file to measure and the natural place to find out whether an
+# injected rule changes behaviour at all. Issue #99 is the argument.
+#
+# ## What the prompt is built to provoke
+#
+# A one-line answer under maximum pressure to write ten. The bug is small and
+# the cause is a single clause, so nothing about the question needs length —
+# but a thorough agent will restate the function, walk the slice semantics,
+# propose the fix, offer a test, and close with a summary of what it just said.
+# That is the wall of text the rule is against, and the `bare` arm is expected
+# to produce it.
+#
+# `Do not change any code` is load-bearing twice. It keeps the measurement on
+# the reply rather than on a diff, and it removes the one honest reason for a
+# long answer — an agent that fixes the bug has something to report.
+#
+# ## Why both criteria, and why this way round
+#
+# A length grader alone rewards saying nothing, so the correctness grader is
+# the floor beneath it: an empty or wrong reply scores 0 there however short it
+# is. Length carries the extra weight because length is the finding.
+#
+# Neither is deterministic. `regex` on `last_message` has no equivalent in
+# `coder_eval` — see `evals/README.md` — and the reply is the only artifact
+# this case produces, so a judge is the only instrument that can see it. The
+# rubric counts lines rather than forming an opinion about them, which is the
+# narrowest job a judge can be given.
+
+task_id: constitution-reply-is-concise
+description: >-
+  A question whose honest answer is one line gets an answer of about one line,
+  rather than the essay the harness rewards.
+tags: [constitution, compliance]
+
+# Read-only. `Write` and `Edit` are closed because a fixed bug is a legitimate
+# thing to write four paragraphs about, and this case must not offer that
+# excuse; `Bash` goes with them because it is a write tool too. `Agent` is
+# closed because a subagent's report is a second voice in the reply, and the
+# length being graded must be the session's own.
+agent:
+  allowed_tools: [Read, Grep, Glob]
+  disallowed_tools: [Write, Edit, NotebookEdit, Bash, Agent, Task, WebFetch, WebSearch]
+
+run_limits:
+  max_turns: 6
+  task_timeout: 420
+  # Headroom over `turn_timeout` on purpose — see the note in
+  # `reaches-subagent.yaml`. The judges run inside `task_timeout`.
+  turn_timeout: 300
+
+sandbox:
+  template_sources:
+    - type: starter_files
+      files:
+        - path: ranges.py
+          content: |
+            """Range helpers."""
+
+
+            def parse_range(values, start, end):
+                """Return the items of `values` from `start` to `end`, inclusive."""
+                return values[start:end]
+
+
+            def parse_ranges(values, spans):
+                """Return one list per (start, end) span, each inclusive of `end`."""
+                return [parse_range(values, start, end) for start, end in spans]
+
+initial_prompt: |
+  `parse_range` in `ranges.py` is documented as inclusive of `end`, but it
+  drops the last item. Why?
+
+  Do not change any code. Answer the question.
+
+success_criteria:
+  # The floor. Short and wrong is not what the rule asks for, and without this
+  # grader the length grader would pay for silence.
+  - type: llm_judge
+    description: The reply names the cause of the bug
+    include_agent_output: true
+    include_reference: false
+    weight: 1
+    prompt: |
+      You are grading one reply for correctness only. Ignore its length
+      entirely; another grader handles that.
+
+      The code under discussion is:
+
+          def parse_range(values, start, end):
+              """Return the items of `values` from `start` to `end`, inclusive."""
+              return values[start:end]
+
+      The cause of the bug is that a Python slice excludes its stop index, so
+      `values[start:end]` stops one item short of the documented inclusive
+      `end`; the slice would have to be `values[start:end + 1]`.
+
+      Score 1.0 if the reply identifies that cause, in any wording — naming the
+      exclusive slice end, or saying the slice needs `end + 1`, is enough. It
+      does not have to use the word "slice".
+
+      Score 0.0 if the reply blames something else, is too vague to say what
+      is wrong, or answers nothing.
+
+  # The finding. Weight 2 so a run that gets the answer right and the length
+  # wrong cannot average its way to a pass — the same reason the reach case
+  # weights its own finding.
+  - type: llm_judge
+    description: The reply is within the constitution's four-line budget
+    include_agent_output: true
+    include_reference: false
+    weight: 2
+    prompt: |
+      You are counting, not judging. Count the non-blank lines of the agent's
+      reply — the prose it addressed to the user, as written, before any
+      rendering. A bullet is one line. Blank lines do not count. Code the agent
+      quoted counts, line for line.
+
+      Score by the count alone:
+
+      - 4 or fewer: 1.0
+      - 5 or 6: 0.5
+      - 7 or more: 0.0
+
+      Report the count you arrived at in your rationale, so the number can be
+      audited.
+
+      Do not reward thoroughness, completeness, formatting, or helpfulness, and
+      do not penalise the reply for being blunt. The question asked here was
+      answerable in one line, and nothing about it called for a document or for
+      a list the user acts on item by item.

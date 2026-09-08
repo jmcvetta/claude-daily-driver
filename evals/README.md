@@ -18,7 +18,7 @@ evals/
 │   ├── pr-body/         … when a body is written, and only then?
 │   ├── review-cycle/    … when a review is to be run and answered, and only then?
 │   ├── undertake/       … when work is undertaken, and only when handed over?
-│   ├── constitution/    does the constitution reach a subagent?
+│   ├── constitution/    does the constitution reach a subagent, and land?
 │   └── review-depth/    does `review` send the right panel at the diff?
 └── fixtures/review-depth/
     ├── shared/          builds the git repository every case starts from
@@ -115,6 +115,12 @@ widened description is answered by asking what it now sweeps in.
 `constitution/` is not a trigger-accuracy suite: it is the live half of the
 constitution's own test, described under "Checks" in the repository README. Its credential-free half is
 `scripts/check-constitution.py`.
+
+It asks two questions, not one. `reaches-subagent` asks whether the text
+arrives; `reply-is-concise` asks whether it changes anything once it has. The
+second is what a delivery test cannot tell you, and until it existed every
+amendment to the constitution shipped on argument alone. See "The constitution
+suite" below for why that case is the one the file gets first.
 
 `review-depth/` asks whether `review` sends the *right panel* at the right
 diff. Every case is anchored on something a person would notice if routing
@@ -256,7 +262,7 @@ cannot see it: the first distractor misfire ends the run, the positive is then
 scored on a trajectory that stopped before the right skill could fire, and the
 row records a false negative a full run would never have produced.
 
-## The constitution suite: one grader redesigned
+## The constitution suite: reach, then compliance
 
 `subagent-reports-the-token` was `regex` on `last_message`, weight 2 — the
 grader that *is* the finding. It now has the subagent write its answer to a
@@ -283,6 +289,34 @@ bubble into the parent's telemetry tagged with `parent_tool_use_id`, and
 `Write` from a subagent `Write`. The `last_message` version had exactly the
 same hole — the parent could simply type the answer. Closing it needs a marker
 the parent never sees, which is a change to the hook, not to the case.
+
+### `reply-is-concise`, the compliance half
+
+Reach is settled; whether an injected rule *lands* is not, and `reply-is-concise`
+is the first case here that asks. It picks the `Before I reply` rule because
+compliance with it is countable — every other rule in the constitution needs a
+judgment about engineering, and this one needs a line count. That makes it the
+cheapest instrument in the repository for the general question, and a cheap
+instrument is the one that gets built.
+
+The case asks why a documented-inclusive slice drops its last item. The honest
+answer is one line, and everything about the situation pushes the other way: a
+bug invites a diagnosis, a fix, a test and a summary. `Do not change any code`
+in the prompt, and closed `Write` / `Edit` / `Bash`, remove the one honest
+reason for length — an agent that fixed the bug has something to report.
+
+Both graders are `llm_judge`, because the reply is the only artifact the case
+produces and nothing in `coder_eval` matches the final message deterministically
+(see "How the graders ported"). The length grader is given a rubric that counts
+rather than one that forms an opinion, and it reports the count in its
+rationale so a verdict can be audited. Beneath it sits a correctness grader at
+weight 1: a length grader alone pays for silence, and short and wrong is not
+what the rule asks for.
+
+Its weakness is the threshold. Four lines is the constitution's number, and the
+rubric inherits it — so the case measures compliance with the budget as written
+and says nothing about whether the budget is set at the right place. Moving the
+number means moving it in both files, together.
 
 ## The review-depth suite
 
