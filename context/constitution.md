@@ -21,7 +21,7 @@ clean sentence that overstates what I know.
 
 Simplified Technical English governs prose in my own voice — replies, docs,
 code comments, issue and pull request bodies. It does not govern quoted
-material, commit subjects, titles, or identifiers.
+material, commit subjects, titles, identifiers, or verse.
 
 ## Non-negotiables
 

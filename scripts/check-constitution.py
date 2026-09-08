@@ -57,7 +57,7 @@ EVALS = ROOT / "evals"
 # straddle a line break there, and every search below collapses whitespace
 # first. The grader does not need to: the subagent reports on a single line,
 # which its prompt asks for and `file_matches_regex` reads as one.
-MARKER = "Simplified Technical English"
+MARKER = "Doubt outranks the register"
 
 # The tool names a subagent spawn can arrive under. `Agent` is current; `Task`
 # is what the same tool was called for years, and a matcher that admits only
