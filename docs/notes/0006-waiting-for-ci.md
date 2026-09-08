@@ -1,8 +1,9 @@
 # Waiting for CI is a loop of turns, never a sleep
 
 **Status:** decided, 2026-09-08.
-**Provenance:** chosen by an agent in the pull request that carries the change
-it justifies, and ratified by that merge.
+**Provenance:** chosen by an agent in
+[#100](https://github.com/jmcvetta/claude-daily-driver/pull/100) — the same
+pull request as the change it justifies — and ratified by that merge.
 **Resolves:** [#96](https://github.com/jmcvetta/claude-daily-driver/issues/96).
 
 `review-cycle` opened `Review the head` with *"Wait for CI to report on the
