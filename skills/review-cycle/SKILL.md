@@ -28,8 +28,10 @@ and the re-review test — none of which the built-in has an opinion about, and
 all four of which are the ones that go wrong.
 
 Callers keep their own gates. `undertake` runs this round between its `Open the
-draft` and `Ready for review` steps and owns whether the pull request then goes
-ready; nothing here marks a draft ready or merges anything.
+draft` and `Ready for review` steps, runs it again where its `Keep it current`
+earns one, and owns whether the pull request then goes ready — including the
+return to draft while that later round runs. Nothing here marks a draft ready
+or merges anything.
 
 
 The round
@@ -320,6 +322,9 @@ at `Review the head`, and classify every commit made after it.
   mark.
 - **Neither** — a comment reflow, a changelog line, a merge from the base
   branch that leaves the pull request's own diff untouched. **Not a new diff.**
+  What a base merge breaks, it breaks in the build rather than in the diff, so
+  a red check is what reports it and `Fix, answer, resolve, push` is where it
+  is answered.
   The default is not to go again, because `Review the head` reads the pull
   request, whose diff is three-dot: a clean base merge changes the head and
   changes nothing it would read. Reviewing it again would review

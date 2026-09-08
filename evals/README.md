@@ -115,13 +115,18 @@ prose on work with no issue: the description is the only thing saying an issue
 is optional, so a drift back to requiring one fails here and nowhere else.
 `03` is `Implement #191.` — the half of the register that predates `Open the
 issue`, and the half a description rewritten around the invocation alone would
-silently drop.
+silently drop. `06` is the third way in, added with `Keep it current`: a pull
+request already ready and now behind its base, which reaches the skill through
+neither an issue nor an invocation.
 
-Two no-fire rows, one against each way in. `04` is the same retry loop as `01`
-and `02` with neither an issue nor an invocation. `05` is the mood — `What does
-#191 say?`, an issue named and nothing assigned — which is the row that matters
-most here, because `Open the issue` is what widened the description and a
-widened description is answered by asking what it now sweeps in.
+Three no-fire rows. `04` is the same retry loop as `01` and `02` with neither an
+issue nor an invocation. `05` is the mood — `What does #191 say?`, an issue
+named and nothing assigned — which is the row that matters most here, because
+`Open the issue` is what widened the description and a widened description is
+answered by asking what it now sweeps in. `07` is `Merge PR #25.`, the
+direction `Keep it current` does not go: that step merges the base branch into
+the pull request, and the word it put in the description is the word this row
+keeps from sweeping in the other one.
 
 `constitution/` is not a trigger-accuracy suite: it is the live half of the
 constitution's own test, described under "Checks" in the repository README. Its credential-free half is

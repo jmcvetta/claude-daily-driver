@@ -6,22 +6,25 @@ description: >-
   ready for review — including when the user says "/undertake", "undertake #34",
   "undertake adding a retry loop", "take #7", "work on issue 12", "start on
   that issue", "let's build #4", or "implement #191" — and on Claude's own
-  move from reading an issue to writing code for it. Two things fire it: an
-  issue handed over to be worked on, or an explicit invocation of this skill.
+  move from reading an issue to writing code for it. It covers keeping that
+  pull request current after it goes ready too — "the PR is behind master",
+  "the branch is out of date", "bring the branch up to date with master".
+  Two things fire the sequence from its start: an issue handed over to be
+  worked on, or an explicit invocation of this skill.
   The issue is no longer required — an invocation carrying none opens one
   itself — but one of the two still is. "Implement a retry loop", "build the
   parser" and "fix this function", with neither an issue nor an invocation,
   are ordinary work and must NOT fire it. Supplies the order of the steps, the
-  gates between them, and the ready gate the sequence ends on; the review round
-  it runs is `review-cycle`'s. Not for merely reading, summarising or
+  gates between them, the ready gate, and the base merge that keeps the branch
+  current after it; the review round it runs is `review-cycle`'s. Not for merely reading, summarising or
   discussing an issue, since "what does #191 say" is a question rather than an
   assignment.
 ---
 
 # Undertake
 
-An issue in, a pull request ready for review out. Eleven steps, and this skill
-is the order they run in — the first of them, `Open the issue`, skipped in the
+An issue in, a pull request ready for review out, and kept current with its
+base branch after that. Twelve steps, and this skill is the order they run in — the first of them, `Open the issue`, skipped in the
 common case where the work already has an issue. Where it does not, that step
 supplies one: an issue is what this skill takes in, and untracked work is what
 running without one leaves behind.
@@ -61,6 +64,7 @@ The sequence
 | 8 | `Review the head` | `review-cycle` |
 | 9 | `Fix, answer, resolve, push` | `review-cycle` |
 | 10 | `Ready for review` | `mcp__github__update_pull_request` |
+| 11 | `Keep it current` | this skill, `review-cycle` |
 
 `Review the head` and `Fix, answer, resolve, push` are `review-cycle`'s own
 first two stages, named identically on purpose: they are the same work, and one
@@ -257,7 +261,8 @@ true of it.
 What is this skill's is where the round sits — after the draft is open, before
 the ready gate, and once. `review-cycle` decides whether it goes again, and it
 decides that from the head SHA it recorded, so `Ready for review` never re-runs
-it and never needs to ask.
+it and never needs to ask. A later round is `Keep it current`'s to earn, on the
+same test and from the same mark.
 
 10 — Ready for review
 ---------------------
@@ -274,6 +279,74 @@ discharges the `draft: false` trigger in its description: it fires on exactly
 the moment this step occupies, and a round already run on this head is that
 trigger already answered.
 
+11 — Keep it current
+--------------------
+
+Ready is not the end. Commits land on the base branch while a reviewer reads,
+and a branch behind its base was reviewed and tested against a tree nobody
+will merge into. This step brings the base branch in, and it is the only step
+that runs more than once.
+
+**The merge is `mcp__github__update_pull_request_branch`.** It merges the base
+branch into the head server-side, so it needs no checkout: by the time this
+runs, the session may be on another branch, and the working tree it had may be
+gone. The call is the test as well as the merge — GitHub answers that the
+branch is already up to date when there is nothing to bring in, so nothing
+here has to compute how far behind the branch is.
+
+**A merge, never a rebase.** A rebase rewrites history somebody is reading,
+and it voids the mark `review-cycle` recorded at `Review the head`. A merge
+commit leaves both intact.
+
+When it looks
+-------------
+
+At `Ready for review`, and then on a check-in: one
+`mcp__Claude_Code_Remote__send_later`, an hour out, carrying the instruction to
+look again. **One timer at a time** — arm the replacement on the wake that
+timer itself caused, which is the discipline `review-cycle`'s `The backstop`
+states for the same reason.
+
+An hour, rather than the two minutes of the wait at `Review the head`. That
+wait watches a run that finishes in minutes and blocks everything behind it;
+this watches a base branch that moves a few times a day and blocks nothing.
+
+The check-ins end when the pull request is merged or closed, or when the user
+says to stop. A pull request nobody merges is not a reason to wake a session
+for ever.
+
+Where the scheduler is absent — a laptop — there are no check-ins. Do the step
+whenever the session is next on the pull request, and say so once, rather than
+claiming a watch the surface cannot keep.
+
+After the merge
+---------------
+
+The head moved, so CI runs again. Wait for it the way `review-cycle`'s
+`How to wait` says, and answer a red check under `Fix, answer, resolve, push`.
+**Red CI is how a base merge reports that it broke something**: the base
+changed what the branch depends on, the branch's own diff is untouched, and no
+review of that diff would have found it.
+
+**A clean merge does not earn a round.** `review-cycle`'s `Does it go again?`
+classifies it under `Neither`, and the reason is what `/code-review` reads —
+the pull request's three-dot diff, which after a clean merge is byte-identical
+to what `Review the head` already reviewed. A base branch that moves daily
+would otherwise buy a review a day for a diff nobody changed.
+
+**A conflict resolution does.** Resolving a conflict rewrites the branch's own
+files, which is `Changing what the code does` in that same classification.
+One round over it, and `review-cycle` decides anything further.
+
+A round after ready goes back to draft
+--------------------------------------
+
+`mcp__github__update_pull_request` with `draft: true` before `Review the head`
+runs, and ready again through `The gate` below when the round closes — the
+same gate, not a second one. A pull request under review is not ready for
+review, and a reviewer must not be reading a branch that is changing
+underneath them.
+
 
 The gate
 ========
@@ -281,7 +354,7 @@ The gate
 The hand-typed prompt this skill replaces got three things wrong. Two of them
 were about the round rather than the sequence and left with it — `review-cycle`
 carries *review once per diff* and *a reviewer, not a subagent*. The third is
-this skill's, and it is the one the sequence ends on.
+this skill's, and it is the one `Ready for review` turns on.
 
 Ready is a gate, not a step
 ---------------------------
@@ -301,15 +374,20 @@ Red CI or an open thread means it **stays a draft**, and the reason is stated
 in one line. A red pull request marked ready is a claim about the work that is
 not true.
 
+The gate is also what a round at `Keep it current` returns through. That round
+sends the pull request back to draft, and these three conditions are what let
+it out again — the same three, tested again, rather than a second gate written
+for the second round.
+
 
 Where it stops and waits
 ========================
 
-Autonomy is the point, so each pause has to earn itself. Six stop the
-sequence. Four stop it to *ask* — the ambiguous issue, the request too vague
-to write one for, the failing approach, and a designated branch the harness
-states ambiguously. A blocked issue and a running check stop it to report, and
-wait on something other than an answer.
+Autonomy is the point, so each pause has to earn itself. Seven stop the
+sequence. Five stop it to *ask* — the ambiguous issue, the request too vague
+to write one for, the failing approach, a designated branch the harness states
+ambiguously, and a base merge whose conflict is a real one. A blocked issue and
+a running check stop it to report, and wait on something other than an answer.
 
 - **A blocked issue, an issue whose intent is genuinely ambiguous, or a
   request too vague to write an issue for.** The constitution forbids guessing
@@ -323,6 +401,13 @@ wait on something other than an answer.
   worse than no pull request.
 - **CI still running**, at `Ready for review`. A wait, not a question —
   nothing is asked, and nothing proceeds on a check that has not reported.
+- **A base merge that conflicts**, at `Keep it current`.
+  `mcp__github__update_pull_request_branch` cannot resolve a conflict: it fails
+  and changes nothing, so a resolution is a local merge, resolved and pushed.
+  Resolve it where the resolution is plain — a moved import, two files that
+  never met. Where both sides changed the same logic, picking either loses
+  behaviour, and that is the constitution's rule against guessing at intent:
+  name the conflicting files and wait.
 
 The round at `Review the head` and `Fix, answer, resolve, push` has two stops
 of its own — its own wait on CI, and a review finding whose fix is a real
@@ -336,7 +421,9 @@ claim it, to commit, to push, or to open the draft.
 Non-goals
 =========
 
-- **Does not merge.** Ready for review is where this ends.
+- **Does not merge the pull request.** `Keep it current` merges the base
+  branch *into* the pull request and never the other way. Landing it is
+  somebody else's.
 - **Does not close the issue by hand.** The pull request body does that, and
   the merge does it.
 - **Does not fire on reading an issue.** Discussing #191 is not undertaking
