@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.12.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.11.0...v0.12.0) (2026-09-08)
+
+
+### Features
+
+* **constitution:** give the concision rule a moment, a number and a shape ([#105](https://github.com/jmcvetta/claude-daily-driver/issues/105)) ([c143dd8](https://github.com/jmcvetta/claude-daily-driver/commit/c143dd8572a68104b5ad26e06d6686e6dcbe8c06))
+* **conventional-commits-type:** never revert a type the user set ([#104](https://github.com/jmcvetta/claude-daily-driver/issues/104)) ([ea3b80d](https://github.com/jmcvetta/claude-daily-driver/commit/ea3b80deae44049ad89ac83dc1a6ebf558cb5417))
+
 ## [0.11.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.10.0...v0.11.0) (2026-09-08)
 
 
