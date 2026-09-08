@@ -1,8 +1,11 @@
 # The branch is kept current by a base merge, and the merge does not buy a review
 
-**Status:** decided, 2026-09-08.
-**Provenance:** chosen by an agent in the pull request that carries the change
-it justifies, and ratified by that merge.
+**Status:** decided, 2026-09-08; amended, 2026-09-08.
+**Provenance:** chosen by an agent in
+[#115](https://github.com/jmcvetta/claude-daily-driver/pull/115), the pull
+request that carries the change it justifies, and ratified by that merge. The
+cadence was amended straight after that merge, by the author's correction that
+`master` here moves every few minutes.
 **Resolves:** [#113](https://github.com/jmcvetta/claude-daily-driver/issues/113).
 
 `undertake` ended at `Ready for review`. Commits land on `master` several times
@@ -55,27 +58,25 @@ The return is through the existing gate — green CI, no unanswered thread,
 every finding closed — rather than through a second gate written for the
 second round.
 
-**The step looks on a check-in every fifteen minutes, and the merge rate is
-bounded by CI rather than by the base branch.** A base branch is not a pull
-request event: nothing wakes a session when `master` moves, so `Keep it
-current` is scheduled rather than woken. One `send_later` at a time, ended by
-the merge or the close of the pull request.
+**The step looks on a check-in every two minutes, with one floor: a CI run
+still in flight.** A base branch is not a pull request event — nothing wakes a
+session when `master` moves — so `Keep it current` is scheduled rather than
+woken. One `send_later` at a time, ended by the merge or the close of the pull
+request. Two minutes is the interval `review-cycle` already waits on CI with,
+and `master` here takes a commit every few minutes, so anything slower is a
+branch held behind deliberately. The floor exists because a merge restarts the
+run: a check-in that finds the last merge's run still going does nothing. On
+this repository CI answers in seconds and the floor rarely bites.
 
-Fifteen minutes is chosen against the cost of a merge, not against the rate of
-the base branch. A busy `master` takes a commit every few minutes; a branch
-merging each one moves its head each time, restarts CI each time, and never
-holds a green check long enough to be read. So a check-in that finds the last
-merge's run still going does nothing, and the branch rides a few commits behind
-between merges. What has to be current is the branch a reviewer reads and the
-branch that lands.
+**Rejected: a fifteen-minute check-in**, and an hourly one before it. Both were
+written against a base branch that moves a few times a day. This one moves
+every few minutes, so both leave the branch behind for most of its life, and
+the merge they were rationing costs a call and a run measured in seconds.
 
-**Rejected: an hourly check-in**, the first cadence written here. An hour is
-slower than the thing being tracked by an order of magnitude — a dozen commits
-behind on a busy day, and a conflict unseen for most of it.
-
-**Rejected: merging on every base commit.** It is the cadence the request
-suggests and the one CI cannot pay for: the run is restarted by each merge, so
-a branch merging faster than the run reports is a branch that is never green.
+**Rejected: a merge with no floor at all.** Merging while the last merge's run
+is still going restarts that run, so on a slow CI the branch would never hold a
+green check. The floor above is that case and nothing wider — it is not a
+licence to ration the merge.
 
 **Rejected: a pull request subscription.** `review-cycle` takes one for the CI
 wait and drops it with the wait. Keeping it standing would not answer this
