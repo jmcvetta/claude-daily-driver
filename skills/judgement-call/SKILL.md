@@ -50,7 +50,7 @@ in advance is what makes most of these questions answerable without asking:
 > maintainable, sane way.
 
 Where that rule picks a winner, there is nothing to ask. It is the constitution
-restated at the moment of choosing — *correct beats quick*, *I abjure
+restated at the moment of choosing — *correct beats quick*, *abjure
 workarounds*, *simplicity is beautiful* — and those rules are not menu items.
 
 
