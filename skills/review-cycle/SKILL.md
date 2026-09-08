@@ -75,9 +75,38 @@ with `--comment`.
 How to wait
 -----------
 
-Nothing in the toolkit blocks until CI reports, so the wait is a loop of turns:
-read the checks, wake later, read them again.
+**Subscribe to the pull request, and let the events wake the session.** Nothing
+in the toolkit blocks until CI reports, so the wait was once a poll: read the
+checks, wake two minutes later, read again. The poll is still here, as the
+backstop rather than as the mechanism.
 
+Four parts, and the last one is not optional: a wait that subscribes and arms a
+timer has two things running that outlive it.
+
+### Subscribe
+
+- **Subscribe** with `mcp__github__subscribe_pr_activity`, once, before the
+  first read. CI results then arrive as `<wake reason="external-event">`
+  envelopes that start a turn on their own — no interval to tune, and a green
+  run is answered in the seconds after it goes green rather than at the next
+  poll.
+- **Read the tool result.** Where a PR Steward already watches the pull
+  request, the call succeeds and the events go to the steward instead — the
+  result says so. That is the case with no subscription in it, and the backstop
+  is the whole wait.
+- **Its absence is its own condition**, not `send_later`'s. A session can hold
+  one call and not the other, so a surface without the scheduler may still have
+  the subscription and should still take it. There is a
+  `mcp__Claude_Code_Remote__subscribe_pr_activity` with the same contract;
+  where both exist, use the GitHub one, and use one namespace throughout.
+
+### The read
+
+- **Every wake ends in a read**, and the read is what decides. The event is a
+  wake, never a verdict. Webhook delivery is not a guarantee: the harness's own
+  pull request guidance, delivered alongside the `subscription.created` event,
+  says webhooks *"don't reliably deliver CI success, new pushes, or
+  merge-conflict transitions"*.
 - **Read** with `mcp__github__pull_request_read` — **both** `get_check_runs`
   and `get_status`, because they answer from different endpoints and a
   repository can report through either. `get_check_runs` sees the Checks API,
@@ -92,13 +121,48 @@ read the checks, wake later, read them again.
   everything passed — *every check has reported* is otherwise vacuously true
   of a pull request nothing has looked at. Keep waiting, and let the cap
   decide.
+- **A wake that is not about a check is still just a read.** The subscription
+  carries comments and reviews too, and the round is its own loudest source of
+  them: `/code-review --comment` posts a thread per finding and
+  `Fix, answer, resolve, push` answers every one. None of that is a check
+  reporting, so none of it moves the wait — read, find nothing changed, and go
+  on with what the turn was doing. A wake arriving after the wait is over is a
+  no-op for the same reason.
+
+### The backstop
+
 - **Wake** with `mcp__Claude_Code_Remote__send_later`, two minutes out,
   carrying the instruction to read again — then end the turn. The scheduler is
-  what brings the session back, which is what makes the wait survive.
+  what brings the session back when no event does, which is what makes the wait
+  survive a dropped webhook and a steward-held subscription alike. Two minutes,
+  unchanged: the backstop is what bounds the worst case, so making it lazier
+  because the subscription usually beats it would slow down exactly the case it
+  exists for.
+- **Exactly one timer, ever.** Keep the `trigger_id` the call returns, and arm
+  a replacement only on the wake that timer itself caused — an event wake never
+  arms one. Re-arming on every wake instead puts a timer in flight per check
+  that reports, each of which wakes and re-arms again, and a wait that spends
+  more turns than the poll it replaced has replaced nothing.
 - **Cap the loop at fifteen minutes.** On the cap, stop and name the checks
   that have not reported. Do not review: an unreported check is the thing this
   wait exists not to guess at, and a check stuck for fifteen minutes is a
   report to the user rather than a longer wait.
+
+### End the wait
+
+Both halves are running until something stops them, and neither stops itself.
+On the wake that ends the wait — every check reported, however it reported, or
+the fifteen-minute cap:
+
+- **Cancel the backstop** with `mcp__Claude_Code_Remote__delete_trigger` on the
+  `trigger_id` held from `The backstop`. An armed `send_later` does not lapse,
+  it fires: left pending, it injects *read the checks again* as a user turn in
+  the middle of `/code-review`, restarting a wait on a run that finished.
+- **Unsubscribe** with `mcp__github__unsubscribe_pr_activity`. The
+  subscription is this wait's, taken for it and dropped with it — the next wait
+  on this pull request takes it again, and the call is idempotent. Left
+  standing it is the round's own echo chamber, waking the session for every
+  thread the round posts and every reply it writes.
 
 **Never a `sleep`, in the foreground or in the background.** A sleep is a
 timer, not a test of the thing waited on — it expires while the checks are
@@ -115,13 +179,13 @@ cannot wake the session, which is the report this mechanism answers.
 [`0006`](../../docs/notes/0006-waiting-for-ci.md) is the decision, and carries
 what was rejected with it.
 
-`send_later` exists on the Claude Code Remote surface and nowhere else. Where
-it is absent — a laptop session, where a human is watching the terminal and a
-blocking command is a wait somebody can see — the wait is what that surface can
-block on: `gh pr checks --watch <number>` where the CLI is installed, inside
+Where a surface has neither the subscription nor the scheduler — a laptop
+session — the wait is what that surface can block on, with a human watching the
+terminal: `gh pr checks --watch <number>` where the CLI is installed, inside
 the Bash timeout. Failing that, read the checks once, and where they have not
 all reported, say so and stop. A session that cannot wake itself cannot wait,
 and a wait it only claims to perform is worse than the stop.
+
 
 Name the level
 --------------
