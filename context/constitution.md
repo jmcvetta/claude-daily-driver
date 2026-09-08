@@ -58,6 +58,11 @@ and runs offline against fixtures, never against a live third-party service.
 The worst bugs are silent — a filter that wrongly drops records raises no
 error, and the dropped records are invisible. Only a test catches those.
 
+**Name every script you run.** Never expand a glob into a directory of
+executables. `bash .github/scripts/test-*.sh` runs whatever the directory
+holds, and what it held was a mutation suite the repository forbids running
+locally. List the scripts you mean, one by one.
+
 **Fix problems, do not hide them.** A failing test is telling you something,
 so listen to it. Never skip, disable, silence, or delete a test to reach
 green. Say that it is failing, and make a plan to fix it.
@@ -111,8 +116,13 @@ green. Say that it is failing, and make a plan to fix it.
 
 It is not done until it passes the project's own gates: tests, linters,
 formatters, and whatever validation the project defines (`terraform validate`
-and its kind). Run them, rather than reasoning about whether they would pass.
-Do not be lazy about this, and do not be over-eager to declare the finish.
+and its kind). Get a real result, rather than reasoning about whether they
+would pass. Do not be over-eager to declare the finish.
+
+**CI is the gate.** Push, and read what CI reports back. **Do not run a
+project check locally**, unless you are reproducing a specific failure you are
+about to fix. Running the suite to be sure duplicates the work CI does anyway,
+and bills the user for your uncertainty.
 
 ## Dependencies
 
@@ -123,9 +133,9 @@ manifest or a lockfile.
 
 ## Delegation
 
-Plan first, then delegate the implementation. Be sensitive to quota: a
-cheaper model for work that does not need capability, batched tasks rather
-than a subagent per task, and separate subagents only where the work genuinely
-requires them. Subagents touching different files run in the background in
+Plan first, then delegate the implementation. Quota is the user's money. Do
+not spend a capable model on work that does not need capability, and do not
+open a subagent per task where one subagent can take the batch. Open separate
+subagents only where the work genuinely requires them. Subagents touching different files run in the background in
 parallel, in their own worktrees, all launched before you start your own share
 of the plan.

@@ -20,7 +20,7 @@ description: >-
 
 # Undertake
 
-An issue in, a pull request ready for review out. Eleven steps, and this skill
+An issue in, a pull request ready for review out. Ten steps, and this skill
 is the order they run in — the first of them, `Open the issue`, skipped in the
 common case where the work already has an issue. Where it does not, that step
 supplies one: an issue is what this skill takes in, and untracked work is what
@@ -56,11 +56,10 @@ The sequence
 | 3 | `Claim the issue` | this skill |
 | 4 | `Cut the branch` | this skill |
 | 5 | `Implement` | the constitution |
-| 6 | `Run the gates` | the constitution |
-| 7 | `Open the draft` | `pr` |
-| 8 | `Review the head` | `review-cycle` |
-| 9 | `Fix, answer, resolve, push` | `review-cycle` |
-| 10 | `Ready for review` | `mcp__github__update_pull_request` |
+| 6 | `Open the draft` | `pr` |
+| 7 | `Review the head` | `review-cycle` |
+| 8 | `Fix, answer, resolve, push` | `review-cycle` |
+| 9 | `Ready for review` | `mcp__github__update_pull_request` |
 
 `Review the head` and `Fix, answer, resolve, push` are `review-cycle`'s own
 first two stages, named identically on purpose: they are the same work, and one
@@ -223,13 +222,7 @@ The constitution governs, under *While you write code*, *Before you commit* and
 *When you hit a wall*. Nothing about how to write or commit the code is decided
 here.
 
-6 — Run the gates
------------------
-
-The constitution's *Before you call it done*, run at this point rather than
-after the pull request, so that the draft opens green.
-
-7 — Open the draft
+6 — Open the draft
 ------------------
 
 Push the branch, then invoke `pr`: it owns the branch guard, the existing-PR
@@ -240,7 +233,13 @@ confirm-before-write rule does not bite here, because the edge is given by the
 assignment rather than inferred from evidence. The issue being implemented is
 the issue the pull request closes.
 
-8 and 9 — Review the head, then fix, answer, resolve, push
+**The push is what runs the project's gates.** The constitution's *Before you
+call it done* sends them to CI rather than to this machine, so no local gate
+step comes before this one. The draft may open red, and `Review the head`
+waits for the result either way. A red check is answered at `Fix, answer,
+resolve, push`, and the ready gate below is what it has to satisfy in the end.
+
+7 and 8 — Review the head, then fix, answer, resolve, push
 ----------------------------------------------------------
 
 Invoke `review-cycle`. It owns the wait for CI on the pushed head — the
@@ -259,8 +258,8 @@ the ready gate, and once. `review-cycle` decides whether it goes again, and it
 decides that from the head SHA it recorded, so `Ready for review` never re-runs
 it and never needs to ask.
 
-10 — Ready for review
----------------------
+9 — Ready for review
+--------------------
 
 `mcp__github__update_pull_request` with `draft: false`. See the gate below
 first: this step is conditional.
@@ -344,7 +343,7 @@ Non-goals
   questions; answer them, and do not cut a branch.
 - **Does not fire on work it was not asked to undertake.** "Implement a retry
   loop", with neither an issue nor an invocation, is ordinary work, and running
-  eleven steps and a review round over it would be the heaviest possible way
+  ten steps and a review round over it would be the heaviest possible way
   to write ten lines. `Open the issue` makes the issue reference optional; it
   does not make it the only thing that was ever doing the separating. An issue
   handed over, or this skill named — either fires it, and neither is ordinary
