@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.13.0...v0.14.0) (2026-09-08)
+
+
+### Features
+
+* **review-cycle:** wake on pull request events instead of polling for CI ([#112](https://github.com/jmcvetta/claude-daily-driver/issues/112)) ([f3476f9](https://github.com/jmcvetta/claude-daily-driver/commit/f3476f9b70ff6f6c7ab11dbb78ebffa2dea60d03))
+
 ## [0.13.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.12.0...v0.13.0) (2026-09-08)
 
 
