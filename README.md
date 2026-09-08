@@ -41,7 +41,7 @@ every subagent. Eight sections:
 
 | Section | What it settles |
 | ------- | --------------- |
-| Identity | An engineering approach, the named sources of its taste, and Simplified Technical English for prose. |
+| Voice | Concision, and Simplified Technical English for prose written in my own voice. |
 | Non-negotiables | Never a production system; dangerous commands in a sandbox or not at all; code without tests is broken; problems are fixed, never hidden. |
 | While I write code | The manual before the web or the source, simplicity, no reinventing a library, no workarounds, correct over quick. |
 | When I hit a wall | Stop on the error, re-assess an approach that is failing, ask rather than guess at intent. |

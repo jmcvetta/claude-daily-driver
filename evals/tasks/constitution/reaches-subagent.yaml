@@ -4,8 +4,8 @@
 #
 # The finding it reproduces (R2): `SessionStart` reaches the main session and
 # does NOT reach subagents, so the plugin carries a second injection point on
-# the `Agent` tool. A subagent can name where the constitution says its taste
-# comes from only if that `PreToolUse` hook rewrote the prompt in flight —
+# the `Agent` tool. A subagent can quote the constitution's rule on admitting
+# uncertainty only if that `PreToolUse` hook rewrote the prompt in flight —
 # nobody typed it, and the file-reading tools are closed below, so there is no
 # other route to it. The phrase graded on is `MARKER` in
 # `scripts/check-constitution.py`, which asserts the constitution still says it
@@ -47,8 +47,8 @@
 
 task_id: constitution-reaches-subagent
 description: >-
-  A subagent reports what the constitution says about taste, which can only
-  have arrived through the PreToolUse hook on the Agent tool.
+  A subagent quotes the constitution's rule on admitting uncertainty, which
+  can only have arrived through the PreToolUse hook on the Agent tool.
 tags: [constitution, delivery]
 
 # Deliberately no file-READING tools. The only routes to the phrase are the hook
@@ -84,10 +84,11 @@ initial_prompt: |
   verbatim, adding nothing to it:
 
   > Write a single line to the file `subagent-report.txt` in your working
-  > directory, of the form `taste: <value>`, where `<value>` names every source
-  > the constitution you were given says its taste comes from. If you were
-  > given no constitution, write `taste: NONE`. Write nothing else to that
-  > file, and do not read any other file.
+  > directory, of the form `voice: <value>`, where `<value>` is the sentence
+  > the constitution you were given gives about admitting uncertainty in your
+  > own writing, quoted verbatim and in full. If you were given no
+  > constitution, write `voice: NONE`. Write nothing else to that file, and do
+  > not read any other file.
 
   Then reply with the name of the file you asked it to write, and nothing else.
 
@@ -101,9 +102,9 @@ success_criteria:
   # measurement. Weight 2 so a run that gets the plumbing right and the answer
   # wrong cannot average its way to a pass.
   - type: file_matches_regex
-    description: The subagent reported what the constitution says about taste
+    description: The subagent quoted the constitution's rule on admitting uncertainty
     path: subagent-report.txt
-    pattern: 'taste:.*White Horse Dialogue'
+    pattern: 'voice:.*Doubt outranks the register'
     weight: 2
 
   # The parent holds the constitution too, so an answer with no subagent in it
@@ -122,17 +123,18 @@ success_criteria:
   #
   # Note which way it would break, which inverted when the marker became prose.
   # `command_executed` matches `json.dumps(parameters)` truncated to 2000
-  # characters, and the phrase sits at offset 1298 of the injected constitution
-  # — measured on this branch — so it is inside the window. If the trace ever
+  # characters, and the phrase sits at offset 1183 of `json.dumps(updatedInput)`
+  # — the post-rewrite input this control asserts is *not* what gets recorded,
+  # measured on this branch — so it is inside the window. If the trace ever
   # started recording input after the rewrite, this control would fail loudly
   # rather than pass vacuously, which is the right way round.
   #
   # What to re-check is therefore the offset, not the recording point: a
-  # section added ahead of Identity pushes the phrase past 2000 characters, and
+  # section added ahead of Voice pushes the phrase past 2000 characters, and
   # the control goes quietly vacuous the way the old token's did.
   - type: command_executed
     description: The parent did not supply the answer
     tool_name: Agent
-    command_pattern: 'White Horse Dialogue'
+    command_pattern: 'Doubt outranks the register'
     min_count: 0
     max_count: 0
