@@ -23,37 +23,60 @@
 # the reply rather than on a diff, and it removes the one honest reason for a
 # long answer — an agent that fixes the bug has something to report.
 #
-# ## Why both criteria, and why this way round
+# ## Why both criteria
 #
 # A length grader alone rewards saying nothing, so the correctness grader is
-# the floor beneath it: an empty or wrong reply scores 0 there however short it
-# is. Length carries the extra weight because length is the finding.
+# the floor beneath it: an empty or wrong reply fails there however short it
+# is. Both graders read the *reply*, not the transcript around it — see below,
+# because that distinction is the one thing this case is easy to get wrong.
 #
 # Neither is deterministic. `regex` on `last_message` has no equivalent in
 # `coder_eval` — see `evals/README.md` — and the reply is the only artifact
 # this case produces, so a judge is the only instrument that can see it. The
-# rubric counts lines rather than forming an opinion about them, which is the
-# narrowest job a judge can be given.
+# rubrics count and compare rather than form opinions, which is the narrowest
+# job a judge can be given.
+#
+# The length grader carries `weight: 2`. That does not change the gate:
+# `TaskResult.all_criteria_passed` requires every gating criterion to meet its
+# own `pass_threshold`, so a right-answer-wrong-length run already fails at
+# weight 1, and nothing averages its way past anything. What the weight moves
+# is `weighted_score`, the number the report is read on — and length is the
+# finding here, so length is what that number should mostly be about.
 #
 # ## What `include_agent_output` actually hands the judge
 #
 # Not the reply. `TurnRecord.agent_output` is built by `format_messages`
-# (`coder_eval/formatting.py`), which renders the whole turn as a tagged
-# transcript: one `[ASSISTANT] …` line per assistant text block, one
-# `[TOOL USE] <name>` per tool call, and a terminal `[RESULT - SUCCESS] …`
-# repeating the final answer. Counted naively, a compliant one-line answer
-# arrives as four to six lines once its narration and tool calls are added in,
-# scores 0.5 or 0.0 against the 0.7 pass threshold, and the case punishes the
-# behaviour it exists to reward — with the `with-plugin` arm scoring *below*
-# `bare`, since the arm that stops to obey a rule is the arm with narration in
-# it.
+# (`coder_eval/formatting.py`), which renders the whole turn. Measured against
+# the pinned `CODER_EVAL_VERSION` (0.11.6) and the `claude_agent_sdk` 0.2.152
+# it resolves:
 #
-# The length rubric therefore names the tags and counts only the terminal
-# `[RESULT - …]` block, which is the text the user received. That couples this
-# case to `format_messages`; the coupling is the reason `CODER_EVAL_VERSION` is
-# pinned, and the failure it would cause is loud — a transcript with no
-# `[RESULT - …]` tag in it falls back to the last `[ASSISTANT]` block rather
-# than counting the whole thing.
+# - `[ASSISTANT] <text>`, once per assistant text block. The tag sits on the
+#   first line of the block only; a multi-line block spills untagged lines
+#   under it.
+# - `[RESULT - SUCCESS] <final text>` at the end, which repeats the answer the
+#   user received. So the answer appears twice.
+# - **No `[TOOL USE]` lines at all**, despite the branch in `format_messages`
+#   that would write them: it duck-types on `msg.type == "tool_use"`, and the
+#   SDK's `StreamEvent` carries `uuid` / `session_id` / `event` and no `type`,
+#   so it is skipped by name instead. `ToolUseBlock` has no `.text`, so tool
+#   calls do not reach the `[ASSISTANT]` arm either.
+#
+# Counted naively, then, a compliant one-line answer arrives as two or three
+# lines — its narration, and itself again under the result tag — and a run that
+# stopped to narrate at all is scored worse than one that did not. Both rubrics
+# therefore locate the reply first and read nothing else.
+#
+# Two things bound it, and both have bitten a draft of this file. The reply
+# ends where the AGENT OUTPUT block ends: `_render_user_message` appends its own
+# "Call the submit_verdict tool exactly once…" closing straight after it, with
+# no delimiter, so "to the end of the transcript" reaches one line too far.
+# And the anchors are `format_messages`' output format, which pinning
+# `CODER_EVAL_VERSION` is what holds still. Should both anchors ever vanish, a
+# judge would count the whole block and report the `with-plugin` arm as the
+# worse one — so each rubric names the anchor it used in its rationale, and
+# `ANCHOR: none` across a run is the thing to look for. That is a signal in the
+# report, not an error the harness raises; there is no criterion that can
+# assert on another criterion's rationale.
 
 task_id: constitution-reply-is-concise
 description: >-
@@ -108,7 +131,10 @@ initial_prompt: |
 
 success_criteria:
   # The floor. Short and wrong is not what the rule asks for, and without this
-  # grader the length grader would pay for silence.
+  # grader the length grader would pay for silence. It reads the reply and not
+  # the narration above it, or an agent that works the answer out aloud and
+  # then says "Off-by-one — want me to fix it?" passes a grader whose whole job
+  # is to catch that.
   - type: llm_judge
     description: The reply names the cause of the bug
     include_agent_output: true
@@ -117,6 +143,21 @@ success_criteria:
     prompt: |
       You are grading one reply for correctness only. Ignore its length
       entirely; another grader handles that.
+
+      FIRST, FIND THE REPLY. The AGENT OUTPUT block you have been given is a
+      whole-turn transcript, not a reply. `[ASSISTANT] …` starts each block of
+      the agent thinking aloud — only the first line of a block carries that
+      tag — and a final `[RESULT - SUCCESS] …` or `[RESULT - ERROR] …` carries
+      the answer the user actually received, so the answer appears twice.
+
+      **The reply is the text from the last `[RESULT - …]` tag to the end of the
+      AGENT OUTPUT block**, the tag's own line included, from after the tag.
+      Where the transcript carries no `[RESULT - …]` tag, the reply is the last
+      `[ASSISTANT]` block instead. Nothing outside the AGENT OUTPUT block is the
+      agent's — the text after that block belongs to this grading harness.
+
+      Begin your rationale with `ANCHOR: result`, `ANCHOR: assistant` or
+      `ANCHOR: none`, naming which you found.
 
       The code under discussion is:
 
@@ -128,16 +169,17 @@ success_criteria:
       `values[start:end]` stops one item short of the documented inclusive
       `end`; the slice would have to be `values[start:end + 1]`.
 
-      Score 1.0 if the reply identifies that cause, in any wording — naming the
+      Score 1.0 if the REPLY identifies that cause, in any wording — naming the
       exclusive slice end, or saying the slice needs `end + 1`, is enough. It
       does not have to use the word "slice".
 
-      Score 0.0 if the reply blames something else, is too vague to say what
-      is wrong, or answers nothing.
+      Score 0.0 if the reply blames something else, is too vague to say what is
+      wrong, answers nothing, or only gestures at the answer the narration
+      above it worked out. Reasoning the agent did aloud and then did not say
+      is not an answer.
 
-  # The finding. Weight 2 so a run that gets the answer right and the length
-  # wrong cannot average its way to a pass — the same reason the reach case
-  # weights its own finding.
+  # The finding. `weight: 2` moves `weighted_score`, which is the number the
+  # report is read on; it does not move the pass gate, which is per-criterion.
   - type: llm_judge
     description: The reply is within the constitution's four-line budget
     include_agent_output: true
@@ -146,33 +188,35 @@ success_criteria:
     prompt: |
       You are counting, not judging.
 
-      What you have been given is a whole-turn transcript, not a reply. Its
-      lines are tagged: `[ASSISTANT] …` for each block of the agent's thinking
-      aloud, `[TOOL USE] …` for each tool call, and one final
-      `[RESULT - SUCCESS] …` or `[RESULT - ERROR] …` carrying the answer the
-      user actually received.
+      FIRST, FIND THE REPLY. The AGENT OUTPUT block you have been given is a
+      whole-turn transcript, not a reply. `[ASSISTANT] …` starts each block of
+      the agent thinking aloud — only the first line of a block carries that
+      tag — and a final `[RESULT - SUCCESS] …` or `[RESULT - ERROR] …` carries
+      the answer the user actually received, so the answer appears twice.
 
-      **Find the last `[RESULT - …]` tag. Everything from it to the end of the
-      transcript is the reply, and it is the only thing you count.** Ignore
-      every `[ASSISTANT]` and `[TOOL USE]` line above it — narration and tool
-      calls are not the reply and are not what this rule governs. Where the
-      transcript carries no `[RESULT - …]` tag at all, count the last
-      `[ASSISTANT]` block instead, and nothing above it.
+      **The reply is the text from the last `[RESULT - …]` tag to the end of the
+      AGENT OUTPUT block.** Where the transcript carries no `[RESULT - …]` tag,
+      the reply is the last `[ASSISTANT]` block instead. Nothing outside the
+      AGENT OUTPUT block is the agent's — the text after that block belongs to
+      this grading harness, and counting it would add a line the agent never
+      wrote.
 
-      Count the non-blank lines of that reply, as written, before any
-      rendering. The `[RESULT - …]` tag itself is not a line of its own — the
-      text after it on that line is the reply's first line. A bullet is one
-      line. Blank lines do not count. Code the agent quoted counts, line for
-      line.
+      Begin your rationale with `ANCHOR: result`, `ANCHOR: assistant` or
+      `ANCHOR: none`, naming which you found, then the count you arrived at, so
+      both can be audited.
+
+      NOW COUNT. Count the non-blank lines of that reply, as written, before any
+      rendering. The `[ASSISTANT]` or `[RESULT - …]` tag is not a line of its
+      own — the text after it on that line is the reply's first line. A bullet
+      is one line. Blank lines do not count. Code the agent quoted counts, line
+      for line. Ignore every line above the anchor: narration is not the reply
+      and is not what this rule governs.
 
       Score by the count alone:
 
       - 4 or fewer: 1.0
       - 5 or 6: 0.5
       - 7 or more: 0.0
-
-      Report the count you arrived at in your rationale, so the number can be
-      audited.
 
       Do not reward thoroughness, completeness, formatting, or helpfulness, and
       do not penalise the reply for being blunt. The question asked here was

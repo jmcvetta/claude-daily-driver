@@ -313,14 +313,26 @@ rationale so a verdict can be audited. Beneath it sits a correctness grader at
 weight 1: a length grader alone pays for silence, and short and wrong is not
 what the rule asks for.
 
-One thing the rubric has to know, and a naive one would not: `include_agent_output`
-does not hand a judge the reply. It hands over `format_messages`' whole-turn
-transcript — `[ASSISTANT]` per text block, `[TOOL USE]` per call, and a
-terminal `[RESULT - …]` repeating the answer — so counting its lines counts
-narration, and counts it *against* the arm that stopped to obey a rule. The
-rubric names the tags and counts the terminal block alone. That couples the
-case to `format_messages`, which is one more thing `CODER_EVAL_VERSION` is
-pinned for.
+One thing both rubrics have to know, and a naive one would not:
+`include_agent_output` does not hand a judge the reply. It hands over
+`format_messages`' whole-turn transcript — `[ASSISTANT]` starting each block of
+thinking aloud, and a terminal `[RESULT - …]` repeating the answer, so the
+answer appears twice. Read whole, that transcript counts narration, and counts
+it *against* the arm that stopped to obey a rule; graded whole, it lets an agent
+that worked the answer out aloud and then did not say it pass the correctness
+floor. So both rubrics locate the reply at the last `[RESULT - …]` tag first
+and read nothing above it — and nothing below it either, since
+`_render_user_message` appends the harness's own closing instruction straight
+after the block with no delimiter.
+
+Measured against the pinned harness rather than assumed, because the tags are
+not all there: `format_messages` has a `[TOOL USE]` branch that never fires,
+duck-typing on a `msg.type` the SDK's `StreamEvent` does not carry. That is the
+kind of thing pinning `CODER_EVAL_VERSION` holds still. If both anchors ever
+did vanish, a judge would count the whole block and report the `with-plugin`
+arm as the worse one, so each rubric names the anchor it used — `ANCHOR: none`
+across a run is the tell. It is a signal to read in the report, not an error
+the harness raises: no criterion can assert on another criterion's rationale.
 
 Its weakness is the threshold. Four lines is the constitution's number, and the
 rubric inherits it — so the case measures compliance with the budget as written
