@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.15.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.14.0...v0.15.0) (2026-09-08)
+
+
+### Features
+
+* phrase the cost rules as prohibitions, and run the gates on CI ([#116](https://github.com/jmcvetta/claude-daily-driver/issues/116)) ([6ba1be2](https://github.com/jmcvetta/claude-daily-driver/commit/6ba1be261a0bcef3dc10ae35ba76defc5513c64d))
+* **undertake:** keep the branch current with master after ready ([#115](https://github.com/jmcvetta/claude-daily-driver/issues/115)) ([10cc2b9](https://github.com/jmcvetta/claude-daily-driver/commit/10cc2b9bf606b89e19adcd6f7dd071b80eddce90))
+
+
+### Bug Fixes
+
+* **undertake:** check in every two minutes, not every fifteen ([#118](https://github.com/jmcvetta/claude-daily-driver/issues/118)) ([8897c40](https://github.com/jmcvetta/claude-daily-driver/commit/8897c40ae6e1519d5197ba5b8e6e4fdc74404a6c))
+
 ## [0.14.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.13.0...v0.14.0) (2026-09-08)
 
 
