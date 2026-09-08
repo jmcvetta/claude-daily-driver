@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.8.0...v0.9.0) (2026-09-08)
+
+
+### Features
+
+* **review-cycle:** cap the level a rule may select at high ([#94](https://github.com/jmcvetta/claude-daily-driver/issues/94)) ([bb80032](https://github.com/jmcvetta/claude-daily-driver/commit/bb80032059fcb9905ef46ce4a7a562e4b420a7f2))
+
 ## [0.8.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.7.0...v0.8.0) (2026-09-07)
 
 
