@@ -115,7 +115,7 @@ The read
 The backstop
 ------------
 
-- **Wake** with `mcp__Claude_Code_Remote__send_later`, five minutes out,
+- **Wake** with `mcp__Claude_Code_Remote__send_later`, two minutes out,
   carrying the instruction to read again — then end the turn. The scheduler is
   what brings the session back when no event does, which is what makes the wait
   survive a dropped webhook and a steward-held subscription alike. Re-arm it on

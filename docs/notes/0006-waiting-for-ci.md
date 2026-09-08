@@ -20,7 +20,7 @@ run. That is #96, reported from a live session.
 
 **The wait is a loop of turns: read the checks, wake later, read again, capped.**
 *Amended 2026-09-08 — the wake is now a pull request subscription, and the loop
-is its backstop. See* Amended *below.*
+is its backstop; the interval is unchanged. See* Amended *below.*
 `review-cycle`'s `How to wait` carries the calls, the two-minute interval and
 the fifteen-minute cap. Both numbers are chosen rather than measured; a
 measurement is what may move them.
@@ -70,9 +70,10 @@ after the event it is waiting for, and it spends a turn every time it answers
 *not yet*.
 
 **Amended: subscribe first, and keep the loop as a backstop.** The event is the
-wake; the check read is still the answer. The interval moves from two minutes
-to five, because it is no longer the thing that notices — it is what covers the
-two cases the events do not.
+wake; the check read is still the answer. The two-minute interval does not
+move. It is no longer the thing that notices, but it is still the thing that
+bounds the worst case, and the worst case is a wait with no events in it at
+all — stretching it would slow down the only runs that depend on it.
 
 Both cases are real, and neither is a reason to skip the subscription:
 
