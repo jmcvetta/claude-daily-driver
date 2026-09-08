@@ -319,8 +319,8 @@ wait on something other than an answer.
   branch`'s first source. Guessing which one the harness will accept risks a
   claim already posted at `Claim the issue` that no push can honour.
 - **The approach failing mid-implementation** — the constitution's *When you
-  hit a wall*, at `Implement`. A pull request that documents a wrong turn is worse
-  than no pull request.
+  hit a wall*, at `Implement`. A pull request that documents a wrong turn is
+  worse than no pull request.
 - **CI still running**, at `Ready for review`. A wait, not a question —
   nothing is asked, and nothing proceeds on a check that has not reported.
 
