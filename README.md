@@ -43,13 +43,13 @@ every subagent. Nine sections:
 | ------- | --------------- |
 | Voice | Simplified Technical English for prose written in your own voice. |
 | Before you reply | A four-line budget on a reply, the two things outside it, and the shape: the answer first, no preamble, no recap. |
-| Non-negotiables | Never a production system; dangerous commands in a sandbox or not at all; code without tests is broken; problems are fixed, never hidden. |
+| Non-negotiables | Never a production system; dangerous commands in a sandbox or not at all; code without tests is broken; every script named rather than globbed; problems are fixed, never hidden. |
 | While you write code | The manual before the web or the source, simplicity, no reinventing a library, no workarounds, correct over quick. |
 | When you hit a wall | Stop on the error, re-assess an approach that is failing, ask rather than guess at intent. |
 | Before you commit | A doc comment on every new exported symbol, focused commits, message style, named files staged. |
-| Before you call it done | The project's own gates are run, not reasoned about. |
+| Before you call it done | The project's own gates decide, not reasoning about them — and CI is where they run, not this machine. |
 | Dependencies | Added and pinned through the package manager; never a hand-edited manifest or lockfile. |
-| Delegation | Plan first, delegate the implementation, batch the subagents, watch the quota. |
+| Delegation | Plan first, delegate the implementation, batch the subagents, spend no more quota than the work needs. |
 
 **What belongs there** is the admission test the file states on itself: a rule
 lives here only if it changes behaviour in most sessions, hangs off a nameable
