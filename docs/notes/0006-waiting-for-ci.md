@@ -37,18 +37,26 @@ green. Backgrounded it also has the failure #96 reports, and a wait that
 depends on a process nobody is watching is a wait that can be lost. On this
 surface a foreground `sleep` is refused outright.
 
-**Rejected: a shell poll — `Monitor`, or a backgrounded `until` loop.** This is
-the harness's own advice for waiting on a condition, and it is right wherever
-the condition is visible from a shell. This one is not: the check state is
-behind the MCP.
+**Rejected: a shell wait — `Monitor`, a backgrounded `until` loop, or a
+blocking `gh pr checks --watch`.** This is the harness's own advice for waiting
+on a condition, and it is right where a human is watching the terminal. It is
+not right for a wait nobody is attending, and the reason is not that a shell
+cannot read GitHub — where `gh` is installed and authenticated, it can, which
+is why `How to wait` prescribes exactly that on a laptop. It is that neither
+shape survives the session: in the foreground the watch is bounded by the Bash
+tool's timeout, and refused outright on a surface that blocks `sleep`; in the
+background it is bounded by nothing and cannot wake the session, which is #96.
 
 **Rejected: `mcp__Claude_Code_Remote__subscribe_pr_activity`.** It is the exact
 instrument — CI results arrive as wake events, with no polling at all — and it
-is not reliably this session's to use. Where a steward already watches the pull
-request, the subscription call succeeds and the events go elsewhere, which
-fails in the silent direction: a wait that is never woken looks identical to
-CI that has not finished. A session that already holds the subscription for
-other reasons is welcome to the events; the loop is what the round is written
+is not reliably this session's to use: where a steward already watches the pull
+request, the subscription call succeeds and the events go elsewhere. That case
+is *detectable*, and the note first said otherwise: the tool documents that its
+result says so. So the rejection is not silence. It is that the fallback loop
+has to exist anyway, for the pull request a steward holds and for the surface
+where the tool is absent — and a round carrying both mechanisms would be two
+things to get right where one will do. A session that already holds the
+subscription is welcome to the events; the loop is what the round is written
 against.
 
 **A surface with no wake performs no wait.** Where `send_later` does not exist
