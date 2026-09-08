@@ -243,7 +243,8 @@ the issue the pull request closes.
 8 and 9 — Review the head, then fix, answer, resolve, push
 ----------------------------------------------------------
 
-Invoke `review-cycle`. It owns the wait for CI on the pushed head, the built-in
+Invoke `review-cycle`. It owns the wait for CI on the pushed head — the
+mechanism as well as the rule, under `How to wait` — the built-in
 `/code-review` at a level it names, the protocol every finding is answered and
 resolved under, and the test for whether a later push has earned a second
 review.
@@ -288,8 +289,9 @@ Ready is a gate, not a step
 "After fixing, set the PR to ready" reads as unconditional. It is not. The
 pull request goes to ready only when **all** of these hold:
 
-- CI is green on the head commit. **Pending is not green** — wait for it,
-  rather than treating an unreported check as either answer.
+- CI is green on the head commit. **Pending is not green** — wait for it the
+  way `review-cycle`'s `How to wait` says, rather than treating an unreported
+  check as either answer. The mechanism has one home, and it is not this one.
 - No review thread is unanswered or unresolved — from any reviewer, not only
   from the round at `Review the head`.
 - Every finding that round raised has been fixed, or rejected with a reason on

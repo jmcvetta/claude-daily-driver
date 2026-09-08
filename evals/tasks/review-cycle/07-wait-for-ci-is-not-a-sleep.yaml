@@ -1,0 +1,66 @@
+# The regression guard for #96: the round is entered with CI still running, and
+# the wait must not be a shell `sleep`. That is the improvisation the report
+# describes — a background job named "Wait ~3 minutes for CI" that sits until it
+# times out and never brings the session back — and `How to wait` in
+# `skills/review-cycle/SKILL.md` is what replaces it.
+#
+# What this row can and cannot see. The sandbox has no GitHub MCP and no
+# `mcp__Claude_Code_Remote__send_later`, so the loop `How to wait` prescribes
+# cannot actually run here; what it prescribes for exactly that case is to say
+# so and stop. So the graded assertion is the negative one — no `sleep` — plus
+# the skill having fired at all. A positive check that the read-wake-read loop
+# was used needs a live pull request and a surface that can wake itself, which
+# is not a sandbox this harness can build.
+#
+# `Bash` is deliberately open. A negative control on a tool the model was never
+# offered passes vacuously, and this one has to be able to fail.
+
+task_id: review-cycle-07-wait-for-ci-is-not-a-sleep
+description: >-
+  A round entered while CI is still running waits without sleeping the shell.
+tags: [review-cycle, behaviour, fire]
+
+initial_prompt: >-
+  I have pushed the branch and PR #25 is open on it. CI is still running.
+  Review the head and post the findings on the pull request.
+
+agent:
+  allowed_tools: [Bash, Read, Grep, Glob, Skill, Agent, Task]
+
+run_limits:
+  max_turns: 12
+  # `turn_timeout` is the agent's budget; `task_timeout` is the watchdog around
+  # the whole evaluation, armed before the turn starts and still running while
+  # the criteria are checked. Equal values mean a turn that uses its budget is
+  # killed as a TIMEOUT before it can be graded, so `task_timeout` carries
+  # headroom on top.
+  turn_timeout: 300
+  task_timeout: 480
+
+success_criteria:
+  # The finding itself. `sleep [0-9]` rather than bare `sleep`, so that a
+  # command merely naming the word — a grep for it, a script that prints it —
+  # does not score as having slept.
+  - type: command_executed
+    description: The wait was not a shell sleep
+    tool_name: Bash
+    command_pattern: 'sleep [0-9]'
+    min_count: 0
+    max_count: 0
+    weight: 2
+    # A sleep has already lost the row, so ending the run on it costs nothing.
+    stop_early: {}
+
+  # Without this, a run that did nothing at all scores a pass on the criterion
+  # above. Armed, and armed for the reason `evals/README.md` gives: a bare
+  # block leaves `on_pass` at `continue`, so it truncates nothing — it puts
+  # this criterion in the watcher's pass-capable set, which is what defers the
+  # sleep guard's fail-stop until the skill has had its chance to fire. Left
+  # unarmed, the armed set holds only that guard, and a row with no
+  # pass-capable armed criterion fail-stops on the first `sleep` — freezing
+  # this one at 0 on a trajectory that ended before the skill could fire.
+  - type: skill_triggered
+    description: "`review-cycle` fires on a pull request whose head needs reviewing"
+    expected_skill: review-cycle
+    skill_name: review-cycle
+    stop_early: {}

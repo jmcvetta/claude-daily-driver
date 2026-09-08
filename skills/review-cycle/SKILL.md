@@ -8,7 +8,8 @@ description: >-
   review?", and including any call Claude makes on its own initiative to the
   built-in `/code-review` aimed at a pull request, to
   `mcp__github__add_reply_to_pull_request_comment`, or to
-  `mcp__github__resolve_review_thread`. Supplies the review invocation and its
+  `mcp__github__resolve_review_thread`. Supplies the wait for CI on the pushed
+  head — the mechanism, not only the rule — the review invocation and its
   named effort level, the protocol every finding is answered under, and the
   test for whether a later push has earned a second round. Do NOT use this skill for opening a pull request or bringing
   one up to date — that is `pr` — nor for marking a draft ready, which is the
@@ -22,9 +23,9 @@ is reviewed once per diff, every finding it raises is closed out, and a push
 that only answered the review does not buy a second review.
 
 The analysis is the session's built-in `/code-review`. What this skill supplies
-is the three things around it — the level, the thread protocol, and the
-re-review test — none of which the built-in has an opinion about, and all three
-of which are the ones that go wrong.
+is the four things around it — the wait for CI, the level, the thread protocol,
+and the re-review test — none of which the built-in has an opinion about, and
+all four of which are the ones that go wrong.
 
 Callers keep their own gates. `undertake` runs this round between its `Open the
 draft` and `Ready for review` steps and owns whether the pull request then goes
@@ -64,9 +65,63 @@ still decides what happens after.
 **Wait for CI to report on the pushed head first.** A pull request opened
 seconds ago has its checks queued, and a queued check is not a passing one — a
 review that reads it as either answer is reviewing the runner, not the code.
+The wait ends when every check has reported, whichever way it reported: a red
+check is a fact about the branch, not a reason to hold the review, and
+`Fix, answer, resolve, push` is where it is answered.
 
 Then run the session's built-in **`/code-review`** against the pull request,
 with `--comment`.
+
+How to wait
+-----------
+
+Nothing in the toolkit blocks until CI reports, so the wait is a loop of turns:
+read the checks, wake later, read them again.
+
+- **Read** with `mcp__github__pull_request_read` — **both** `get_check_runs`
+  and `get_status`, because they answer from different endpoints and a
+  repository can report through either. `get_check_runs` sees the Checks API,
+  which is what GitHub Actions writes to; `get_status` sees the commit
+  statuses an external CI service, a coverage bot or a DCO check still posts.
+  *Reported* is the union of the two. Both answer for the head commit of the
+  pull request, which is the commit the checks are running on: that SHA is the
+  key they are looked up by, it does not move while they run, and nothing here
+  is waiting for it to.
+- **An empty answer is not an answer.** Nothing from either endpoint, on a
+  head pushed seconds ago, means nothing has registered yet rather than that
+  everything passed — *every check has reported* is otherwise vacuously true
+  of a pull request nothing has looked at. Keep waiting, and let the cap
+  decide.
+- **Wake** with `mcp__Claude_Code_Remote__send_later`, two minutes out,
+  carrying the instruction to read again — then end the turn. The scheduler is
+  what brings the session back, which is what makes the wait survive.
+- **Cap the loop at fifteen minutes.** On the cap, stop and name the checks
+  that have not reported. Do not review: an unreported check is the thing this
+  wait exists not to guess at, and a check stuck for fifteen minutes is a
+  report to the user rather than a longer wait.
+
+**Never a `sleep`, in the foreground or in the background.** A sleep is a
+timer, not a test of the thing waited on — it expires while the checks are
+still queued as readily as it expires long after they went green. Backgrounded,
+it is also the failure this mechanism was written for: a job named *"Wait ~3
+minutes for CI"* that sits until it times out and never brings the session back
+to the loop.
+
+**And no shell wait at all where the session is unattended**, `gh` installed or
+not. The two shapes fail differently and both fail: a blocking watch in the
+foreground is bounded by the Bash tool's own timeout, and refused outright on a
+surface that blocks `sleep`; a backgrounded one is not bounded by anything and
+cannot wake the session, which is the report this mechanism answers.
+[`0006`](../../docs/notes/0006-waiting-for-ci.md) is the decision, and carries
+what was rejected with it.
+
+`send_later` exists on the Claude Code Remote surface and nowhere else. Where
+it is absent — a laptop session, where a human is watching the terminal and a
+blocking command is a wait somebody can see — the wait is what that surface can
+block on: `gh pr checks --watch <number>` where the CLI is installed, inside
+the Bash timeout. Failing that, read the checks once, and where they have not
+all reported, say so and stop. A session that cannot wake itself cannot wait,
+and a wait it only claims to perform is worse than the stop.
 
 Name the level
 --------------
@@ -225,6 +280,8 @@ Where it stops and waits
 
 - **CI still running**, before `Review the head`. A wait, not a question —
   nothing is asked, and nothing proceeds on a check that has not reported.
+  `How to wait` is the mechanism, and its fifteen-minute cap is where the wait
+  turns into a stop that reports.
 - **A finding whose fix is a real trade-off**, in the sense `judgement-call`
   gives that phrase: two defensible approaches differing in something the user
   owns. That skill owns the gate, and it is the gate for every question this

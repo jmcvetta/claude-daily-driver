@@ -84,6 +84,16 @@ halves, and the second is the one that earns its keep:
 that already exists, so "raise a pull request" is `pr`'s and not the round's —
 and a mood, which is the harder one. See "The two moods" below.
 
+It also carries the one row here that grades behaviour rather than triggering:
+`07-wait-for-ci-is-not-a-sleep`, which enters the round with CI still running
+and asserts that no shell `sleep` was run. `Bash` is open on purpose — a
+negative control on a tool the model was never offered passes vacuously — and
+both criteria are armed bare, the positive included, for the reason the arming
+paragraph below gives. What the row cannot grade is the loop `How to wait`
+prescribes in the sleep's place: reading the checks needs the GitHub MCP and
+waking needs a surface that can wake itself, and the sandbox is neither. It
+grades the failure, not the fix.
+
 `undertake/` asks the same question of a skill with two ways in. `Open the
 issue` opens one for work that has none, so an issue reference no longer has
 to be present for the skill to fire — and what fires it is now either an issue
