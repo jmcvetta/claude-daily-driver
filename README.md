@@ -23,7 +23,7 @@ by hook — plus nine skills:
 | `session-title` | Names the session for the Claude web and mobile lists: forty characters, `#123 shortened issue title` while an issue is in hand. |
 | `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. |
 | `review-cycle` | One round on a pull request: the built-in `/code-review`, a verdict on every finding, and the test for whether a later push has earned a second round. |
-| `undertake` | Takes a piece of work from its description to a pull request ready for review, opening the issue first where there is none. |
+| `undertake` | Takes a piece of work from its description to a pull request ready for review, opening the issue first where there is none, and keeping the branch current with its base after. |
 
 A skill fires on its slash command where it has one, on natural phrasings of
 the work, and on Claude's own tool calls — `mcp__github__create_pull_request`

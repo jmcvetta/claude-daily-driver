@@ -1,0 +1,27 @@
+task_id: undertake-06-branch-behind-master
+description: >-
+  A pull request that has gone behind its base branch after being marked ready.
+  `Keep it current` is the step that answers it, so the skill has to fire on
+  the phrasing that reports the drift rather than only on the phrasings that
+  hand over an issue.
+tags: [trigger-accuracy, undertake, fire]
+
+initial_prompt: "PR #25 is behind master. Bring the branch up to date."
+
+agent:
+  # See 01: `disallowed_tools`, not `allowed_tools`, is what stops a denied read
+  # of `skills/undertake/SKILL.md` scoring as a fire.
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`undertake` fires on a branch that has fallen behind its base"
+    expected_skill: undertake
+    skill_name: undertake
+    stop_early:
+      on_pass: stop
