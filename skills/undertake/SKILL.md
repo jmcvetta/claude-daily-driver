@@ -301,15 +301,26 @@ commit leaves both intact.
 When it looks
 -------------
 
-At `Ready for review`, and then on a check-in: one
-`mcp__Claude_Code_Remote__send_later`, an hour out, carrying the instruction to
-look again. **One timer at a time** — arm the replacement on the wake that
-timer itself caused, which is the discipline `review-cycle`'s `The backstop`
-states for the same reason.
+At `Ready for review`, and then on a check-in every fifteen minutes: one
+`mcp__Claude_Code_Remote__send_later` at a time, carrying the instruction to
+look again, and armed on the wake the previous one caused — the discipline
+`review-cycle`'s `The backstop` states for the same reason.
 
-An hour, rather than the two minutes of the wait at `Review the head`. That
-wait watches a run that finishes in minutes and blocks everything behind it;
-this watches a base branch that moves a few times a day and blocks nothing.
+**Fifteen minutes is not the base branch's rate, and it is not meant to be.**
+A busy `master` takes a commit every few minutes. A branch that merged each one
+would spend its life in CI: every merge moves the head, every moved head
+restarts the run, and a branch merging faster than CI reports never holds a
+green check long enough for anybody to read it. **The merge rate is bounded by
+the CI cycle, not by the base branch's** — so a check-in that finds the run
+from the last merge still going does nothing and waits for the next one. The
+branch rides a few commits behind between merges. That is the design, not a
+shortfall in it: what has to be current is the branch a reviewer reads and the
+branch that lands, and neither is harmed by a base commit that arrived four
+minutes ago.
+
+A merge-conflict notice does not wait for the cadence. It is the case where
+behind has already cost something, and it is answered on the wake that reports
+it.
 
 The check-ins end when the pull request is merged or closed, or when the user
 says to stop. A pull request nobody merges is not a reason to wake a session

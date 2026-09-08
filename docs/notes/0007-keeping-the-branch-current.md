@@ -55,12 +55,27 @@ The return is through the existing gate — green CI, no unanswered thread,
 every finding closed — rather than through a second gate written for the
 second round.
 
-**The step looks on an hourly check-in.** A base branch is not a pull request
-event: nothing wakes a session when `master` moves, so `Keep it current` is
-scheduled rather than woken. One `send_later` at a time, an hour out, ended by
-the merge or the close of the pull request. An hour rather than the two minutes
-`review-cycle` waits on CI, because that wait blocks the round behind it and
-this one blocks nothing.
+**The step looks on a check-in every fifteen minutes, and the merge rate is
+bounded by CI rather than by the base branch.** A base branch is not a pull
+request event: nothing wakes a session when `master` moves, so `Keep it
+current` is scheduled rather than woken. One `send_later` at a time, ended by
+the merge or the close of the pull request.
+
+Fifteen minutes is chosen against the cost of a merge, not against the rate of
+the base branch. A busy `master` takes a commit every few minutes; a branch
+merging each one moves its head each time, restarts CI each time, and never
+holds a green check long enough to be read. So a check-in that finds the last
+merge's run still going does nothing, and the branch rides a few commits behind
+between merges. What has to be current is the branch a reviewer reads and the
+branch that lands.
+
+**Rejected: an hourly check-in**, the first cadence written here. An hour is
+slower than the thing being tracked by an order of magnitude — a dozen commits
+behind on a busy day, and a conflict unseen for most of it.
+
+**Rejected: merging on every base commit.** It is the cadence the request
+suggests and the one CI cannot pay for: the run is restarted by each merge, so
+a branch merging faster than the run reports is a branch that is never green.
 
 **Rejected: a pull request subscription.** `review-cycle` takes one for the CI
 wait and drops it with the wait. Keeping it standing would not answer this
