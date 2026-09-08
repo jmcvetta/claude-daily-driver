@@ -131,6 +131,34 @@ What does not decide it
   the doing, none of them of the effect.
 
 
+What ends the question
+======================
+
+One input does decide the type, and it decides it by ending the question: the
+type already on the pull request, where the user put it. It is settled. It is
+not changed back, and the tests above are not run against it.
+
+Where it looks wrong, say so in a sentence and ask — then wait. Editing the
+title and reporting the edit is the failure this section exists to stop, and
+the *Projected Releases* comment is no exception: a projection that disagrees
+with a user-set type is something to raise, not something to correct.
+
+**This does not depend on knowing who set it.** A type that disagrees with the
+one the tests pick is a type to ask about, because *a subagent must have done
+that* is the assumption the rule was written from. On Green-Pagoda/pagoda#387
+a `chore(deps):` title was retitled `test:` by the user, read as a stray edit,
+and set back. The user's reading was the better one — every package in the
+diff was a devDependency of the test tooling, nothing in a shipped artifact
+moved, and the pull request added two tests — but which type was right is not
+what went wrong. A human decision was reverted without being recognised as
+one.
+
+It is narrower than *never touch the title*. Correcting a type this session
+wrote itself, or writing one where the pull request carries none, is
+unchanged. The stop bites where the type on the pull request is not one this
+session wrote — the unattributable case included.
+
+
 One type for the whole pull request
 ===================================
 
@@ -167,5 +195,6 @@ What a given title will actually cut is not worth reasoning out. In this
 repository the *Projected Releases* check comments it on every pull request
 but release-please's own, and that comment is the test: read it against what
 the change warrants, and treat a bug fix that projects a minor version, or a
-new capability that projects a patch, as a title to correct. Where the check
+new capability that projects a patch, as a title to correct — unless the type
+is the user's, where *What ends the question* applies instead. Where the check
 does not run, the table above is the best available answer.
