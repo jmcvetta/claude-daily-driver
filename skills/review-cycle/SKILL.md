@@ -75,8 +75,27 @@ with `--comment`.
 How to wait
 -----------
 
-Nothing in the toolkit blocks until CI reports, so the wait is a loop of turns:
-read the checks, wake later, read them again.
+**Subscribe to the pull request, and let the events wake the session.** Nothing
+in the toolkit blocks until CI reports, so the wait was once a poll: read the
+checks, wake two minutes later, read again. The poll still exists below, but it
+is the backstop now rather than the mechanism.
+
+- **Subscribe** with `mcp__github__subscribe_pr_activity`, once, before the
+  first read. CI results then arrive as `<wake reason="external-event">`
+  envelopes that start a turn on their own — no interval to tune, and a green
+  run is answered in the seconds after it goes green rather than at the next
+  poll.
+- **Read the tool result.** Where a PR Steward already watches the pull
+  request, the call succeeds and the events go to the steward instead — the
+  result says so. That is the case with no subscription in it, and the backstop
+  is the whole wait.
+- **An event is a wake, not an answer.** The harness documents its own webhook
+  delivery as incomplete: CI success in particular may arrive late or not at
+  all. So every wake — an event or the backstop — ends in the same read, and
+  the read is what decides.
+
+The read
+--------
 
 - **Read** with `mcp__github__pull_request_read` — **both** `get_check_runs`
   and `get_status`, because they answer from different endpoints and a
@@ -92,9 +111,16 @@ read the checks, wake later, read them again.
   everything passed — *every check has reported* is otherwise vacuously true
   of a pull request nothing has looked at. Keep waiting, and let the cap
   decide.
-- **Wake** with `mcp__Claude_Code_Remote__send_later`, two minutes out,
+
+The backstop
+------------
+
+- **Wake** with `mcp__Claude_Code_Remote__send_later`, five minutes out,
   carrying the instruction to read again — then end the turn. The scheduler is
-  what brings the session back, which is what makes the wait survive.
+  what brings the session back when no event does, which is what makes the wait
+  survive a dropped webhook and a steward-held subscription alike. Re-arm it on
+  each wake that finds checks still running, and let it lapse once they have
+  all reported.
 - **Cap the loop at fifteen minutes.** On the cap, stop and name the checks
   that have not reported. Do not review: an unreported check is the thing this
   wait exists not to guess at, and a check stuck for fifteen minutes is a
@@ -115,13 +141,18 @@ cannot wake the session, which is the report this mechanism answers.
 [`0006`](../../docs/notes/0006-waiting-for-ci.md) is the decision, and carries
 what was rejected with it.
 
-`send_later` exists on the Claude Code Remote surface and nowhere else. Where
-it is absent — a laptop session, where a human is watching the terminal and a
-blocking command is a wait somebody can see — the wait is what that surface can
-block on: `gh pr checks --watch <number>` where the CLI is installed, inside
-the Bash timeout. Failing that, read the checks once, and where they have not
-all reported, say so and stop. A session that cannot wake itself cannot wait,
-and a wait it only claims to perform is worse than the stop.
+**The round does not unsubscribe.** The subscription is the caller's to end —
+`unsubscribe_pr_activity` when the pull request merges or closes — and a round
+that dropped it would blind the next push on the same branch.
+
+Neither call is universal. `subscribe_pr_activity` and `send_later` both exist
+on the Claude Code Remote surface, and a laptop session has neither. There the
+wait is what that surface can block on, with a human watching the terminal:
+`gh pr checks --watch <number>` where the CLI is installed, inside the Bash
+timeout. Failing that, read the checks once, and where they have not all
+reported, say so and stop. A session that cannot wake itself cannot wait, and a
+wait it only claims to perform is worse than the stop.
+
 
 Name the level
 --------------
