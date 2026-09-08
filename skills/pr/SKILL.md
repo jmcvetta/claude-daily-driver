@@ -39,7 +39,8 @@ Already Existing PR
 
 First check whether there is already a PR for this branch. If there is, update
 the existing PR.
-- Update both title and body of existing PR
+- Update both title and body of existing PR — the title under `pr-title`,
+  which does not rewrite a type this session did not write
 
 
 Title

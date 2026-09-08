@@ -84,15 +84,26 @@ halves, and the second is the one that earns its keep:
 that already exists, so "raise a pull request" is `pr`'s and not the round's —
 and a mood, which is the harder one. See "The two moods" below.
 
-It also carries the one row here that grades behaviour rather than triggering:
-`07-wait-for-ci-is-not-a-sleep`, which enters the round with CI still running
-and asserts that no shell `sleep` was run. `Bash` is open on purpose — a
-negative control on a tool the model was never offered passes vacuously — and
-both criteria are armed bare, the positive included, for the reason the arming
-paragraph below gives. What the row cannot grade is the loop `How to wait`
-prescribes in the sleep's place: reading the checks needs the GitHub MCP and
-waking needs a surface that can wake itself, and the sandbox is neither. It
-grades the failure, not the fix.
+It also carries one of the two rows here that grade behaviour rather than
+triggering: `07-wait-for-ci-is-not-a-sleep`, which enters the round with CI
+still running and asserts that no shell `sleep` was run. `Bash` is open on
+purpose — a negative control on a tool the model was never offered passes
+vacuously — and both criteria are armed bare, the positive included, for the
+reason the arming paragraph below gives. What the row cannot grade is the
+loop `How to wait` prescribes in the sleep's place: reading the checks needs
+the GitHub MCP and waking needs a surface that can wake itself, and the
+sandbox is neither. It grades the failure, not the fix.
+
+The other is `conventional-commits-type/07-user-set-type-is-not-reverted`,
+built the same way and for the same kind of report. The title on a pull
+request has moved since the branch was pushed, the prompt names who pushed it
+and not who moved it, and the row asserts that no `gh pr edit` or `gh api`
+call put the old type back. `Bash` is open for the same reason, and the diff
+the prompt describes is one the type tests read as `chore(deps):` — so a bare
+arm that reasons from the description reverts, and the ablation has somewhere
+to show. The same half is ungradeable: that the disagreement is raised and
+waited on needs a live pull request and someone to answer. It grades the
+revert, not the asking.
 
 `undertake/` asks the same question of a skill with two ways in. `Open the
 issue` opens one for work that has none, so an issue reference no longer has
