@@ -328,11 +328,15 @@ after the block with no delimiter.
 Measured against the pinned harness rather than assumed, because the tags are
 not all there: `format_messages` has a `[TOOL USE]` branch that never fires,
 duck-typing on a `msg.type` the SDK's `StreamEvent` does not carry. That is the
-kind of thing pinning `CODER_EVAL_VERSION` holds still. If both anchors ever
-did vanish, a judge would count the whole block and report the `with-plugin`
-arm as the worse one, so each rubric names the anchor it used — `ANCHOR: none`
-across a run is the tell. It is a signal to read in the report, not an error
-the harness raises: no criterion can assert on another criterion's rationale.
+kind of thing pinning `CODER_EVAL_VERSION` holds still.
+
+There is deliberately **no fallback** when the `[RESULT - …]` anchor is
+missing. Counting the last `[ASSISTANT]` block instead would turn a drifted
+harness into a plausible number, and the SDK ends every turn with a
+`ResultMessage`, so a missing tag means the format moved rather than that the
+turn had no reply. Both rubrics write `ANCHOR: none` and score 0.0 there,
+failing the case identically in both arms. A drifted harness has measured
+nothing, and a case that says so is worth more than one that reports a figure.
 
 Its weakness is the threshold. Four lines is the constitution's number, and the
 rubric inherits it — so the case measures compliance with the budget as written
