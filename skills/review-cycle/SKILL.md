@@ -81,6 +81,10 @@ read the checks, wake later, read them again.
   answers for the head commit of the pull request, which is the commit the
   checks are running on. That SHA is the key they are looked up by; it does
   not move while they run, and nothing here is waiting for it to.
+- **An empty answer is not an answer.** `total_count: 0` on a head pushed
+  seconds ago means the workflows have not registered yet, not that they
+  passed, and *every check has reported* is otherwise vacuously true of a
+  pull request nothing has looked at. Keep waiting, and let the cap decide.
 - **Wake** with `mcp__Claude_Code_Remote__send_later`, two minutes out,
   carrying the instruction to read again — then end the turn. The scheduler is
   what brings the session back, which is what makes the wait survive.
