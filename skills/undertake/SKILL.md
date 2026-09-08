@@ -219,14 +219,14 @@ this order:
 5 — Implement
 -------------
 
-The constitution governs, under *While I write code*, *Before I commit* and
-*When I hit a wall*. Nothing about how to write or commit the code is decided
+The constitution governs, under *While you write code*, *Before you commit* and
+*When you hit a wall*. Nothing about how to write or commit the code is decided
 here.
 
 6 — Run the gates
 -----------------
 
-The constitution's *Before I call it done*, run at this point rather than
+The constitution's *Before you call it done*, run at this point rather than
 after the pull request, so that the draft opens green.
 
 7 — Open the draft
@@ -318,9 +318,9 @@ wait on something other than an answer.
 - **More than one designated branch** for this repository, at `Cut the
   branch`'s first source. Guessing which one the harness will accept risks a
   claim already posted at `Claim the issue` that no push can honour.
-- **The approach failing mid-implementation** — the constitution's *When I hit
-  a wall*, at `Implement`. A pull request that documents a wrong turn is worse
-  than no pull request.
+- **The approach failing mid-implementation** — the constitution's *When you
+  hit a wall*, at `Implement`. A pull request that documents a wrong turn is
+  worse than no pull request.
 - **CI still running**, at `Ready for review`. A wait, not a question —
   nothing is asked, and nothing proceeds on a check that has not reported.
 

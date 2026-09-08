@@ -126,7 +126,7 @@ success_criteria:
   #
   # Note which way it would break, which inverted when the marker became prose.
   # `command_executed` matches `json.dumps(parameters)` truncated to 2000
-  # characters, and the phrase sits at offset 1183 of `json.dumps(updatedInput)`
+  # characters, and the phrase sits at offset 1181 of `json.dumps(updatedInput)`
   # — the post-rewrite input this control asserts is *not* what gets recorded,
   # measured on this branch — so it is inside the window. If the trace ever
   # started recording input after the rewrite, this control would fail loudly

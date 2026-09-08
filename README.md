@@ -41,13 +41,13 @@ every subagent. Nine sections:
 
 | Section | What it settles |
 | ------- | --------------- |
-| Voice | Simplified Technical English for prose written in my own voice. |
-| Before I reply | A four-line budget on a reply, the two things outside it, and the shape: the answer first, no preamble, no recap. |
+| Voice | Simplified Technical English for prose written in your own voice. |
+| Before you reply | A four-line budget on a reply, the two things outside it, and the shape: the answer first, no preamble, no recap. |
 | Non-negotiables | Never a production system; dangerous commands in a sandbox or not at all; code without tests is broken; problems are fixed, never hidden. |
-| While I write code | The manual before the web or the source, simplicity, no reinventing a library, no workarounds, correct over quick. |
-| When I hit a wall | Stop on the error, re-assess an approach that is failing, ask rather than guess at intent. |
-| Before I commit | A doc comment on every new exported symbol, focused commits, message style, named files staged. |
-| Before I call it done | The project's own gates are run, not reasoned about. |
+| While you write code | The manual before the web or the source, simplicity, no reinventing a library, no workarounds, correct over quick. |
+| When you hit a wall | Stop on the error, re-assess an approach that is failing, ask rather than guess at intent. |
+| Before you commit | A doc comment on every new exported symbol, focused commits, message style, named files staged. |
+| Before you call it done | The project's own gates are run, not reasoned about. |
 | Dependencies | Added and pinned through the package manager; never a hand-edited manifest or lockfile. |
 | Delegation | Plan first, delegate the implementation, batch the subagents, watch the quota. |
 
@@ -66,7 +66,7 @@ constitution could have told it.
 **Whether it landed**: arriving and being obeyed are different questions, and
 the `constitution-reply-is-concise` eval asks the second. It puts a one-line
 answer under every pressure to write ten and counts the lines that come back.
-`Before I reply` is the rule it measures because that rule's compliance is
+`Before you reply` is the rule it measures because that rule's compliance is
 countable; the rest of the file needs a judgment about engineering instead.
 
 **How it arrives**: a plugin cannot ship a `CLAUDE.md`, so two hooks deliver
