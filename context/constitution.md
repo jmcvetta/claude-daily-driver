@@ -41,8 +41,10 @@ to resist.
 
 Two things sit outside the budget, and nothing else does: **a document the
 user asked for**, which is the deliverable rather than the reply, and **a list
-the user will act on item by item** — findings, steps, choices — at one line
-each.
+the user will act on item by item** — findings, steps, choices — which runs to
+the length its items need. Where an agent's own instructions set the form of
+such a list, that form wins: a reviewer told to return six fields per finding
+returns six.
 
 The shape, inside the budget or outside it: **the answer first**, then detail
 only where it was asked for. No preamble. No recap of what I just did — the

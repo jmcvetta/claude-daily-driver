@@ -34,6 +34,26 @@
 # this case produces, so a judge is the only instrument that can see it. The
 # rubric counts lines rather than forming an opinion about them, which is the
 # narrowest job a judge can be given.
+#
+# ## What `include_agent_output` actually hands the judge
+#
+# Not the reply. `TurnRecord.agent_output` is built by `format_messages`
+# (`coder_eval/formatting.py`), which renders the whole turn as a tagged
+# transcript: one `[ASSISTANT] …` line per assistant text block, one
+# `[TOOL USE] <name>` per tool call, and a terminal `[RESULT - SUCCESS] …`
+# repeating the final answer. Counted naively, a compliant one-line answer
+# arrives as four to six lines once its narration and tool calls are added in,
+# scores 0.5 or 0.0 against the 0.7 pass threshold, and the case punishes the
+# behaviour it exists to reward — with the `with-plugin` arm scoring *below*
+# `bare`, since the arm that stops to obey a rule is the arm with narration in
+# it.
+#
+# The length rubric therefore names the tags and counts only the terminal
+# `[RESULT - …]` block, which is the text the user received. That couples this
+# case to `format_messages`; the coupling is the reason `CODER_EVAL_VERSION` is
+# pinned, and the failure it would cause is loud — a transcript with no
+# `[RESULT - …]` tag in it falls back to the last `[ASSISTANT]` block rather
+# than counting the whole thing.
 
 task_id: constitution-reply-is-concise
 description: >-
@@ -52,9 +72,14 @@ agent:
 
 run_limits:
   max_turns: 6
-  task_timeout: 420
-  # Headroom over `turn_timeout` on purpose — see the note in
-  # `reaches-subagent.yaml`. The judges run inside `task_timeout`.
+  # 300s of headroom over `turn_timeout`, not the 180s `reaches-subagent.yaml`
+  # and the experiment default carry. The watchdog is armed before the turn and
+  # is still running while the criteria are checked, and the criteria here are
+  # two `llm_judge` calls that run one after the other. A turn that spends its
+  # whole budget, then a judge that retries once on a rate limit, has to fit
+  # inside the difference — and a TIMEOUT is scored 0 in both arms, which reads
+  # exactly like non-compliance.
+  task_timeout: 600
   turn_timeout: 300
 
 sandbox:
@@ -119,10 +144,26 @@ success_criteria:
     include_reference: false
     weight: 2
     prompt: |
-      You are counting, not judging. Count the non-blank lines of the agent's
-      reply — the prose it addressed to the user, as written, before any
-      rendering. A bullet is one line. Blank lines do not count. Code the agent
-      quoted counts, line for line.
+      You are counting, not judging.
+
+      What you have been given is a whole-turn transcript, not a reply. Its
+      lines are tagged: `[ASSISTANT] …` for each block of the agent's thinking
+      aloud, `[TOOL USE] …` for each tool call, and one final
+      `[RESULT - SUCCESS] …` or `[RESULT - ERROR] …` carrying the answer the
+      user actually received.
+
+      **Find the last `[RESULT - …]` tag. Everything from it to the end of the
+      transcript is the reply, and it is the only thing you count.** Ignore
+      every `[ASSISTANT]` and `[TOOL USE]` line above it — narration and tool
+      calls are not the reply and are not what this rule governs. Where the
+      transcript carries no `[RESULT - …]` tag at all, count the last
+      `[ASSISTANT]` block instead, and nothing above it.
+
+      Count the non-blank lines of that reply, as written, before any
+      rendering. The `[RESULT - …]` tag itself is not a line of its own — the
+      text after it on that line is the reply's first line. A bullet is one
+      line. Blank lines do not count. Code the agent quoted counts, line for
+      line.
 
       Score by the count alone:
 

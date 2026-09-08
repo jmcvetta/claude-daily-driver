@@ -313,6 +313,15 @@ rationale so a verdict can be audited. Beneath it sits a correctness grader at
 weight 1: a length grader alone pays for silence, and short and wrong is not
 what the rule asks for.
 
+One thing the rubric has to know, and a naive one would not: `include_agent_output`
+does not hand a judge the reply. It hands over `format_messages`' whole-turn
+transcript — `[ASSISTANT]` per text block, `[TOOL USE]` per call, and a
+terminal `[RESULT - …]` repeating the answer — so counting its lines counts
+narration, and counts it *against* the arm that stopped to obey a rule. The
+rubric names the tags and counts the terminal block alone. That couples the
+case to `format_messages`, which is one more thing `CODER_EVAL_VERSION` is
+pinned for.
+
 Its weakness is the threshold. Four lines is the constitution's number, and the
 rubric inherits it — so the case measures compliance with the budget as written
 and says nothing about whether the budget is set at the right place. Moving the
