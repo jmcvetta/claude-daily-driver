@@ -135,8 +135,10 @@ What ends the question
 ======================
 
 One input does decide the type, and it decides it by ending the question: the
-type already on the pull request, where the user put it. It is settled. It is
-not changed back, and the tests above are not run against it.
+type already on the pull request, where the user put it. It is settled: it is
+not changed back. The tests above still run against it — a disagreement can
+only be raised once it is seen — but their answer is a sentence to the user,
+never a title to write.
 
 Where it looks wrong, say so in a sentence and ask — then wait. Editing the
 title and reporting the edit is the failure this section exists to stop, and
@@ -145,7 +147,7 @@ with a user-set type is something to raise, not something to correct.
 
 **This does not depend on knowing who set it.** A type that disagrees with the
 one the tests pick is a type to ask about, because *a subagent must have done
-that* is the assumption the rule was written from. On Green-Pagoda/pagoda#387
+that* is the assumption the failure came from. On Green-Pagoda/pagoda#387
 a `chore(deps):` title was retitled `test:` by the user, read as a stray edit,
 and set back. The user's reading was the better one — every package in the
 diff was a devDependency of the test tooling, nothing in a shipped artifact

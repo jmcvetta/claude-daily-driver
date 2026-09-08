@@ -35,9 +35,9 @@ Follow `conventional-commits-type`. It decides the type from what the change
 and they are not guessed at here from the branch name, the issue label, or
 the shape of the diff.
 
-It also decides when the type is decided already: a type the user has set on
-the pull request is settled, and a disagreement with it is raised rather than
-retitled.
+It also decides when the type is decided already: a type on the pull request
+that this session did not write is settled — whoever set it — and a
+disagreement with it is raised rather than retitled.
 
 The type is not decoration. Releases are cut from it: the type in a merged
 PR's title becomes the squashed commit subject, and that subject is what

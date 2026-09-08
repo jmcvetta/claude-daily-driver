@@ -96,11 +96,14 @@ sandbox is neither. It grades the failure, not the fix.
 
 The other is `conventional-commits-type/07-user-set-type-is-not-reverted`,
 built the same way and for the same kind of report. The title on a pull
-request has moved since the branch was pushed, the prompt says who pushed it
-and not who moved it, and the row asserts that no `gh pr edit --title` put the
-old type back. `Bash` is open for the same reason, and the same half is
-ungradeable: that the disagreement is raised and waited on needs a live pull
-request and someone to answer. It grades the revert, not the asking.
+request has moved since the branch was pushed, the prompt names who pushed it
+and not who moved it, and the row asserts that no `gh pr edit` or `gh api`
+call put the old type back. `Bash` is open for the same reason, and the diff
+the prompt describes is one the type tests read as `chore(deps):` — so a bare
+arm that reasons from the description reverts, and the ablation has somewhere
+to show. The same half is ungradeable: that the disagreement is raised and
+waited on needs a live pull request and someone to answer. It grades the
+revert, not the asking.
 
 `undertake/` asks the same question of a skill with two ways in. `Open the
 issue` opens one for work that has none, so an issue reference no longer has
