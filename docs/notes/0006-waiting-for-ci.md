@@ -79,9 +79,14 @@ Both cases are real, and neither is a reason to skip the subscription:
 
 1. **A steward already holds it.** The call succeeds and the events go
    elsewhere. Detectable — the tool result says so.
-2. **The delivery is incomplete.** The harness documents its own webhooks as
-   best-effort, and names CI success as one of the things that may arrive late
-   or not at all. A wait for green cannot be built on the green event alone.
+2. **The delivery is not a guarantee.** The `subscribe_pr_activity` tool
+   description promises comments, CI failures and successful check-suite
+   rollups. The harness's own pull request guidance, delivered alongside the
+   `subscription.created` event on 2026-09-08, qualifies it: webhooks *"don't
+   reliably deliver CI success, new pushes, or merge-conflict transitions"*.
+   The two are not reachable from the same place, which is why this note
+   quotes the second — a wait for green cannot be built on the green event
+   alone, and the claim that it cannot is checkable rather than recalled.
 
 So the round does carry two mechanisms, and that is the correct number rather
 than one too many. They are not two ways of doing the same thing: the
