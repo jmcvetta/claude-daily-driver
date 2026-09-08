@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.9.0...v0.10.0) (2026-09-08)
+
+
+### Features
+
+* **review-cycle:** wait for CI by polling the checks, never by sleeping ([#100](https://github.com/jmcvetta/claude-daily-driver/issues/100)) ([6b26d31](https://github.com/jmcvetta/claude-daily-driver/commit/6b26d31cf3520aec4feabfee5775f6d2f1e1535e))
+
 ## [0.9.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.8.0...v0.9.0) (2026-09-08)
 
 
