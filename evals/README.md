@@ -1,6 +1,6 @@
 # Evals
 
-Eight suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
+Nine suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
 than by `claude plugin eval`. The reasoning for the harness is
 [`docs/notes/0002-eval-harness.md`](../docs/notes/0002-eval-harness.md);
 the short version is that the built-in cannot be run on this account, is
@@ -131,10 +131,13 @@ keeps from sweeping in the other one.
 
 `deps/` asks where the line falls between a bulk upgrade and one dependency.
 `01` is the slash command and `02` is the register the skill was written for —
-Dependabot's pull requests named, the whole set asked for. `03` is the row that
-carries the suite: `Bump requests to 2.32.3 — just that one, nothing else.` is
-ordinary work through the package manager, and a description that swept it in
-would answer a one-line ask by upgrading everything in the repository.
+Dependabot's pull requests named, the whole set asked for. `03` and `04` are the rows
+that carry the suite. `Bump requests to 2.32.3 — just that one, nothing else.`
+is ordinary work through the package manager, and a description that swept it
+in would answer a one-line ask by upgrading everything in the repository. `04`
+is the ambient case: Dependabot's pull requests visible in the prompt and other
+work asked for, which is the shape a description reaching for "noticing" would
+misread as an invitation.
 
 `constitution/` is not a trigger-accuracy suite: it is the live half of the
 constitution's own test, described under "Checks" in the repository README. Its credential-free half is

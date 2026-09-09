@@ -5,11 +5,13 @@ description: >-
   upgraded in bulk, or whenever open Dependabot pull requests are the thing to
   answer — including when the user says "/deps", "dependabot is complaining",
   "upgrade the deps", "these dependency PRs are piling up", or "bump
-  everything", and on Claude noticing open Dependabot pull requests while doing
-  other work. Supplies the one-branch bulk upgrade, the bulk command each
-  package manager already has, green CI as the whole acceptance test, and the
-  boundary an unattended run stays inside — no merge, no code edited around a
-  breaking change, no outward action but the pull request itself. Not for a
+  everything". Noticing open Dependabot pull requests during other work is
+  worth a line to the user and is not itself a trigger, because a bulk upgrade
+  started mid-task is scope nobody asked for. Supplies the one-branch bulk
+  upgrade, the bulk command each manager already has, green CI as the whole
+  acceptance test, and the boundary an unattended run stays inside — no merge,
+  no code edited around a breaking change, and nothing outside the pull
+  request it opens. Not for a
   single named dependency, which is ordinary work, and not for a major version
   bump, which this skill reports and hands to `undertake`.
 ---
@@ -51,34 +53,59 @@ run:
 - **Never edit code to accommodate a breaking change.** See `Majors are not in
   the pass` below.
 - **Never skip, disable or pin around a failing test.**
-- **No outward action beyond opening the pull request.** Nothing is commented
-  on, and nothing is closed.
+- **Nothing outside this pull request.** No comment on anybody else's pull
+  request, nothing closed, and no issue opened. Opening the pull request and
+  marking it ready are the run's whole footprint on GitHub.
+- **Ready is the end, and only on green.** `pr` opens a draft; the run marks
+  it ready with `mcp__github__update_pull_request` once every check has
+  reported green, and leaves it a draft with the failure named when one has
+  not. No round runs in between — see `Green CI is the acceptance test` — so
+  there is nothing else for the draft to wait on.
 
 
 The pass
 ========
 
 **Read what is behind from the open Dependabot pull requests**, rather than
-guessing at it from the manifest. `mcp__github__list_pull_requests` filtered
-to Dependabot's authorship is the list, and each title names the dependency
-and the version it wants.
+guessing at it from the manifest. `mcp__github__search_pull_requests` with
+`is:open author:app/dependabot` is the list, and each title names the
+dependency and the version it wants. Not `mcp__github__list_pull_requests`:
+it takes no author, so a filter written for it is one the server never
+applies, and a busy repository answers with everybody's pull requests.
 
 **Upgrade every ecosystem the repository declares, on one branch.** One CI run
-over the whole upgrade is the point. Each manager has a bulk command already:
+over the whole upgrade is the point. `.github/dependabot.yml` says which
+ecosystems a repository declares, and the **lockfile in the tree** says which
+manager owns each one. Read the second before running anything: Dependabot's
+`npm` ecosystem covers pnpm, yarn and bun, and its `pip` ecosystem covers
+Poetry, Pipenv and uv, so the ecosystem name alone picks the wrong command
+about as often as the right one. A `pnpm-lock.yaml` answered with
+`npm update` writes a stray `package-lock.json` and upgrades nothing.
 
-| Ecosystem | The bulk command |
-| --------- | ---------------- |
-| uv | `uv lock --upgrade` |
-| Bundler | `bundle update` |
-| npm | `npm update` |
-| Cargo | `cargo update` |
-| Go | `go get -u ./...`, then `go mod tidy` |
-| GitHub Actions, Terraform | no bulk command — see below |
+The command is whatever that manager calls its bulk upgrade:
 
-`.github/dependabot.yml` is what says which ecosystems a repository declares.
-Two of them have no package manager to run: a GitHub Actions pin and a
-Terraform provider lock are moved by editing the pin and re-locking with the
-project's own tooling — `tofu init -upgrade` and its kind — which is that
+| Lockfile in the tree | The bulk command |
+| -------------------- | ---------------- |
+| `uv.lock` | `uv lock --upgrade` |
+| `poetry.lock` | `poetry update` |
+| `Gemfile.lock` | `bundle update` |
+| `package-lock.json` | `npm update` |
+| `pnpm-lock.yaml` | `pnpm update` |
+| `yarn.lock` | `yarn upgrade` |
+| `Cargo.lock` | `cargo update` |
+| `go.sum` | `go get -u ./...`, then `go mod tidy` |
+| `composer.lock` | `composer update` |
+| `packages.lock.json` | `dotnet list package --outdated`, then `dotnet add package` per row |
+
+**The table is a convenience, not the rule.** The rule is *the manager that
+wrote the lockfile is the manager that updates it*, and a manager missing from
+the table is looked up in its own manual rather than guessed at — the
+constitution's *RTFM*. Maven, Gradle and Docker are the common ones absent
+here.
+
+Some ecosystems have no package manager to run at all. A GitHub Actions pin
+and a Terraform provider lock are moved by editing the pin and re-locking with
+the project's own tooling — `tofu init -upgrade` and its kind — which is that
 ecosystem's package manager rather than a hand edit.
 
 **Split the branch only under duress.** Where one ecosystem goes red and holds
@@ -98,9 +125,11 @@ code to edit. Folded into the batch it makes the branch un-bisectable the
 moment CI goes red, and it turns an unattended run into one that edits code it
 cannot review.
 
-So the pass **reports** them. The pull request body lists every dependency the
-bulk command would not move and the constraint that held it, and each major
-worth taking gets its own issue. Those are then ordinary `undertake` work.
+So the pass **reports** them, in the pull request body: every dependency the
+bulk command would not move, and the constraint that held it. It opens no
+issue for them — an issue is an outward action, and the boundary above allows
+none. Taking one is a separate, attended decision, and `undertake` opens the
+issue when it is taken.
 
 
 The superseded pull requests are left alone

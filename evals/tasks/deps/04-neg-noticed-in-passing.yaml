@@ -1,0 +1,27 @@
+task_id: deps-04-neg-noticed-in-passing
+description: >-
+  The ambient case. Dependabot's pull requests are visible in the prompt, and
+  the work asked for is something else entirely. Noticing them is worth a line
+  to the user; starting a bulk upgrade mid-task is scope nobody asked for.
+tags: [trigger-accuracy, deps, no-fire]
+
+initial_prompt: >-
+  Here's the PR list — six of them are Dependabot's, and #12 is mine. Fix the
+  failing test on #12.
+
+agent:
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+# `expected_skill: none` names no skill in this plugin, so the criterion below
+# is a distractor and the row passes only in silence.
+success_criteria:
+  - type: skill_triggered
+    description: "`deps` does not fire on Dependabot pull requests noticed in passing"
+    expected_skill: none
+    skill_name: deps
+    stop_early: {}
