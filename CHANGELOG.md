@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.17.0...v0.18.0) (2026-09-09)
+
+
+### Features
+
+* **deps:** bulk dependency upgrades on one branch ([#131](https://github.com/jmcvetta/claude-daily-driver/issues/131)) ([bacec24](https://github.com/jmcvetta/claude-daily-driver/commit/bacec24cfa0bf9ad19f9afdac6249797f75d917c))
+
 ## [0.17.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.16.0...v0.17.0) (2026-09-09)
 
 
