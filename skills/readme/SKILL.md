@@ -7,7 +7,8 @@ description: >-
   belongs in one, and on Claude's own initiative before creating or editing
   any `README.md`, at the root of a repository or inside a directory within
   one. Supplies the two questions a README answers, the shape that answers
-  them, the length budget, and the list of what must never appear in one —
+  them, the rule that decides how long one runs, and the list of what must
+  never appear in one —
   work log, project history, specifications, test numbers, rejected ideas —
   with the place each of those belongs instead. Not for a pull request body,
   which is `pr-body`, and not for a design note, a planning document or
@@ -90,21 +91,27 @@ what it used to be — is interesting to the author and to nobody else.
 edge — is a paragraph that says nothing a reader can act on.
 
 
-Budget
+Length
 ======
 
-- **A directory README: 20 lines.** What lives here, and how it is used.
-- **A repository README: 50 lines.** Past that, the detail moves into `docs/`
-  and the README links to it.
+A README is as long as its two answers need, and not a line longer. There is
+no line count to hit, and no line count to stay under: a tool with one command
+is finished in six lines, and a library with four entry points is not padded
+to match nor squeezed to fit.
 
-The counts are the whole file, headings and code blocks included. They are
-caps, not targets: a README that says everything in twelve lines is finished
-at twelve.
+So length is a **symptom**, read rather than budgeted. A README that feels long
+is long because of one of these, and each has its own fix:
 
-A README over budget is not brought under it by tightening sentences. It is
-brought under it by deleting sections. Find the section a reader would skip,
-and delete that.
+- **A section that answers neither question.** Cut it, and check the table
+  above for where it belongs.
+- **Detail a reader needs later, not now** — every flag, every configuration
+  key, the API surface. It moves into `docs/` or the reference, and the README
+  links to it in one line.
+- **Prose doing a code block's work.** Replace the paragraph with the command.
+- **The same thing said twice** in the summary and again under a heading. Keep
+  the one that is closer to where the reader acts.
 
+Where none of those applies, the length is the subject's, and it stays.
 
 Revising one that already exists
 ================================
