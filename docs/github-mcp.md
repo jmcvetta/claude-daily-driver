@@ -181,6 +181,25 @@ Read the result against three questions, in this order:
 3. What did `gh` still do? Each row is either an MCP gap worth reporting
    upstream or a habit worth breaking.
 
+## A measured limit: the server rewrites `@` mentions
+
+Every write path rewrites a literal `@` mention before it reaches GitHub —
+issue bodies and issue comments alike, and inside a code span as readily as in
+prose. What lands is the name broken up by separator characters, which renders
+as text and addresses nobody.
+
+Measured on 2026-09-09 against issue #130: an issue body carrying the
+Dependabot rebase command, and then a comment carrying the same command on its
+own line, both arrived mangled and were read back from the browser to confirm
+it. A code span and an `&#64;` entity were tried and neither survived.
+
+The consequence is a capability a skill cannot assume. **A session using this
+server cannot drive a bot that takes commands by mention** — Dependabot's
+`rebase`, `recreate` and `merge` among them. Where such a prod is wanted, the
+paths left are a workflow posting the comment with the Actions token, or a
+person typing it. The `deps` skill met this limit and chose neither, and its
+`The superseded pull requests are left alone` section says why.
+
 ## Decision (pending)
 
 Nothing is decided yet, and the blank is the point: a toolset chosen before
