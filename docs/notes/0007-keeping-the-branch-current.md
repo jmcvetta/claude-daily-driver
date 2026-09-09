@@ -1,6 +1,6 @@
 # The branch is kept current by a base merge, and the merge does not buy a review
 
-**Status:** decided, 2026-09-08; amended, 2026-09-08.
+**Status:** decided, 2026-09-08; amended, 2026-09-08 and 2026-09-09.
 **Provenance:** chosen by an agent in
 [#115](https://github.com/jmcvetta/claude-daily-driver/pull/115), the pull
 request that carries the change it justifies, and ratified by that merge. The
@@ -57,6 +57,10 @@ that the branch is finished; a branch being changed under a reviewer is not.
 The return is through the existing gate — green CI, no unanswered thread,
 every finding closed — rather than through a second gate written for the
 second round.
+
+**Amended by [`0010`](0010-the-wake-slot-is-never-empty.md),
+2026-09-09:** the two timers this note and its sibling each specify are one
+wake slot, and a turn never ends with it empty.
 
 **The step looks on a check-in every two minutes, with one floor: a CI run
 still in flight.** A base branch is not a pull request event — nothing wakes a

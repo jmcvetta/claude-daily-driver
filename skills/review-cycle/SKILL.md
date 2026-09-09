@@ -140,11 +140,16 @@ timer has two things running that outlive it.
   unchanged: the backstop is what bounds the worst case, so making it lazier
   because the subscription usually beats it would slow down exactly the case it
   exists for.
-- **Exactly one timer, ever.** Keep the `trigger_id` the call returns, and arm
-  a replacement only on the wake that timer itself caused — an event wake never
-  arms one. Re-arming on every wake instead puts a timer in flight per check
-  that reports, each of which wakes and re-arms again, and a wait that spends
-  more turns than the poll it replaced has replaced nothing.
+- **Exactly one timer, ever, and never none.** Keep the `trigger_id` the call
+  returns: that is the session's one wake slot. **The test is whether the slot
+  is empty, not what woke the turn** — a wake with the timer still in flight
+  arms nothing, and a turn whose slot is empty arms one before it ends.
+  Re-arming on every wake regardless puts a timer in flight per check that
+  reports, each of which wakes and re-arms again, and a wait that spends more
+  turns than the poll it replaced has replaced nothing.
+  [`0010`](../../docs/notes/0010-the-wake-slot-is-never-empty.md) is the
+  decision, and the report behind it is a session that emptied the slot and
+  slept through a green run.
 - **Cap the loop at fifteen minutes.** On the cap, stop and name the checks
   that have not reported. Do not review: an unreported check is the thing this
   wait exists not to guess at, and a check stuck for fifteen minutes is a
@@ -165,6 +170,14 @@ the fifteen-minute cap:
   on this pull request takes it again, and the call is idempotent. Left
   standing it is the round's own echo chamber, waking the session for every
   thread the round posts and every reply it writes.
+- **Hand the slot back**, in the same turn. Cancelling the backstop empties
+  the wake slot, and a caller with a standing cadence — `undertake`'s
+  `Keep it current`, which checks in for the whole life of the pull request —
+  held that slot before this wait borrowed it. Arm its next check-in before
+  the turn ends. A wait that ends by deleting the one timer in flight and
+  dropping the subscription leaves a session with nothing to wake it: CI goes
+  green, and the pull request sits. This wait owns the reading loop, never the
+  caller's watch.
 
 **Never a `sleep`, in the foreground or in the background.** A sleep is a
 timer, not a test of the thing waited on — it expires while the checks are

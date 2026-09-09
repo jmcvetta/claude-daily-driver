@@ -1,6 +1,6 @@
 # Waiting for CI is a loop of turns, never a sleep
 
-**Status:** decided, 2026-09-08; amended, 2026-09-08.
+**Status:** decided, 2026-09-08; amended, 2026-09-08 and 2026-09-09.
 **Provenance:** chosen by an agent in
 [#100](https://github.com/jmcvetta/claude-daily-driver/pull/100) — the same
 pull request as the change it justifies — and ratified by that merge.
@@ -21,6 +21,10 @@ run. That is #96, reported from a live session.
 **The wait is a loop of turns: read the checks, wake later, read again, capped.**
 *Amended 2026-09-08 — the wake is now a pull request subscription, and the loop
 is its backstop; the interval is unchanged. See* Amended *below.*
+**Amended by [`0010`](0010-the-wake-slot-is-never-empty.md),
+2026-09-09:** the two timers this note and its sibling each specify are one
+wake slot, and a turn never ends with it empty.
+
 `review-cycle`'s `How to wait` carries the calls, the two-minute interval and
 the fifteen-minute cap. Both numbers are chosen rather than measured; a
 measurement is what may move them.
