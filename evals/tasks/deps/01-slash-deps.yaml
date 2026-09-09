@@ -1,0 +1,24 @@
+task_id: deps-01-slash-deps
+description: The literal slash command. Nothing else is being asked for.
+tags: [trigger-accuracy, deps, fire]
+
+initial_prompt: "/deps"
+
+agent:
+  # See the `pr` suite for why this is `disallowed_tools` rather than
+  # `allowed_tools`: a *denied* read of `skills/deps/SKILL.md` still scores as
+  # engaging the skill, so the path must be impossible to type.
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`deps` fires on the literal /deps"
+    expected_skill: deps
+    skill_name: deps
+    stop_early:
+      on_pass: stop

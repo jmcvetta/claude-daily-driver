@@ -11,7 +11,7 @@ read it, do not go further.
 ## What's in it
 
 The **constitution** — `context/constitution.md`, delivered to every session
-by hook — plus **two hooks that enforce rather than instruct**, and ten
+by hook — plus **two hooks that enforce rather than instruct**, and eleven
 skills:
 
 | Skill | What it does |
@@ -26,6 +26,7 @@ skills:
 | `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. A question that survives the gate is asked in the chat reply — the `AskUserQuestion` widget is denied by hook. |
 | `review-cycle` | One round on a pull request: the built-in `/code-review`, a verdict on every finding, and the test for whether a later push has earned a second round. |
 | `undertake` | Takes a piece of work from its description to a pull request ready for review, opening the issue first where there is none, and keeping the branch current with its base after. |
+| `deps` | The bulk dependency upgrade: every ecosystem on one branch through the package managers' own bulk commands, green CI as the whole acceptance test, majors reported rather than taken. |
 
 A skill fires on its slash command where it has one, on natural phrasings of
 the work, and on Claude's own tool calls — `mcp__github__create_pull_request`

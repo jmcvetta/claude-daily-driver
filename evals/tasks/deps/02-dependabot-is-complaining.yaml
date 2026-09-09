@@ -1,0 +1,24 @@
+task_id: deps-02-dependabot-is-complaining
+description: >-
+  The natural phrasing, with no slash command and no tool named. The bot is
+  named and the ask is the whole set, which is the case the skill exists for.
+tags: [trigger-accuracy, deps, fire]
+
+initial_prompt: >-
+  Dependabot has six PRs open against this repo. Upgrade everything instead.
+
+agent:
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`deps` fires when the open Dependabot pull requests are the thing to answer"
+    expected_skill: deps
+    skill_name: deps
+    stop_early:
+      on_pass: stop
