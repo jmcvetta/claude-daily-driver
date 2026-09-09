@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.2](https://github.com/jmcvetta/claude-daily-driver/compare/v0.18.1...v0.18.2) (2026-09-09)
+
+
+### Bug Fixes
+
+* keep a wake armed while the pull request is open ([#138](https://github.com/jmcvetta/claude-daily-driver/issues/138)) ([d3eb847](https://github.com/jmcvetta/claude-daily-driver/commit/d3eb84723e29c7aa8972e350798a06d73cdec870))
+
 ## [0.18.1](https://github.com/jmcvetta/claude-daily-driver/compare/v0.18.0...v0.18.1) (2026-09-09)
 
 
