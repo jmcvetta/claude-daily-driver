@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.15.0...v0.16.0) (2026-09-09)
+
+
+### Features
+
+* **agents:** retire the four dormant reviewers to the attic ([#120](https://github.com/jmcvetta/claude-daily-driver/issues/120)) ([cbe19f1](https://github.com/jmcvetta/claude-daily-driver/commit/cbe19f1e86c732f3e38589ea4e4500da42f09af7))
+
 ## [0.15.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.14.0...v0.15.0) (2026-09-08)
 
 
