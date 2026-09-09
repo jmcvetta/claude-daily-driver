@@ -29,7 +29,7 @@ was *which*.
 | **Blocked-by / blocking** — read | `--json blockedBy,blocking` | `blocked-by`, `blocking` | counts only |
 | **Blocked-by / blocking** — write | `--add-blocked-by`, `--add-blocking`, and their `--remove-` pairs | `add`, `remove` | none |
 | **Sub-issue / parent** — read | `--json subIssues,parent` | no | `issue_read` with `get_sub_issues` / `get_parent`; counts only on the older server |
-| **Sub-issue / parent** — write | `--add-sub-issue`, `--parent`, and their `--remove-` pairs | no | `sub_issue_write`, `issue_write` with `parent_issue_number`; none on the older server |
+| **Sub-issue / parent** — write | `--add-sub-issue` / `--remove-sub-issue`, `--parent`, `--remove-parent` | no | `sub_issue_write`, `issue_write` with `parent_issue_number`; none on the older server |
 | **Which PR closes an issue** | `--json closedByPullRequestsReferences` | no | `issue_read` returns `closed_by_pull_requests`; nothing on the older server |
 
 The one thing that is *written* as prose is the `Closes #123` line in a pull
@@ -43,12 +43,21 @@ Which client
 Probe, do not assume. Three branches, in this order, and the first that holds
 is the client:
 
-1. **`gh` at 2.94.0 or later.** The whole graph, both directions, one client.
+1. **`gh` at 2.94.0 or later, and authenticated.** The whole graph, both
+   directions, one client.
    The floor is real and recent: the flags and the `--json` fields above
    arrived together in 2.94.0 (cli/cli#13057), and an older `gh` does not say
    so. It says `unknown flag: --add-blocked-by`, or `Unknown JSON field:
    "issueType"`, neither of which hints at the version. So read the version
    first — `gh --version` — rather than the error.
+
+   **Installed is not authenticated, and this branch needs both.** An image
+   that ships `gh` and injects no credential passes a version check and fails
+   every call with *"To use GitHub CLI in a GitHub Actions workflow, set the
+   GH_TOKEN environment variable"*. Committing to this branch on the version
+   alone strands the session there, with branch 2 — which that same token
+   would have served — never reached. So probe `gh auth status` too, and fall
+   through where it fails.
 2. **`gh` older, or absent, and `GITHUB_TOKEN` / `GH_TOKEN` present.** The
    script. This is the branch a Claude Code web worker lands on — `gh` is not
    installed there at all (measured 2026-09-06, and again 2026-09-09) while the
@@ -129,8 +138,13 @@ gh issue edit 150 --add-sub-issue 191         # the same edge, stated from the p
 gh issue edit 190 --add-blocked-by https://github.com/googleapis/release-please/issues/2853
 ```
 
-Every flag takes a number or a URL, never a database id, so the id trap under
-`The traps` is closed by the client. Both directions are offered: REST still
+Every flag that names an issue takes a number or a URL, never a database id,
+so the id trap under `The traps` is closed by the client. **`--remove-parent`
+is not one of them**: it is a boolean and takes no argument, unlike the
+`--remove-` pairs of `--add-sub-issue`, `--add-blocked-by` and
+`--add-blocking`, which all take the issue they remove. `gh issue edit 191
+--remove-parent 150` reads `150` as a second positional argument and aborts on
+argument count, having removed nothing. Both directions are offered: REST still
 has no `POST .../dependencies/blocking`, and `gh` inverts a `--add-blocking`
 client-side into the write REST does accept. State the edge from whichever end
 the need arrives at.
@@ -149,8 +163,11 @@ is the trap that briefly made it look as if `gh` exited 0 on failure. It does
 not; the pipe did.
 
 **A read against a pull request still answers empty rather than refusing.**
-`gh issue view <pr> --json blockedBy` returns `{"nodes":[],"totalCount":0}`,
-which is what an issue with no edges returns too. `gh` does not close this
+`gh issue view <pr> --json blockedBy` returns
+`{"blockedBy":{"nodes":[],"totalCount":0}}`, which is what an issue with no
+edges returns too. The requested field is a key in that object, not the object
+itself — `jq '.totalCount'` against it is `null`, and a `null` read as zero is
+this same empty answer arriving by a second route. `gh` does not close this
 trap. Check the kind of object before believing an empty answer, the way the
 script does.
 
@@ -237,8 +254,8 @@ mandatory rather than fastidious.
 
 - **A read cannot see the restriction.** `GET .../issues/<pr>/dependencies/blocked_by`
   answers `200` with an empty array, and `gh issue view <pr> --json blockedBy`
-  answers `{"nodes":[],"totalCount":0}` — either one indistinguishable from an
-  issue with genuinely no edges. Only the write refuses, and only the write
+  answers `{"blockedBy":{"nodes":[],"totalCount":0}}` — either one
+  indistinguishable from an issue with genuinely no edges. Only the write refuses, and only the write
   says so. The script therefore refuses a pull request rather than reporting
   emptiness; do not route around it by curling the endpoint directly, and do
   not read `gh`'s empty answer as evidence either.
