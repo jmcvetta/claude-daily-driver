@@ -34,13 +34,16 @@ run_limits:
 
 success_criteria:
   # Without this, a run that never reached the skill can still be judged on a
-  # plausible-sounding reply. Armed for the reason `review-cycle/07` gives:
-  # it puts a pass-capable criterion in the watcher's armed set.
+  # plausible-sounding reply. Unarmed, unlike `review-cycle/07`: there the bare
+  # arming defers another criterion's fail-stop, and this row has no
+  # fail-stopping criterion to defer. Armed here it would add an on-fail stop
+  # to the only pass-capable criterion the row has, and a trajectory truncated
+  # before the `[RESULT - …]` reply is one the judge below grades at 0 for a
+  # reason the row does not intend.
   - type: skill_triggered
     description: "`undertake` fires on a ready pull request kept current"
     expected_skill: undertake
     skill_name: undertake
-    stop_early: {}
 
   # The finding.
   - type: llm_judge

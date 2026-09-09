@@ -150,6 +150,12 @@ timer has two things running that outlive it.
   [`0010`](../../docs/notes/0010-the-wake-slot-is-never-empty.md) is the
   decision, and the report behind it is a session that emptied the slot and
   slept through a green run.
+- **A slot already occupied is the backstop.** A wait entered while the
+  caller's cadence timer is in flight — `undertake`'s `Keep it current`,
+  which holds one for the life of the pull request — arms nothing: that timer
+  is two minutes out too, and every wake ends in a read whatever the wake was
+  for. Note whose it is, because `End the wait` cancels the timer in the slot
+  and hands the slot back to that owner.
 - **Cap the loop at fifteen minutes.** On the cap, stop and name the checks
   that have not reported. Do not review: an unreported check is the thing this
   wait exists not to guess at, and a check stuck for fifteen minutes is a
@@ -161,23 +167,29 @@ Both halves are running until something stops them, and neither stops itself.
 On the wake that ends the wait — every check reported, however it reported, or
 the fifteen-minute cap:
 
-- **Cancel the backstop** with `mcp__Claude_Code_Remote__delete_trigger` on the
-  `trigger_id` held from `The backstop`. An armed `send_later` does not lapse,
-  it fires: left pending, it injects *read the checks again* as a user turn in
-  the middle of `/code-review`, restarting a wait on a run that finished.
+- **Cancel the timer in the slot** with
+  `mcp__Claude_Code_Remote__delete_trigger` — the backstop this wait armed, or
+  the caller's cadence timer it borrowed under `The backstop`. An armed
+  `send_later` does not lapse, it fires: left pending, it injects *read the
+  checks again* as a user turn in the middle of `/code-review`, restarting a
+  wait on a run that finished.
 - **Unsubscribe** with `mcp__github__unsubscribe_pr_activity`. The
   subscription is this wait's, taken for it and dropped with it — the next wait
   on this pull request takes it again, and the call is idempotent. Left
   standing it is the round's own echo chamber, waking the session for every
   thread the round posts and every reply it writes.
-- **Hand the slot back**, in the same turn. Cancelling the backstop empties
-  the wake slot, and a caller with a standing cadence — `undertake`'s
-  `Keep it current`, which checks in for the whole life of the pull request —
-  held that slot before this wait borrowed it. Arm its next check-in before
-  the turn ends. A wait that ends by deleting the one timer in flight and
-  dropping the subscription leaves a session with nothing to wake it: CI goes
-  green, and the pull request sits. This wait owns the reading loop, never the
-  caller's watch.
+- **Hand the slot back to the caller**, where the caller keeps a standing
+  cadence and the surface has the scheduler that cadence needs. The wait does
+  not arm that timer itself: the caller arms it under its own rule, before the
+  turn ends, so a check-in cannot fire into the round this cancel was clearing
+  the way for. What this bullet forbids is standing down instead — no timer
+  and no subscription, on a pull request the caller is still driving, which is
+  the session asleep through a green run that
+  [`0010`](../../docs/notes/0010-the-wake-slot-is-never-empty.md) records.
+  **A wait with no such caller arms nothing.** A round run on its own — no
+  `undertake` around it — has no cadence to resume and no step that would ever
+  end one, so a check-in armed here would wake a session that has stopped
+  driving anything. This wait owns the reading loop, never the caller's watch.
 
 **Never a `sleep`, in the foreground or in the background.** A sleep is a
 timer, not a test of the thing waited on — it expires while the checks are

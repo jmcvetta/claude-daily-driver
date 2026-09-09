@@ -44,10 +44,13 @@ rule was written to stop a timer being armed per event, and the emptiness test
 does that job without the hole: a wake with a timer still in flight arms
 nothing, whatever woke it.
 
-**Ending a wait hands the slot back.** `End the wait` cancels the backstop
-because an armed `send_later` fires into the middle of `/code-review`. Where
-the caller has a standing cadence, the same turn arms it again. The wait owns
-the reading loop; it does not own the caller's watch.
+**Ending a wait hands the slot back.** `End the wait` cancels the timer in the
+slot — its own backstop, or the caller's cadence timer it borrowed rather than
+arming a second — because an armed `send_later` fires into the middle of
+`/code-review`. Where the caller keeps a cadence, the caller arms it again
+before that turn ends, after the round rather than into it. Where there is no
+such caller, nothing is armed: check-ins belong to a sequence that ends them.
+The wait owns the reading loop; it does not own the caller's watch.
 
 **Rejected: two slots, one per purpose.** It removes the hand-back, and buys a
 second timer that fires while the first is doing the same read — which is the
