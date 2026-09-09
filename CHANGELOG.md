@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.17.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.16.0...v0.17.0) (2026-09-09)
+
+
+### Features
+
+* **hooks:** deny the AskUserQuestion widget and ask in chat instead ([#123](https://github.com/jmcvetta/claude-daily-driver/issues/123)) ([601980b](https://github.com/jmcvetta/claude-daily-driver/commit/601980bd4a7add1b20a471b6c97eb375c34f2556))
+* **readme:** add the skill for writing tight READMEs ([#128](https://github.com/jmcvetta/claude-daily-driver/issues/128)) ([d4fe333](https://github.com/jmcvetta/claude-daily-driver/commit/d4fe3338d54757d57410daa6d23ae1bd82c23ca5))
+
 ## [0.16.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.15.0...v0.16.0) (2026-09-09)
 
 
