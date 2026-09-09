@@ -313,8 +313,21 @@ Once before `Ready for review`, as the gate's look rather than the cadence's.
 The cadence itself starts from the ready pull request, unchanged: a check-in
 every two minutes, one
 `mcp__Claude_Code_Remote__send_later` at a time, carrying the instruction to
-look again, and armed on the wake the previous one caused — the discipline
-`review-cycle`'s `The backstop` states for the same reason.
+look again — the discipline `review-cycle`'s `The backstop` states for the same
+reason.
+
+**Never end a turn with the wake slot empty while the check-ins are running.**
+They run from `Ready for review` until the pull request is merged or closed or
+the user says to stop, and on a surface that has the scheduler at all — the
+three exits below, and nothing narrower. Inside them the slot is that one
+timer, held by the `trigger_id` the call returned, and it empties two ways: the
+timer fires, or a CI wait cancels it at `End the wait`. Both are the same
+instruction — fill it before the turn ends. What arms a check-in is therefore
+an empty slot rather than a particular kind of wake: a wake with the timer
+still in flight arms nothing, and a wake that found nothing to do still leaves
+a wake behind it. A turn that ends with no timer and no subscription is a
+session asleep on a pull request nobody else is watching, which is the report
+[`0010`](../../docs/notes/0010-the-wake-slot-is-never-empty.md) records.
 
 **Two minutes, the same interval `review-cycle` waits on CI with.** A busy
 `master` takes a commit every few minutes, so a slower check-in is a branch
@@ -344,6 +357,10 @@ After the merge
 
 The head moved, so CI runs again. Wait for it the way `review-cycle`'s
 `How to wait` says, and answer a red check under `Fix, answer, resolve, push`.
+That wait borrows the wake slot for its backstop and gives it back at
+`End the wait`: the check-ins above are armed again before that turn ends,
+whichever way the wait ended, and after the round the wait was clearing the way
+for rather than into it.
 **Red CI is how a base merge reports that it broke something**: the base
 changed what the branch depends on, the branch's own diff is untouched, and no
 review of that diff would have found it.
