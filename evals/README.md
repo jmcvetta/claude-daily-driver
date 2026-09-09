@@ -18,6 +18,7 @@ evals/
 │   ├── pr-body/         … when a body is written, and only then?
 │   ├── review-cycle/    … when a review is to be run and answered, and only then?
 │   ├── undertake/       … when work is undertaken, and only when handed over?
+│   ├── deps/            … when the deps are upgraded in bulk, and not for one?
 │   ├── constitution/    does the constitution reach a subagent, and land?
 │   └── review-depth/    does `review` send the right panel at the diff?
 └── fixtures/review-depth/
@@ -127,6 +128,13 @@ answered by asking what it now sweeps in. `07` is `Merge PR #25.`, the
 direction `Keep it current` does not go: that step merges the base branch into
 the pull request, and the word it put in the description is the word this row
 keeps from sweeping in the other one.
+
+`deps/` asks where the line falls between a bulk upgrade and one dependency.
+`01` is the slash command and `02` is the register the skill was written for —
+Dependabot's pull requests named, the whole set asked for. `03` is the row that
+carries the suite: `Bump requests to 2.32.3 — just that one, nothing else.` is
+ordinary work through the package manager, and a description that swept it in
+would answer a one-line ask by upgrading everything in the repository.
 
 `constitution/` is not a trigger-accuracy suite: it is the live half of the
 constitution's own test, described under "Checks" in the repository README. Its credential-free half is

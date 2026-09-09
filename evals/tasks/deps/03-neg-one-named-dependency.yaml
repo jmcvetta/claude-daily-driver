@@ -1,0 +1,25 @@
+task_id: deps-03-neg-one-named-dependency
+description: >-
+  One dependency, named, with a version. This is ordinary work through the
+  package manager, and firing a bulk-upgrade sequence over it would upgrade
+  everything the user did not ask about.
+tags: [trigger-accuracy, deps, no-fire]
+
+initial_prompt: "Bump requests to 2.32.3 — just that one, nothing else."
+
+agent:
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+# `expected_skill: none` names no skill in this plugin, so the criterion below
+# is a distractor and the row passes only in silence.
+success_criteria:
+  - type: skill_triggered
+    description: "`deps` does not fire on a single named dependency"
+    expected_skill: none
+    skill_name: deps
+    stop_early: {}
