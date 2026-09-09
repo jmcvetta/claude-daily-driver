@@ -250,6 +250,11 @@ def main() -> int:
     # Agents resolve by their frontmatter `name`, not their filename -- the
     # opposite of skills -- so a mismatch means the filename lies, and two
     # agents sharing a name means one of them is unreachable.
+    #
+    # Zero agents is not an error, unlike zero skills: the plugin ships none
+    # today, and `glob` on the absent directory is empty rather than a crash.
+    # The loop stays so that an agent revived out of `attic/agents/` is checked
+    # the moment it lands.
     agents = sorted((ROOT / "agents").glob("*.md"))
     claimed: dict[str, Path] = {}
     for agent in agents:
