@@ -269,7 +269,9 @@ same test and from the same mark.
 --------------------
 
 `mcp__github__update_pull_request` with `draft: false`. See the gate below
-first: this step is conditional.
+first: this step is conditional, and `Keep it current` runs before it — the
+gate's first condition is that step's merge, so the sequence reaches it once
+out of the table's order and then again on its own cadence.
 
 It does not review. Marking a draft ready is a natural moment to reach for one,
 and the branch was already reviewed at `Review the head` — whether that review
@@ -307,8 +309,9 @@ commit leaves both intact.
 When it looks
 -------------
 
-Before `Ready for review`, where the look is the gate's rather than the
-cadence's, and then on a check-in every two minutes: one
+Once before `Ready for review`, as the gate's look rather than the cadence's.
+The cadence itself starts from the ready pull request, unchanged: a check-in
+every two minutes, one
 `mcp__Claude_Code_Remote__send_later` at a time, carrying the instruction to
 look again, and armed on the wake the previous one caused — the discipline
 `review-cycle`'s `The backstop` states for the same reason.
@@ -381,10 +384,9 @@ pull request goes to ready only when **all** of these hold:
 
 - The branch is current with its base branch and merges cleanly. `Keep it
   current` owns the merge that makes this true, and it is tested first because
-  the merge moves the head: the two conditions below are about the head a
-  reviewer will actually read, and a merge run after them would leave both
-  answered about a commit nobody sees. A conflict is that step's stop, arriving
-  early.
+  the merge moves the head: every condition below is about the head a reviewer
+  will actually read, and a merge run after them would leave them answered
+  about a commit nobody sees. A conflict is that step's stop, arriving early.
 - CI is green on the head commit. **Pending is not green** — wait for it the
   way `review-cycle`'s `How to wait` says, rather than treating an unreported
   check as either answer. The mechanism has one home, and it is not this one.
@@ -399,8 +401,8 @@ is a claim about the work that is not true, and so is a ready one that does not
 merge.
 
 The gate is also what a round at `Keep it current` returns through. That round
-sends the pull request back to draft, and these three conditions are what let
-it out again — the same three, tested again, rather than a second gate written
+sends the pull request back to draft, and these four conditions are what let
+it out again — the same four, tested again, rather than a second gate written
 for the second round.
 
 
