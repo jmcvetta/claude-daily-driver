@@ -43,6 +43,8 @@ One or two sentences: what this is, and what it is for.
 ## Configuration  <- only where the thing will not run without it
 
 ## Links          <- one line each, into the docs that carry the detail
+
+## Licence        <- one line, and the file it points at
 ```
 
 Heading names can follow the language's convention — `Getting started`,
@@ -65,6 +67,11 @@ Every sentence earns its place by one question:
 Where the answer is no, cut the sentence. Not shorten it, not move it lower —
 cut it. The question is asked of the draft you have just written, before it is
 saved.
+
+**Legal text is outside the test.** A licence, a warranty disclaimer, a terms
+notice, an attribution a licence obliges: a reader does not need any of them in
+order to use the thing, and every one of them stays. They are in the README
+because it is where a reader looks for them.
 
 
 Never in a README
@@ -113,6 +120,22 @@ is long because of one of these, and each has its own fix:
 
 Where none of those applies, the length is the subject's, and it stays.
 
+
+A README that is not an arrival README
+======================================
+
+This skill is written for the README a reader arrives at. A directory inside a
+repository sometimes carries one that is deliberately something else — an
+attic saying what is kept and why, a test suite explaining the harness it
+chose, an infrastructure directory recording what its state file is for. That
+is rationale, and the table above sends rationale to `docs/`.
+
+**Where the repository has made that choice on purpose, it wins.** Say what
+the README is carrying and leave it, rather than cutting a record somebody
+put there. The table decides what goes into a README nobody has decided about;
+it does not overturn a decision already made.
+
+
 Revising one that already exists
 ================================
 
@@ -121,6 +144,11 @@ Revising one that already exists
 - **Keep the author's voice.** Where a heading and its content still work,
   leave them alone. A README rewritten to say the same thing differently is a
   diff nobody can review.
-- **Run the commands.** Every command that stays in the file is one you have
-  checked still works. A command that no longer runs is worse than no README,
-  because the reader trusts it.
+- **Check the commands, and do not run the dangerous ones.** A command that no
+  longer works is worse than no README, because the reader trusts it. Run the
+  ones that are read-only or confined to the checkout. A command that installs,
+  deploys, publishes, or changes anything outside it is checked by reading —
+  the flag still exists, the target still resolves, the path is still there —
+  because the constitution decides that one, and it says a dangerous command
+  runs in a sandbox or not at all. Where only running it would settle the
+  question, say so and leave it to the user.
