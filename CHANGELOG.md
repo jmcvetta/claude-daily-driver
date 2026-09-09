@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.18.1](https://github.com/jmcvetta/claude-daily-driver/compare/v0.18.0...v0.18.1) (2026-09-09)
+
+
+### Bug Fixes
+
+* **issue-deps:** pick the client by environment, gh 2.94.0 first ([#133](https://github.com/jmcvetta/claude-daily-driver/issues/133)) ([1ec2d0b](https://github.com/jmcvetta/claude-daily-driver/commit/1ec2d0b285e6e8717874b3d6839da875f3e542a7))
+* **undertake:** the ready gate refuses a branch behind its base ([#135](https://github.com/jmcvetta/claude-daily-driver/issues/135)) ([9506f91](https://github.com/jmcvetta/claude-daily-driver/commit/9506f91bc62a1d738d87fefc731722eaf5bb09f5))
+
 ## [0.18.0](https://github.com/jmcvetta/claude-daily-driver/compare/v0.17.0...v0.18.0) (2026-09-09)
 
 
