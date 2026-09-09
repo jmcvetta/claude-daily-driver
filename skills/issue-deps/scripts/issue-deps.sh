@@ -4,16 +4,19 @@
 #
 # WHY THIS EXISTS
 #
-#   The GitHub MCP exposes sub-issues and `closed_by_pull_requests`, but has
-#   no tool and no field for the blocked-by / blocking graph. The REST API
-#   does. So this is the one relationship the skill cannot reach through the
-#   MCP, and this script is the whole of the gap.
+#   `gh` reaches the whole issue-relationship graph from 2.94.0 on
+#   (cli/cli#13057): `gh issue edit --add-blocked-by`, `--add-blocking`, and
+#   `gh issue view --json blockedBy,blocking`. Where that `gh` is present, use
+#   it and not this. The GitHub MCP server, in either of its generations,
+#   returns counts for this graph and no members, and writes nothing into it.
 #
-#   The client is `curl`, deliberately and not incidentally. `gh` is not
-#   installed on a Claude Code web worker at all (measured 2026-09-06), while
-#   `GITHUB_TOKEN` / `GH_TOKEN` are present on both surfaces. A script reaching
-#   for `gh api` would work on the laptop and fail on the web — invisibly, on
-#   the surface nobody develops on.
+#   This script is for the environment in between: a token and no usable
+#   `gh`. That is every Claude Code web worker — `gh` is not installed there
+#   at all (measured 2026-09-06, and again 2026-09-09), while `GITHUB_TOKEN`
+#   / `GH_TOKEN` are present on both surfaces. So the client is `curl`,
+#   deliberately and not incidentally. A script reaching for `gh api` would
+#   work on the laptop and fail on the web — invisibly, on the surface nobody
+#   develops on.
 #
 # EXPIRY
 #
@@ -24,9 +27,11 @@
 #       GET    /repos/{o}/{r}/issues/{n}/dependencies/blocked_by
 #       GET    /repos/{o}/{r}/issues/{n}/dependencies/blocking
 #
-#   Delete this script the day the MCP exposes them. Nothing else here is
-#   worth keeping: the id lookups and the guards below all exist to make those
-#   four calls safe, and go with them.
+#   Delete this script the day the environment it serves stops existing: the
+#   day the web worker ships a `gh` at 2.94.0 or later, or the day the MCP
+#   exposes those four endpoints. Nothing else here is worth keeping: the id
+#   lookups and the guards below all exist to make those four calls safe, and
+#   go with them.
 #
 # THE TRAPS IT CLOSES
 #
@@ -39,9 +44,10 @@
 #     indistinguishable from an issue with no edges. Only the write refuses.
 #     So every subcommand checks the kind of object first and refuses to
 #     present that emptiness as an answer.
-#   - `POST .../dependencies/blocking` does not exist (404). An edge is stated
-#     from the blocked side only, which is also the direction the need arrives
-#     in.
+#   - `POST .../dependencies/blocking` does not exist (404). Here an edge is
+#     stated from the blocked side only, which is also the direction the need
+#     arrives in. `gh` accepts `--add-blocking` and inverts it client-side
+#     before REST sees it; this script does not, and does not need to.
 #   - The POST response is the issue you just modified, so it confirms nothing.
 #     Every write here is verified by a separate read from the other end.
 #
