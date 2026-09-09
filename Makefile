@@ -57,8 +57,19 @@ check-skills:
 # `validate` reads one directory at a time, and skills and agents are separate
 # component kinds, so the agent panel needs its own invocation or it is never
 # checked at all.
+#
+# The guard is what keeps that true in both directions. The plugin ships no
+# agents today -- the four reviewers live in `attic/agents/` -- and handed a
+# directory with no components `validate` falls back to looking for a manifest,
+# finds none, and fails. Deleting the leg instead would mean an agent revived
+# by `git mv` comes back unvalidated and nothing says so, which is exactly the
+# silent failure the attic's cheap-move promise must not buy.
 check-agents:
-	claude plugin validate --strict agents
+	@if compgen -G 'agents/*.md' > /dev/null; then \
+		claude plugin validate --strict agents; \
+	else \
+		echo 'no agents/ to validate; the panel is in attic/agents/'; \
+	fi
 
 # `validate --strict` is a floor, not a ceiling: measured against the CLI, it
 # passes an agent with an empty description, one whose name disagrees with its
