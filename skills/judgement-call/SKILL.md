@@ -93,6 +93,14 @@ genuinely does not settle it:
   the constitution discusses an unavoidable workaround before writing it. This
   skill overrides none of them.
 
+**A question that survives is asked in prose, not in the widget.**
+`AskUserQuestion` is denied by a `PreToolUse` hook — `hooks/ask-in-chat.py`,
+and [`0009`](../../docs/notes/0009-deny-the-question-widget.md) is why — so the
+question goes in the chat reply: the question written out, the options as a
+short list, and the one recommended named with its reason. That hook and this
+gate are ordered rather than overlapping. It decides how a question is put;
+this skill decides whether there is one.
+
 Irreversible, destructive and outward-facing actions sit outside this gate
 entirely. The rules governing them — the constitution's non-negotiables among
 them — are untouched by it.
