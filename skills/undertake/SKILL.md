@@ -15,8 +15,9 @@ description: >-
   itself — but one of the two still is. "Implement a retry loop", "build the
   parser" and "fix this function", with neither an issue nor an invocation,
   are ordinary work and must NOT fire it. Supplies the order of the steps, the
-  gates between them, the ready gate, and the base merge that keeps the branch
-  current after it; the review round it runs is `review-cycle`'s. Not for merely reading, summarising or
+  gates between them, the ready gate — which a branch behind its base does not
+  pass — and the base merge that keeps the branch current before ready and
+  after it; the review round it runs is `review-cycle`'s. Not for merely reading, summarising or
   discussing an issue, since "what does #191 say" is a question rather than an
   assignment.
 ---
@@ -268,7 +269,9 @@ same test and from the same mark.
 --------------------
 
 `mcp__github__update_pull_request` with `draft: false`. See the gate below
-first: this step is conditional.
+first: this step is conditional, and `Keep it current` runs before it — the
+gate's first condition is that step's merge, so the sequence reaches it once
+out of the table's order and then again on its own cadence.
 
 It does not review. Marking a draft ready is a natural moment to reach for one,
 and the branch was already reviewed at `Review the head` — whether that review
@@ -282,10 +285,15 @@ trigger already answered.
 10 — Keep it current
 --------------------
 
-Ready is not the end. Commits land on the base branch while a reviewer reads,
-and a branch behind its base was reviewed and tested against a tree nobody
-will merge into. This step brings the base branch in, and it is the only step
-that runs more than once.
+Commits land on the base branch while the work is written and while a
+reviewer reads, and a branch behind its base was reviewed and tested against a
+tree nobody will merge into. This step brings the base branch in, and it is the
+only step that runs more than once.
+
+**Its first run is before `Ready for review`, not after it.** The gate below
+carries the condition; this step carries the merge that satisfies it, and the
+step is written once for both. Ready is not the end either, so it runs again on
+the cadence under `When it looks`.
 
 **The merge is `mcp__github__update_pull_request_branch`.** It merges the base
 branch into the head server-side, so it needs no checkout: by the time this
@@ -301,7 +309,9 @@ commit leaves both intact.
 When it looks
 -------------
 
-At `Ready for review`, and then on a check-in every two minutes: one
+Once before `Ready for review`, as the gate's look rather than the cadence's.
+The cadence itself starts from the ready pull request, unchanged: a check-in
+every two minutes, one
 `mcp__Claude_Code_Remote__send_later` at a time, carrying the instruction to
 look again, and armed on the wake the previous one caused — the discipline
 `review-cycle`'s `The backstop` states for the same reason.
@@ -372,6 +382,11 @@ Ready is a gate, not a step
 "After fixing, set the PR to ready" reads as unconditional. It is not. The
 pull request goes to ready only when **all** of these hold:
 
+- The branch is current with its base branch and merges cleanly. `Keep it
+  current` owns the merge that makes this true, and it is tested first because
+  the merge moves the head: every condition below is about the head a reviewer
+  will actually read, and a merge run after them would leave them answered
+  about a commit nobody sees. A conflict is that step's stop, arriving early.
 - CI is green on the head commit. **Pending is not green** — wait for it the
   way `review-cycle`'s `How to wait` says, rather than treating an unreported
   check as either answer. The mechanism has one home, and it is not this one.
@@ -380,13 +395,14 @@ pull request goes to ready only when **all** of these hold:
 - Every finding that round raised has been fixed, or rejected with a reason on
   its thread, or deferred with the user's agreement.
 
-Red CI or an open thread means it **stays a draft**, and the reason is stated
-in one line. A red pull request marked ready is a claim about the work that is
-not true.
+A branch behind its base, red CI, or an open thread means it **stays a
+draft**, and the reason is stated in one line. A red pull request marked ready
+is a claim about the work that is not true, and so is a ready one that does not
+merge.
 
 The gate is also what a round at `Keep it current` returns through. That round
-sends the pull request back to draft, and these three conditions are what let
-it out again — the same three, tested again, rather than a second gate written
+sends the pull request back to draft, and these four conditions are what let
+it out again — the same four, tested again, rather than a second gate written
 for the second round.
 
 
