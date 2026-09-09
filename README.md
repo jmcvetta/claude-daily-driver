@@ -210,9 +210,9 @@ request's **title**, which squash-merge makes the commit subject. It bumps
 `version` in `.claude-plugin/plugin.json` and the matching field on the
 marketplace entry together — `claude plugin validate --strict` fails when
 those two disagree. Each pull request gets a comment saying which tags merging
-it would cut, from [release-please-projected-releases-action][prpra].
+it would cut, from [projected-releases-action][pra].
 
-[prpra]: https://github.com/jmcvetta/release-please-projected-releases-action
+[pra]: https://github.com/jmcvetta/projected-releases-action
 
 ## Don't install this
 
