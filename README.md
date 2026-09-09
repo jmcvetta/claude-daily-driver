@@ -30,9 +30,9 @@ the work, and on Claude's own tool calls — `mcp__github__create_pull_request`
 for `pr`, `AskUserQuestion` for `judgement-call`. Each `description` carries its
 own register.
 
-[`agents/`](agents/) holds a reviewer panel, dormant while the `review` skill is
-retired. [`attic/`](attic/) holds what no longer ships; nothing there is loaded,
-and [its README](attic/README.md) says what is kept and why.
+The plugin ships no agents. The reviewer panel `review` dispatched went to the
+attic with it. [`attic/`](attic/) holds what no longer ships; nothing there is
+loaded, and [its README](attic/README.md) says what is kept and why.
 
 ## The constitution
 
@@ -85,7 +85,6 @@ manifest — so there is no nested plugin directory.
 claude-daily-driver/
 ├── .claude-plugin/         plugin.json (the version releases bump) and
 │                           marketplace.json (what `claude plugin install` reads)
-├── agents/                 the reviewer panel, dormant
 ├── attic/                  kept but not shipped; nothing here is loaded
 ├── context/constitution.md always-on rules, one file, read by both hooks
 ├── docs/                   how this repository is meant to be used
@@ -159,10 +158,10 @@ needs no separate port; a checkout loads with `omp --plugin-dir <path>`.
 ## Checks
 
 `make check` is what CI runs — the same target, not a restatement of it. It
-runs `claude plugin validate --strict` over the manifests, the skills and the
-agents; `shellcheck` over every shell script; `scripts/check-manifests.py` for
-what `validate` lets through, such as a skill whose frontmatter `name`
-disagrees with its directory; `scripts/check-constitution.py`, which drives
+runs `claude plugin validate --strict` over the manifests and the skills — and
+over `agents/`, on the runs where the plugin ships any; `shellcheck` over every
+shell script; `scripts/check-manifests.py` for what `validate` lets through,
+such as a skill whose frontmatter `name` disagrees with its directory; `scripts/check-constitution.py`, which drives
 both hooks against synthetic event JSON and asserts the constitution comes back
 from each; and `scripts/check-eval-fixtures.sh`.
 
