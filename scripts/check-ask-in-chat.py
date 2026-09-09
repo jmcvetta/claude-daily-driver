@@ -144,6 +144,15 @@ def run_hook(errors: list[str], where: str, stdin: str) -> dict | None:
 
 def check_wiring(errors: list[str]) -> None:
     """hooks.json runs this script on PreToolUse, on this tool and no other."""
+    # First, because it depends on nothing below it and the returns below
+    # would skip it. The hook command runs the script directly, so the bit is
+    # load-bearing.
+    if not os.access(SCRIPT, os.X_OK):
+        errors.append(
+            f"{SCRIPT.relative_to(ROOT)} is not executable; the hook command "
+            f"runs it directly, so the bit is load-bearing"
+        )
+
     try:
         config = json.loads(HOOKS_JSON.read_text(encoding="utf-8")).get("hooks", {})
     except (OSError, json.JSONDecodeError) as error:
@@ -169,7 +178,16 @@ def check_wiring(errors: list[str]) -> None:
                 continue
             entries.append(entry)
 
-    handlers = [h for entry in entries for h in entry.get("hooks", [])]
+    # Filtered again, because an entry is a matcher and a *list* of handlers:
+    # a second hook sharing this entry's matcher is somebody else's, and
+    # counting it here would report the wrong script and then skip every
+    # assertion below on the early return.
+    handlers = [
+        handler
+        for entry in entries
+        for handler in entry.get("hooks", [])
+        if SCRIPT.name in handler.get("command", "")
+    ]
     if len(handlers) != 1:
         errors.append(
             f"hooks/hooks.json: PreToolUse has {len(handlers)} handlers "
@@ -190,7 +208,22 @@ def check_wiring(errors: list[str]) -> None:
             f"constitution's *name every script you run* covers a hook too"
         )
 
+    # An absent or empty matcher is the dangerous one, and it is dangerous in
+    # the opposite direction to a wrong one: Claude Code reads it as *every*
+    # tool, so the hook would deny Bash and Edit and the rest. It is diagnosed
+    # first and on its own, because every test below reads it as a pattern --
+    # `re.search("", anything)` matches, so the over-match loop would pass it
+    # and the match test would report the exact opposite of what it does.
     matcher = entries[0].get("matcher", "")
+    if not matcher:
+        errors.append(
+            f"hooks/hooks.json: the entry running {SCRIPT.name} has no "
+            f"matcher, and Claude Code reads an empty matcher as every tool; "
+            f"this hook would deny {', '.join(NOT_THIS_TOOL)} and the rest"
+        )
+        return
+
+    # From here the matcher is a pattern, and is read as one.
     try:
         re.compile(matcher)
     except re.error as error:
@@ -198,23 +231,17 @@ def check_wiring(errors: list[str]) -> None:
             f"hooks/hooks.json: PreToolUse matcher {matcher!r} is not a "
             f"regular expression ({error}), so it matches nothing"
         ) from None
-    if not matcher or not re.search(matcher, TOOL):
+    if not re.search(matcher, TOOL):
         errors.append(
             f"hooks/hooks.json: matcher {matcher!r} does not match {TOOL!r}, "
             f"so the widget opens as before"
         )
     for tool in NOT_THIS_TOOL:
-        if matcher and re.search(matcher, tool):
+        if re.search(matcher, tool):
             errors.append(
                 f"hooks/hooks.json: matcher {matcher!r} also matches {tool!r}, "
                 f"which this hook has no business denying"
             )
-
-    if not os.access(SCRIPT, os.X_OK):
-        errors.append(
-            f"{SCRIPT.relative_to(ROOT)} is not executable; the hook command "
-            f"runs it directly, so the bit is load-bearing"
-        )
 
 
 def denial(errors: list[str], where: str, stdin: str) -> None:
