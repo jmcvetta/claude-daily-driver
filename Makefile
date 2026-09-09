@@ -8,8 +8,8 @@ SHELL := /bin/bash
 .SHELLFLAGS := -o pipefail -c
 
 .PHONY: git_sync check check-plugin check-skills check-agents check-scripts \
-	check-manifests check-constitution check-eval-fixtures check-step-names \
-	check-infra evals-install evals-plan evals-run mcp-usage
+	check-manifests check-constitution check-ask-in-chat check-eval-fixtures \
+	check-step-names check-infra evals-install evals-plan evals-run mcp-usage
 
 # The `coder_eval` release the eval suites are written against. Pinned on
 # purpose: being able to hold a version back is the whole reason the suites are
@@ -41,7 +41,7 @@ git_sync:
 # than restating its legs, so a leg added here is a leg CI gains — and there
 # is no second command line to fall behind this one.
 check: check-plugin check-skills check-agents check-scripts check-manifests \
-	check-constitution check-eval-fixtures check-step-names
+	check-constitution check-ask-in-chat check-eval-fixtures check-step-names
 
 # `claude plugin validate --strict` reads one manifest at a time and picks the
 # marketplace when handed a directory, so the plugin manifest is named
@@ -87,6 +87,16 @@ check-manifests:
 # and why.
 check-constitution:
 	python3 scripts/check-constitution.py
+
+# The acceptance test for the other hook: run `hooks/ask-in-chat.py` against
+# synthetic event JSON and assert the AskUserQuestion widget is denied, with a
+# reason that sends the question to the chat reply. Credential-free like
+# check-constitution, and needed for the same reason -- a hook that stops
+# firing does not fail, it just quietly gives the widget back. Unlike the
+# constitution there is no live half: a denial is enforced by the harness
+# rather than believed by a session. See the script's docstring.
+check-ask-in-chat:
+	python3 scripts/check-ask-in-chat.py
 
 # check-scripts: lint the shell a skill ships. `claude plugin validate` reads
 # manifests and never opens a `scripts/` file, so without this leg the plugin's

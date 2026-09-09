@@ -11,7 +11,8 @@ read it, do not go further.
 ## What's in it
 
 The **constitution** — `context/constitution.md`, delivered to every session
-by hook — plus ten skills:
+by hook — plus **two hooks that enforce rather than instruct**, and ten
+skills:
 
 | Skill | What it does |
 | ----- | ------------ |
@@ -22,7 +23,7 @@ by hook — plus ten skills:
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which pull request closes what. |
 | `session-title` | Names the session for the Claude web and mobile lists: forty characters, `#123 shortened issue title` while an issue is in hand. |
 | `readme` | Writes a README that answers what this is and how to use it, and nothing else: the shape, the reading of length as a symptom, and the list of what belongs in a commit message, a changelog or `docs/` instead. |
-| `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. |
+| `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. A question that survives the gate is asked in the chat reply — the `AskUserQuestion` widget is denied by hook. |
 | `review-cycle` | One round on a pull request: the built-in `/code-review`, a verdict on every finding, and the test for whether a later push has earned a second round. |
 | `undertake` | Takes a piece of work from its description to a pull request ready for review, opening the issue first where there is none, and keeping the branch current with its base after. |
 
@@ -58,8 +59,8 @@ moment, and says something the harness does not already say — it is paid for i
 every session and every subagent, forever. Amendments are pull requests against
 this repository.
 
-**Whether a session got it**: `scripts/check-constitution.py` drives both hooks
-and asserts they carry the file verbatim and identically. The
+**Whether a session got it**: `scripts/check-constitution.py` drives both
+injection points and asserts they carry the file verbatim and identically. The
 `constitution-reaches-subagent` eval covers the half a script cannot: it asks a
 subagent, with every file-reading tool closed, for a phrase only the injected
 constitution could have told it.
@@ -70,12 +71,37 @@ answer under every pressure to write ten and counts the lines that come back.
 `Before you reply` is the rule it measures because that rule's compliance is
 countable; the rest of the file needs a judgment about engineering instead.
 
-**How it arrives**: a plugin cannot ship a `CLAUDE.md`, so two hooks deliver
-the file — `SessionStart` for the session, `PreToolUse` on the `Agent` tool for
-every subagent, which `SessionStart` alone does not reach. Both read the one
-file by exact path and fail loudly. The measurement behind the second hook is
-in [the planning doc](docs/planning/plugin-replaces-global-memory.md) under
-R2.
+**How it arrives**: a plugin cannot ship a `CLAUDE.md`, so two injection
+points deliver the file — `SessionStart` for the session, `PreToolUse` on the
+`Agent` tool for every subagent, which `SessionStart` alone does not reach.
+Both read the one file by exact path and fail loudly. The measurement behind
+the second injection point is in [the planning
+doc](docs/planning/plugin-replaces-global-memory.md) under R2.
+
+## The hooks
+
+A plugin cannot ship a `CLAUDE.md`, and it cannot ship a preference either. Two
+hooks do both jobs, and they do them for the same reason: prose can be read and
+not followed.
+
+| Hook | Event | What it does |
+| ---- | ----- | ------------ |
+| `inject-constitution.py` | `SessionStart`, and `PreToolUse` on `Agent`/`Task` | Delivers `context/constitution.md` to the session and to every subagent. |
+| `ask-in-chat.py` | `PreToolUse` on `AskUserQuestion` | Denies the multiple-choice widget, and tells Claude to ask the question in the chat reply instead. |
+
+**Why the second one is a hook** and not a skill or a constitution rule: the
+preference has no exceptions to weigh, so it should be enforced rather than
+instructed, and the constitution's admission test turns it down — most sessions
+never reach for the widget, and every session would pay for the rule.
+[`docs/notes/0009`](docs/notes/0009-deny-the-question-widget.md) is the
+decision, and `judgement-call` is the skill it is ordered with: that gate
+decides *whether* to ask, the hook decides *how*.
+
+**Whether either still fires**: `scripts/check-constitution.py` and
+`scripts/check-ask-in-chat.py` run both against synthetic event JSON, in
+`make check`. A hook that stops firing does not fail — it silently reverts the
+behaviour it was installed for, which is the one failure nothing else would
+report.
 
 ## Layout
 
@@ -87,10 +113,11 @@ claude-daily-driver/
 ├── .claude-plugin/         plugin.json (the version releases bump) and
 │                           marketplace.json (what `claude plugin install` reads)
 ├── attic/                  kept but not shipped; nothing here is loaded
-├── context/constitution.md always-on rules, one file, read by both hooks
+├── context/constitution.md always-on rules, one file, read at both injection points
 ├── docs/                   how this repository is meant to be used
 ├── evals/                  the trigger suites, and the constitution's live half
-├── hooks/                  SessionStart, and PreToolUse on the Agent tool
+├── hooks/                  the constitution's two injection points, and the
+│                           PreToolUse deny on AskUserQuestion
 ├── infra/github/           the repository's own settings, as OpenTofu
 ├── scripts/                the checks CI runs, the stanza, the MCP tally
 ├── skills/                 one directory per skill in the table above
@@ -184,9 +211,9 @@ request's **title**, which squash-merge makes the commit subject. It bumps
 `version` in `.claude-plugin/plugin.json` and the matching field on the
 marketplace entry together — `claude plugin validate --strict` fails when
 those two disagree. Each pull request gets a comment saying which tags merging
-it would cut, from [release-please-projected-releases-action][prpra].
+it would cut, from [projected-releases-action][pra].
 
-[prpra]: https://github.com/jmcvetta/release-please-projected-releases-action
+[pra]: https://github.com/jmcvetta/projected-releases-action
 
 ## Don't install this
 

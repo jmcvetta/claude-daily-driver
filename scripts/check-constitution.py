@@ -149,6 +149,23 @@ def hook_specific(payload: dict, event_name: str, where: str) -> dict:
     return output
 
 
+def own_handlers(config: dict, event: str) -> list[tuple[dict, dict]]:
+    """The entries and handlers for `event` that run the constitution script.
+
+    The plugin wires more than one hook to `PreToolUse` — `hooks/ask-in-chat.py`
+    is on the same event, matched on a different tool — so every assertion
+    below has to say which handler it is about. Scoping by the command that
+    names this script is what keeps a second hook from reading as a second
+    constitution, or its matcher as one of ours.
+    """
+    return [
+        (entry, handler)
+        for entry in config.get(event) or []
+        for handler in entry.get("hooks", [])
+        if SCRIPT.name in handler.get("command", "")
+    ]
+
+
 def check_wiring(errors: list[str]) -> None:
     """hooks.json wires both events to the one script, and matches the right tool."""
     try:
@@ -161,12 +178,11 @@ def check_wiring(errors: list[str]) -> None:
         ("SessionStart", "session-start"),
         ("PreToolUse", "pre-tool-use"),
     ):
-        entries = config.get(event) or []
-        handlers = [h for entry in entries for h in entry.get("hooks", [])]
+        handlers = [h for _, h in own_handlers(config, event)]
         if len(handlers) != 1:
             errors.append(
-                f"hooks/hooks.json: {event} has {len(handlers)} handlers, "
-                f"expected exactly 1"
+                f"hooks/hooks.json: {event} has {len(handlers)} handlers "
+                f"running {SCRIPT.name}, expected exactly 1"
             )
             continue
         command = handlers[0].get("command", "")
@@ -201,7 +217,7 @@ def check_wiring(errors: list[str]) -> None:
                 "installed plugin lives"
             )
 
-    matchers = [entry.get("matcher", "") for entry in config.get("PreToolUse") or []]
+    matchers = [entry.get("matcher", "") for entry, _ in own_handlers(config, "PreToolUse")]
     for matcher in matchers:
         try:
             re.compile(matcher)

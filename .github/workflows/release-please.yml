@@ -1,7 +1,7 @@
 # Cut releases from Conventional Commit subjects on master.
 #
 # One package, one version, one tag series — the same shape as
-# jmcvetta/release-please-projected-releases-action, reached a different way.
+# jmcvetta/projected-releases-action, reached a different way.
 # That repository configures release-please from the action's `release-type:`
 # input, in what release-please calls plain mode. Here the version being
 # released is the `version` field of .claude-plugin/plugin.json, and it has to
