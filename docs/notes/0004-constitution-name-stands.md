@@ -6,7 +6,7 @@
 the author.
 **Resolves:** [#81](https://github.com/jmcvetta/claude-daily-driver/issues/81).
 
-`context/constitution.md` calls itself the supreme law of a session, and it
+`rules/constitution.md` calls itself the supreme law of a session, and it
 cites the White Horse Dialogue on naming. A file that says both invites an
 audit of its own name. #81 is that audit.
 
@@ -48,7 +48,7 @@ Questions 2 and 3 of #81 were conditional on a rename, so both fall away. The
 token keeps its key, and the planning docs stand as the record of what things
 were called when they were decided.
 
-The decision leaves no trace in `context/constitution.md` itself. Context there
+The decision leaves no trace in `rules/constitution.md` itself. Context there
 is paid for in every session and in every subagent, and a paragraph defending
 the file's own name changes no behaviour.
 

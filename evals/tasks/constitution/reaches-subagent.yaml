@@ -52,7 +52,7 @@ description: >-
 tags: [constitution, delivery]
 
 # Deliberately no file-READING tools. The only routes to the phrase are the hook
-# and `context/constitution.md`; closing the second, for the parent and the
+# and `rules/constitution.md`; closing the second, for the parent and the
 # subagent alike, is what makes its return mean something. `Write` has to stay open — the subagent reports through a file —
 # and these lists are session-wide, so they reach the subagent by reaching both.
 #

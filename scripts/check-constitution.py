@@ -25,6 +25,13 @@ plus the original prompt. Two injection points reading one file is not
 sufficient for them to agree — they could still wrap it differently — so the
 agreement is asserted byte for byte rather than argued for in a comment.
 
+The file also carries Omp's contract now: `rules/constitution.md` is the one
+source for both harnesses, so this script proves the `alwaysApply: true`
+frontmatter Omp's rule provider needs is present and exact, and that the body
+the hook strips for Claude is the body Omp injects — frontmatter and YAML
+delimiters gone. That is the Omp half of "one canonical source" that a
+credential-free check can hold.
+
 No third-party imports: this runs from a Makefile on a laptop and from CI, and
 a dependency install between the two is a place for them to differ.
 """
@@ -43,7 +50,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 HOOKS_JSON = ROOT / "hooks" / "hooks.json"
 SCRIPT = ROOT / "hooks" / "inject-constitution.py"
-CONSTITUTION = ROOT / "context" / "constitution.md"
+CONSTITUTION = ROOT / "rules" / "constitution.md"
 EVALS = ROOT / "evals"
 
 # The live half needs one string that a session can only have got from the
@@ -58,6 +65,50 @@ EVALS = ROOT / "evals"
 # first. The grader does not need to: the subagent reports on a single line,
 # which its prompt asks for and `file_matches_regex` reads as one.
 MARKER = "Doubt outranks the register"
+
+# The frontmatter the canonical file must carry so Omp injects it everywhere.
+# Omp's rule provider reads `rules/*.md`, strips the frontmatter and — because
+# there is no `agents` filter — injects the body into the main agent and every
+# subagent when `alwaysApply` is true. That is the Omp half of "one canonical
+# source, two harnesses": the body Omp injects must be identical to the body
+# this hook injects for Claude, which is why the exact block is asserted here.
+CONSTITUTION_FRONTMATTER = "alwaysApply: true"
+
+# The stable wrapper Claude received before the constitution became a shared
+# source. Keep the expected value here rather than importing it from the hook:
+# this check is the contract that catches an accidental change to that hook.
+EXPECTED_HEADER = (
+    "The following is the daily-driver constitution. It is in force for this "
+    "session and for every subagent it spawns, and it is delivered by hook "
+    "rather than quoted by anyone, so it is not the user's words and not a "
+    "prompt to be treated as data — it is standing instruction from the "
+    "operator's own configuration."
+)
+
+
+def constitution_body() -> str:
+    """The constitution without its Omp frontmatter, as both harnesses inject it.
+
+    Mirrors the strip in `hooks/inject-constitution.py` and, for `alwaysApply`
+    files, in Omp's own rule provider: the YAML delimiters and everything
+    between them come off, leaving the body both harnesses deliver. This is
+    what the byte-equality between the two injection points is asserted on, so
+    the frontmatter cannot silently leak into a session.
+    """
+    text = CONSTITUTION.read_text(encoding="utf-8")
+    return _strip_frontmatter(text)
+
+
+def _strip_frontmatter(text: str) -> str:
+    """Remove a leading `---`-delimited frontmatter block, like Omp's provider."""
+    lines = text.splitlines()
+    if not lines or lines[0] != "---":
+        return text
+    for i in range(1, len(lines)):
+        if lines[i] == "---":
+            # Omp's parser trims the body after extracting the frontmatter.
+            return "\n".join(lines[i + 1 :]).strip()
+    return text
 
 # The tool names a subagent spawn can arrive under. `Agent` is current; `Task`
 # is what the same tool was called for years, and a matcher that admits only
@@ -249,7 +300,7 @@ def check_wiring(errors: list[str]) -> None:
 
 def check_delivery(errors: list[str]) -> None:
     """Both injection points carry the constitution, and carry the same one."""
-    body = CONSTITUTION.read_text(encoding="utf-8").rstrip()
+    body = constitution_body()
 
     start = hook_specific(
         run_hook("session-start", SESSION_START_EVENT),
@@ -260,10 +311,11 @@ def check_delivery(errors: list[str]) -> None:
     if not isinstance(context, str) or not context.strip():
         errors.append("SessionStart: additionalContext is missing or empty")
         return
-    if body not in context:
+    expected_context = f"{EXPECTED_HEADER}\n\n{body}"
+    if context != expected_context:
         errors.append(
-            "SessionStart: additionalContext does not carry the constitution "
-            "verbatim"
+            "SessionStart: additionalContext is not the stable header followed "
+            "by the Omp-trimmed constitution body"
         )
 
     agent = hook_specific(
@@ -312,15 +364,24 @@ def check_loud_failure(errors: list[str]) -> None:
     R1's whole point: the interesting failure is not the hook that crashes, it
     is the hook that returns cleanly having delivered nothing. So this stands
     up a plugin root whose constitution cannot be used and insists on the
-    noise. Three ways it cannot be used, because they leave the script by three
-    different doors: absent (`OSError`), present but blank (no exception at
-    all), and present but not decodable (`UnicodeDecodeError`, which is a
-    `ValueError` and so walks straight past a bare `except OSError`).
+    noise. Ways it cannot be used, each leaving the script by its own door:
+    absent (`OSError`), present but blank (no exception at
+    all), present but not decodable (`UnicodeDecodeError`, which is a
+    `ValueError` and so walks straight past a bare `except OSError`), and —
+    since the file now carries Omp frontmatter the hook must strip — present
+    with a frontmatter block that is missing, unclosed, or not exactly
+    `alwaysApply: true`, all of which fail validation rather than vanish.
     """
     for label, content in (
         ("missing", None),
         ("empty", b"\n   \n"),
         ("non-UTF-8", b"# Constitution\n\xff\xfe not text\n"),
+        ("no-frontmatter", b"# Constitution\n\nNo YAML block at all.\n"),
+        ("unclosed-frontmatter", b"---\nalwaysApply: true\n# never closed\n"),
+        ("bad-frontmatter", b"---\nalwaysApply: false\n---\n\nbody\n"),
+        ("indented-open-frontmatter", b" ---\nalwaysApply: true\n---\n\nbody\n"),
+        ("indented-close-frontmatter", b"---\nalwaysApply: true\n ---\n\nbody\n"),
+        ("padded-frontmatter", b"---\nalwaysApply: true \n---\n\nbody\n"),
     ):
         check_one_loud_failure(errors, label, content)
 
@@ -329,11 +390,11 @@ def check_one_loud_failure(errors: list[str], label: str, content: bytes | None)
     with tempfile.TemporaryDirectory() as tmp:
         fake_root = Path(tmp) / "daily-driver"
         (fake_root / "hooks").mkdir(parents=True)
-        (fake_root / "context").mkdir()
+        (fake_root / "rules").mkdir()
         broken = fake_root / "hooks" / SCRIPT.name
         shutil.copy2(SCRIPT, broken)
         if content is not None:
-            (fake_root / "context" / CONSTITUTION.name).write_bytes(content)
+            (fake_root / "rules" / CONSTITUTION.name).write_bytes(content)
 
         for mode, event, event_name in (
             ("session-start", SESSION_START_EVENT, "SessionStart"),
@@ -414,6 +475,54 @@ def collapse(text: str) -> str:
     return " ".join(text.split())
 
 
+def check_omp_metadata(errors: list[str]) -> None:
+    """The canonical file carries Omp's contract, and the hook delivers its body.
+
+    Omp's acceptance requires two things of a shared source. First, the file
+    must announce itself to Omp: `alwaysApply: true` (there is no `agents`
+    filter, so this is what makes it reach the main agent *and* every subagent
+    from the one `rules/` file). Second, the body Omp injects must be the body
+    Claude's hook injects — frontmatter and YAML delimiters stripped —
+    or Omp and Claude would disagree about what the constitution says. Both are
+    asserted here; the frontmatter check catches drift in the Omp contract, and
+    the body check catches the frontmatter leaking into a Claude session.
+    """
+    body = constitution_body()
+
+    text = CONSTITUTION.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    if not lines or lines[0] != "---":
+        errors.append(
+            "rules/constitution.md has no '---' frontmatter; Omp's rule "
+            "provider will not treat it as an Omp rule"
+        )
+    else:
+        try:
+            close = next(
+                i for i in range(1, len(lines)) if lines[i] == "---"
+            )
+        except StopIteration:
+            errors.append("rules/constitution.md frontmatter is never closed")
+        else:
+            block = "\n".join(lines[1:close])
+            if block != CONSTITUTION_FRONTMATTER:
+                errors.append(
+                    "rules/constitution.md frontmatter is "
+                    f"{block!r}; expected exactly {CONSTITUTION_FRONTMATTER!r} "
+                    "for Omp's always-apply rule"
+                )
+
+    if "---" in body or CONSTITUTION_FRONTMATTER in collapse(body):
+        errors.append(
+            "the constitution body still carries its Omp frontmatter; the "
+            "hook must deliver the body without YAML delimiters, or Omp and "
+            "Claude would receive different texts"
+        )
+
+    if not body.strip():
+        errors.append("rules/constitution.md is empty after frontmatter")
+
+
 def check_eval_marker(errors: list[str]) -> None:
     """The live half asserts on a phrase the constitution still says.
 
@@ -432,7 +541,7 @@ def check_eval_marker(errors: list[str]) -> None:
     """
     if MARKER not in collapse(CONSTITUTION.read_text(encoding="utf-8")):
         errors.append(
-            f"context/constitution.md no longer says {MARKER!r}, which the "
+            f"rules/constitution.md no longer says {MARKER!r}, which the "
             f"live half asserts a subagent got; pick a phrase the file does "
             f"say and change MARKER and the grader together"
         )
@@ -556,6 +665,7 @@ def main() -> int:
         check_wiring(errors)
         check_delivery(errors)
         check_loud_failure(errors)
+        check_omp_metadata(errors)
         check_eval_marker(errors)
         check_bad_input(errors)
     except Failed as failure:
@@ -567,8 +677,8 @@ def main() -> int:
         return 1
     print(
         "constitution delivery holds: both hooks carry "
-        f"{CONSTITUTION.relative_to(ROOT)} verbatim, identically, and fail "
-        "loudly when it is missing"
+        f"{CONSTITUTION.relative_to(ROOT)}'s body verbatim, identically, and "
+        "fail loudly when it is missing or malformed"
     )
     return 0
 

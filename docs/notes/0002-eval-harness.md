@@ -88,7 +88,7 @@ The ablation isolates the plugin correctly:
 broken") under "per the project standards" without naming it or the skill. So
 the plugin signal is 1-of-2, not 2-of-2 — real, but n=2 supports no rate.
 
-² "Refers to", not cites: no replicate names the path `context/constitution.md`.
+² "Refers to", not cites: no replicate names the path `rules/constitution.md`.
 `with-plugin/00` says "Per the constitution, …", which is what the **yes**
 records.
 

@@ -50,7 +50,7 @@ The question
 "The thing" is whatever the repository ships, seen by whoever consumes it: a
 caller of a library, a user of a CLI, CI running a workflow, a session
 loading a plugin. **In a plugin whose product is prose, prose is code.** What
-Claude reads and acts on is `skills/`, `agents/`, `context/` and `hooks/`, so
+Claude reads and acts on is `skills/`, `agents/`, `rules/` and `hooks/`, so
 a change there goes to the tests below exactly as code would, and one that
 changes what Claude does is never `docs` however much it reads as writing. A
 typo or a rewording there that changes nothing still is. Outside those
