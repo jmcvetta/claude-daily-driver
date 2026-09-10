@@ -350,7 +350,11 @@ The check-ins end when the pull request is merged or closed, or when the user
 says to stop. A pull request nobody merges is not a reason to wake a session
 for ever.
 
-Where the scheduler is absent — a laptop — there are no check-ins. Do the step
+Where the scheduler is absent — a laptop, or a harness whose timer dies with
+the session — there are no check-ins, and the cadence stops at
+`Ready for review`;
+[`0011`](../../docs/notes/0011-two-harnesses-one-skill-tree.md) is the
+decision. Do the step
 whenever the session is next on the pull request, and say so once, rather than
 claiming a watch the surface cannot keep.
 
