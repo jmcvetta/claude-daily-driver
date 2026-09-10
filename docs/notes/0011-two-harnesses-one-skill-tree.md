@@ -21,18 +21,24 @@ it.
 catalog and the constitution source are shared. `.claude-plugin/marketplace.json`
 is the only catalog: Omp reads the Claude-compatible catalog as its fallback,
 so there is no `.omp-plugin/` copy to keep in step. `rules/constitution.md` is
-the one constitution, delivered to each harness by that harness's adapter.
+the one constitution, and each harness reaches it its own way: Claude Code's
+`hooks/inject-constitution.py` reads the file and injects it, while Omp's rule
+provider reads `rules/*.md` and injects any file whose frontmatter carries
+`alwaysApply: true`. The file therefore carries that frontmatter, and the hook
+strips it. `scripts/check-constitution.py` asserts that both paths deliver the
+same body.
 
 Only the runtime adapter is per-harness, and it is thin. Claude Code gets
-`hooks/`; Omp gets `extensions/daily-driver.js`. Each adapter does the same two
-jobs — deliver the constitution, block the multiple-choice question widget —
-against a different runtime API.
+`hooks/`; Omp gets `extensions/daily-driver.js`, whose job is to block the
+multiple-choice question widget and to supply the session-title and timer
+tools Omp has no hook mechanism for.
 
-**Harness routes live in reference files, not in `SKILL.md`.** A `SKILL.md`
+**Harness routes belong in reference files, not in `SKILL.md`.** A `SKILL.md`
 says what the skill decides and why. The tool routes that carry it out —
 which call names a pull request, which call sets a title — go in
-`skills/<name>/references/claude.md` and `skills/<name>/references/omp.md`, and
-are read on demand by the session that needs them.
+`skills/<name>/references/claude.md` and `skills/<name>/references/omp.md`, read
+on demand by the session that needs them. This is the shape the skills are
+being moved to; no skill carries a `references/` directory yet.
 
 The `description` frontmatter is the exception. It is the trigger, so it is
 read before any reference file can be, and it must be complete for both
@@ -64,9 +70,11 @@ the round carries them and nothing on GitHub records that the round happened.
 therefore Claude Code only; on Omp the round is answered in the session and in
 the commits it produces.
 
-**CI installs Omp from its binary installer**, with
+**CI takes Omp from its binary installer** when it takes Omp at all, with
 `curl -fsSL https://omp.sh/install | sh`. The binary carries its own runtime,
-so CI needs nothing else.
+so CI needs nothing else. No workflow installs it today: the Omp half of
+`make check` is `check-omp-extension`, which drives the adapter under Node
+with a faked `ExtensionAPI` and needs no Omp at all.
 
 *Rejected: `bun install -g`.* That route needs Bun present at runtime, which
 adds a toolchain to every job that runs the Omp half of the checks.

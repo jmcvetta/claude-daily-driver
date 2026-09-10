@@ -291,6 +291,12 @@ Every finding gets a verdict, on its thread, and the thread is closed:
 Every reviewer is the same protocol — Claude's own findings, a human's, a
 bot's. None of it is reviewer-specific.
 
+**It is harness-specific.** The threads are a GitHub review surface, and a
+harness whose reviewer leaves no threads has none to answer or resolve: the
+round then carries the findings and the commits are the record.
+[`0011`](../../docs/notes/0011-two-harnesses-one-skill-tree.md) is the
+decision.
+
 The reply
 ---------
 
