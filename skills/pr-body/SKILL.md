@@ -57,3 +57,11 @@ Issues
 When revising a body that already carries such a section, carry it across. A
 rewrite that drops a `Closes #123` silently stops the merge from closing the
 issue.
+
+
+Setting it
+----------
+
+The call that sets the body, whether on a new pull request or an existing
+one, differs by harness: [`references/claude.md`](references/claude.md) and
+[`references/omp.md`](references/omp.md) name it.

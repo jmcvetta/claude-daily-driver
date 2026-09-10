@@ -66,3 +66,11 @@ Opening a pull request
 Opening a pull request is the `pr` skill's job. When the title is being written
 as part of opening one, follow `pr` as well, for the branch guard, the
 existing-PR check and draft state.
+
+
+Setting it
+----------
+
+The call that sets the title, whether on a new pull request or an existing
+one, differs by harness: [`references/claude.md`](references/claude.md) and
+[`references/omp.md`](references/omp.md) name it.

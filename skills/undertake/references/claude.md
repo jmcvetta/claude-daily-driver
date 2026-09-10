@@ -1,0 +1,73 @@
+# Claude Code routes — undertake
+
+`SKILL.md` names each operation in words. This file names the call, for a
+session running in Claude Code. Omp's routes are in [`omp.md`](omp.md).
+
+
+The issue
+=========
+
+| Step | Operation | Call |
+| ---- | --------- | ---- |
+| `Open the issue` | Search the open issues | `mcp__github__search_issues` |
+| `Open the issue` | Open one | `mcp__github__issue_write` |
+| `Read the issue and its edges` | Read the body and the graph | `mcp__github__issue_read` |
+| `Claim the issue` | Comment on the issue | `mcp__github__add_issue_comment` |
+
+`issue-deps` owns the edge writes, and has its own routes.
+
+
+The pull request
+================
+
+| Step | Operation | Call |
+| ---- | --------- | ---- |
+| `Open the draft` | Open it | `pr`, which owns the call |
+| `Ready for review` | Take it out of draft | `mcp__github__update_pull_request`, `draft: false` |
+| `Keep it current` | Merge the base branch in | `mcp__github__update_pull_request_branch` |
+| `A round after ready goes back to draft` | Return it to draft | `mcp__github__update_pull_request`, `draft: true` |
+
+`Review the head` and `Fix, answer, resolve, push` are `review-cycle`'s, and
+its own `references/claude.md` has the review surface, the wait and the thread
+clients.
+
+
+The session
+===========
+
+`mcp__Claude_Code_Remote__get_session`, with `session_id` omitted, describes
+the caller. It is the one call, and `Claim the issue` and `Cut the branch` read
+three things out of it.
+
+| What | Field |
+| ---- | ----- |
+| The designated branch | `session_context.outcomes[].git_repository.git_info.branches` |
+| The repository it is pushed to | `session_context.outcomes[].git_repository.git_info.repo` |
+| The model that served the turn | `external_metadata.last_served_model` |
+| The model the session is set to | `session_context.model`, `configured_model` |
+| The session id | the call's own `id`, for `https://claude.ai/code/session_…` |
+
+**Both branch fields are arrays.** Read the outcome whose `git_info.repo` names
+the repository this work will be pushed to, and take the one branch it lists.
+More than one is the stop `SKILL.md` states, not a pick.
+
+**`external_metadata.current_branches` is a different field** and answers a
+different question — what is checked out, which before `Cut the branch` need
+not be the designated branch.
+
+Where this call is absent — a laptop without the Claude Code Remote tools —
+`Claim the issue` says the surface supplied no model and no session, and
+`Cut the branch` falls through to its second and third sources.
+
+
+The cadence
+===========
+
+`Keep it current`'s check-ins need a durable wake, and Claude has one:
+`mcp__Claude_Code_Remote__send_later`, two minutes out, cancelled with
+`mcp__Claude_Code_Remote__delete_trigger`. It survives the session that armed
+it, which is what makes a cadence across turns possible at all.
+
+The slot it occupies is the same slot `review-cycle`'s wait borrows and hands
+back, and the rule for both is
+[`0010`](../../../docs/notes/0010-the-wake-slot-is-never-empty.md).

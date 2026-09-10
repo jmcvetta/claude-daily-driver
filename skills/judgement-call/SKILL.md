@@ -95,14 +95,14 @@ genuinely does not settle it:
   skill overrides none of them.
 
 **A question that survives is asked in prose, not in the widget.**
-The widget is closed on both harnesses by each one's own adapter — Claude
-denies `AskUserQuestion` through the `PreToolUse` hook
-`hooks/ask-in-chat.py`, and Omp blocks its `ask` tool in the runtime
-adapter `extensions/daily-driver.js`, telling the model not to retry and to
-ask in chat. [`0009`](../../docs/notes/0009-deny-the-question-widget.md) is
-why either harness closes the widget at all. So the question goes in the
-chat reply: the question written out, the options as a short list, and the
-one recommended named with its reason. That hook and this gate are ordered
+The widget is closed on both harnesses, each by its own deny adapter:
+[`references/claude.md`](references/claude.md) and
+[`references/omp.md`](references/omp.md) name the adapter and what it does
+when the model reaches for the widget.
+[`0009`](../../docs/notes/0009-deny-the-question-widget.md) is why either
+harness closes the widget at all. So the question goes in the chat reply:
+the question written out, the options as a short list, and the one
+recommended named with its reason. That deny and this gate are ordered
 rather than overlapping. It decides how a question is put; this skill
 decides whether there is one.
 

@@ -41,6 +41,13 @@ stale, and a citation is what makes the drift visible. There is no exception.
 
 What this skill owns is the sequencing and the gates between the steps.
 
+**The routes are per harness, and they live beside this file.** Every call the
+steps below need is named in words here and resolved to a route there:
+[`references/claude.md`](references/claude.md) for Claude Code,
+[`references/omp.md`](references/omp.md) for Oh My Pi. Read the one for the
+harness in use before `Claim the issue`, which is the first step that writes
+anything.
+
 **Every step has a name, and the name is how it is cited** — here and in every
 other file that refers to one. The numbers order the sequence and do nothing
 else: insert a step and all of them move, while a name stays where it was put.
@@ -57,14 +64,14 @@ The sequence
 | - | ---- | ----- |
 | 0 | `Open the issue` | this skill, `issue-deps` |
 | 1 | `Title the session` | `session-title` |
-| 2 | `Read the issue and its edges` | `mcp__github__issue_read` / `issue://`, `issue-deps` |
+| 2 | `Read the issue and its edges` | the harness's issue client, `issue-deps` |
 | 3 | `Claim the issue` | this skill |
 | 4 | `Cut the branch` | this skill |
 | 5 | `Implement` | the constitution |
 | 6 | `Open the draft` | `pr` |
 | 7 | `Review the head` | `review-cycle` |
 | 8 | `Fix, answer, resolve, push` | `review-cycle` |
-| 9 | `Ready for review` | `mcp__github__update_pull_request` / `gh pr ready` |
+| 9 | `Ready for review` | the harness's pull request client |
 | 10 | `Keep it current` | this skill, `review-cycle` |
 
 `Review the head` and `Fix, answer, resolve, push` are `review-cycle`'s own
@@ -82,16 +89,13 @@ this step is what supplies one, and the ten after it are unchanged: what would
 otherwise happen is a branch, a review and a merge with no record of why any of
 it was wanted, and a pull request body with nothing to close.
 
-**Search before writing.** `mcp__github__search_issues` (Claude) or
-`github.search_issues` / `gh search issues` (Omp) over the repository's
-open issues first: work described in a prompt has often been described in an
+**Search before writing.** Search the repository's open issues first: work described in a prompt has often been described in an
 issue already, and a second issue for it splits the trail in two. Where one
 already covers the request, that is the issue — go on to `Title the session`
 with it, and say which one it is, so a wrong match is corrected before the
 branch is cut.
 
-Otherwise open one with `mcp__github__issue_write` (Claude) or `gh issue
-create` (Omp). Title and body record what
+Otherwise open one. Title and body record what
 was asked and no more: an issue is the statement of the request, and scope
 invented for it is scope the pull request is then measured against. No
 permission is asked — the invocation is the authorisation, and an issue is
@@ -125,10 +129,8 @@ line and go on to `Read the issue and its edges`.
 2 — Read the issue and its edges
 --------------------------------
 
-The body, and then the graph: parent, sub-issues, blocked-by. Read it with
-`mcp__github__issue_read` on Claude or the `issue://` internal URL on Omp —
-the same cache the harness's `github` tool writes to, with the graphs the two
-clients expose. **An issue
+The body, and then the graph: parent, sub-issues, blocked-by. Read both
+through the harness's issue client, which the reference file names. **An issue
 blocked by an open one is a stop, not a start** — say which issue blocks it
 and wait. Reading the graph is free and needs no confirmation; `issue-deps`
 says so.
@@ -140,9 +142,7 @@ another.
 3 — Claim the issue
 -------------------
 
-One comment on the issue — `mcp__github__add_issue_comment` on Claude,
-`gh issue comment -b "…"` on Omp — saying that
-this session has taken the work. It goes up before the branch is cut, because
+One comment on the issue, saying that this session has taken the work. It goes up before the branch is cut, because
 an issue carrying no claim reads as unstarted, and two agents starting the same
 issue is the waste the claim exists to prevent.
 
@@ -158,8 +158,7 @@ Beyond the claim itself the comment carries three things:
   fork is not the repository the issue is in: read it from
   `session_context.outcomes[].git_repository.git_info.repo`, the same entry
   `Cut the branch`'s first source reads, or from the `origin` remote where
-  there is no
-  call. Built from the issue's repository instead, the link 404s for good
+  the harness has no such call. Built from the issue's repository instead, the link 404s for good
   rather than only until the push, and the trade below stops holding. A reader
   of the issue can otherwise reach the session but not the code: until the pull
   request opens at `Open the draft` nothing on GitHub ties the issue to a
@@ -180,17 +179,13 @@ Beyond the claim itself the comment carries three things:
   call's session id. The identifier is what the reader needs; the link is that
   identifier and somewhere to go with it.
 
-The model and the session are read from `mcp__Claude_Code_Remote__get_session`
-— the call `session-title` documents, on the one surface it says supplies it —
-and so is the branch, where the harness designated one. On Omp there is no such
-call: the claim names the branch from where this skill's `Cut the branch` gets
-it — the harness's git state (`git branch --show-current`, and the `origin`
-remote for `OWNER/REPO`) — and says the surface supplied no model and no
-session, which is the truth of an Omp session.
+The model and the session come from the harness's session call, where it has
+one — the call `session-title` documents — and so does the branch, where the
+harness designated one. The reference file says which of the three the harness
+in use can answer.
 
-Where the Claude call is unavailable the comment still goes up
-— that is every Omp session and every laptop — and says the surface
-supplied neither. `session-title` stops there because a title it cannot set is
+**Where the harness supplies no such call the comment still goes up**, and says
+so. `session-title` stops there because a title it cannot set is
 nothing; a claim that names no model is still a claim. The branch is not lost
 with them: `Cut the branch`'s second and third sources need no call at all —
 the project's convention where it documents one, and `issue-<number>-<slug>`
@@ -218,21 +213,11 @@ branch nobody pushed to is worse than a claim naming none. Three sources, in
 this order:
 
 1. **The branch the harness designated for this session**, where it designated
-   one — and the two harnesses designate differently.
-   - **Claude Code Remote**: `mcp__Claude_Code_Remote__get_session` reports it
-     at `session_context.outcomes[].git_repository.git_info.branches`. Both of
-     those are arrays: read the outcome whose `git_info.repo` names the
-     repository this work will be pushed to, and take the one branch it lists.
-     Where it lists more than one, the source has not answered — that is the
-     stop below, not a pick. Nothing is chosen here otherwise: a web worker
-     refuses a push anywhere else.
-     `external_metadata.current_branches` is a different field and answers a
-     different question — what is checked out, which before this step need not
-     be the designated branch.
-   - **Omp**: the harness's own git state is the designation. `git branch
-     --show-current` names the branch this session works on, and a worktree
-     Omp created for the work carries it. Where the checkout names a branch
-     already, that branch is the one this session will push.
+   one. The harnesses designate differently and the reference file has the
+   field to read. Two rules hold either way: **exactly one branch is an
+   answer**, and where the source names more than one it has not answered —
+   that is the stop below, not a pick. Nothing is chosen here otherwise, since
+   a worker that was given a branch refuses a push anywhere else.
 2. **The project's own convention**, where it documents one.
 3. **`issue-<number>-<slug>`**, failing both. The number leads for the reason
    `session-title` gives it the lead in a session title: it is the identifier
@@ -268,8 +253,7 @@ resolve, push`, and the ready gate below is what it has to satisfy in the end.
 
 Invoke `review-cycle`. It owns the wait for CI on the pushed head — the
 mechanism as well as the rule, under `How to wait` — the harness's review
-surface (`/code-review` on Claude, the `reviewer` task agent on Omp), the
-protocol every finding is answered and
+surface at a level it names, the protocol every finding is answered and
 resolved under, and the test for whether a later push has earned a second
 review.
 
@@ -287,8 +271,7 @@ same test and from the same mark.
 9 — Ready for review
 --------------------
 
-`mcp__github__update_pull_request` with `draft: false` on Claude, `gh pr
-ready` on Omp. See the gate below
+**Take the pull request out of draft.** See the gate below
 first: this step is conditional, and `Keep it current` runs before it — the
 gate's first condition is that step's merge, so the sequence reaches it once
 out of the table's order and then again on its own cadence.
@@ -315,9 +298,9 @@ carries the condition; this step carries the merge that satisfies it, and the
 step is written once for both. Ready is not the end either, so it runs again on
 the cadence under `When it looks`.
 
-**The merge is `mcp__github__update_pull_request_branch` on Claude, `gh pr
-update-branch` on Omp.** It merges the base
-branch into the head server-side, so it needs no checkout: by the time this
+**The merge is the harness's update-branch call**, whichever one the reference
+file names. It merges the base branch into the head server-side, so it needs no
+checkout: by the time this
 runs, the session may be on another branch, and the working tree it had may be
 gone. The call is the test as well as the merge — GitHub answers that the
 branch is already up to date when there is nothing to bring in, so nothing
@@ -331,17 +314,23 @@ When it looks
 -------------
 
 Once before `Ready for review`, as the gate's look rather than the cadence's.
-The cadence itself starts from the ready pull request, unchanged: a check-in
-every two minutes, one scheduled wake at a time — `mcp__Claude_Code_Remote__send_later`
-on Claude, `daily_driver_schedule` on Omp — carrying the instruction to
-look again, the discipline `review-cycle`'s `The backstop` states for the same
-reason.
+The cadence itself starts from the ready pull request, and it needs a **durable
+wake** — a scheduled wake that survives the session that armed it. Where the
+harness has one, the cadence is a check-in every two minutes, one scheduled
+wake at a time, carrying the instruction to look again — the discipline
+`review-cycle`'s `The backstop` states for the same reason. The reference file
+says whether the harness in use has such a wake, and names the call.
+
+**Where it has none, there is no cadence.** Say once, at `Ready for review`,
+that the branch is kept current by the next session that picks the pull request
+up, and stop. A watch a surface cannot keep is worse claimed than skipped. A
+timer that dies with the session is not a durable wake, whatever it is called.
 
 **Never end a turn with the wake slot empty while the check-ins are running.**
 They run from `Ready for review` until the pull request is merged or closed or
-the user says to stop, and on a surface that has the scheduler at all — the
+the user says to stop, and on a surface that has the durable wake at all — the
 three exits below, and nothing narrower. Inside them the slot is that one
-timer, held by the `trigger_id` the call returned, and it empties two ways: the
+timer, held by the identifier the call returned, and it empties two ways: the
 timer fires, or a CI wait cancels it at `End the wait`. Both are the same
 instruction — fill it before the turn ends. What arms a check-in is therefore
 an empty slot rather than a particular kind of wake: a wake with the timer
@@ -369,9 +358,6 @@ The check-ins end when the pull request is merged or closed, or when the user
 says to stop. A pull request nobody merges is not a reason to wake a session
 for ever.
 
-Where the scheduler is absent — a laptop — there are no check-ins. Do the step
-whenever the session is next on the pull request, and say so once, rather than
-claiming a watch the surface cannot keep.
 
 After the merge
 ---------------
@@ -399,9 +385,7 @@ One round over it, and `review-cycle` decides anything further.
 A round after ready goes back to draft
 --------------------------------------
 
-`mcp__github__update_pull_request` with `draft: true` on Claude, `gh pr ready
---undo` on Omp, before `Review the head`
-runs, and ready again through `The gate` below when the round closes — the
+**Return the pull request to draft** before `Review the head` runs, and ready again through `The gate` below when the round closes — the
 same gate, not a second one. A pull request under review is not ready for
 review, and a reviewer must not be reading a branch that is changing
 underneath them.
@@ -467,8 +451,7 @@ a running check stop it to report, and wait on something other than an answer.
 - **CI still running**, at `Ready for review`. A wait, not a question —
   nothing is asked, and nothing proceeds on a check that has not reported.
 - **A base merge that conflicts**, at `Keep it current`.
-  `mcp__github__update_pull_request_branch` (Claude) / `gh pr update-branch`
-  (Omp) cannot resolve a conflict: either fails
+  The update-branch call cannot resolve a conflict: it fails
   and changes nothing, so a resolution is a local merge, resolved and pushed.
   Resolve it where the resolution is plain — a moved import, two files that
   never met. Where both sides changed the same logic, picking either loses

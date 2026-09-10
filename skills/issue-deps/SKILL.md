@@ -181,22 +181,17 @@ is all a web worker has. It closes the traps described below by construction —
 it takes issue references, never raw ids, refuses a pull request at either
 end, and verifies every write from the other end.
 
-Always invoke it through the harness's own skill-directory path. A skill's
-Bash runs in the user's project, not in the plugin, so a relative
-`scripts/issue-deps.sh` is "No such file or directory" — or worse, silently
-runs an unrelated file in a project that has its own `scripts/`. Each
-harness injects the path differently:
-
-- **Claude** — through `${CLAUDE_PLUGIN_ROOT}`, the plugin root the harness
-  injects into a skill's Bash.
-- **Omp** — through the injected skill-directory path, resolved as
-  `skill://issue-deps/scripts/issue-deps.sh`; Omp's Bash resolves the
-  `skill://` URL to the plugin's skill directory, which is where this script
-  lives.
+Always invoke it through the harness's own injected skill-directory path,
+never a relative one. A skill's Bash runs in the user's project, not in the
+plugin, so a relative `scripts/issue-deps.sh` is "No such file or
+directory" — or worse, silently runs an unrelated file in a project that
+has its own `scripts/`. Each harness injects this path under its own name;
+[`references/claude.md`](references/claude.md) and
+[`references/omp.md`](references/omp.md) give the exact form.
 
 ```sh
-deps="${CLAUDE_PLUGIN_ROOT}/skills/issue-deps/scripts/issue-deps.sh"   # Claude
-deps="skill://issue-deps/scripts/issue-deps.sh"                        # Omp
+# $deps is this skill's own script, resolved per the reference file for the
+# harness in use — references/claude.md or references/omp.md.
 
 "$deps" blocked-by 191            # what #191 waits on
 "$deps" blocking   188            # what waits on #188

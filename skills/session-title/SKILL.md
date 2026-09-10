@@ -24,12 +24,12 @@ That is the whole design constraint.
 Budget: 40 characters
 =====================
 
-Claude's `set_session_title` accepts 500. Forty is this skill's own cap, chosen rather
-than measured — short enough to survive the mobile list at the width it is
-read on, long enough to say which session this is. A measurement, when someone
-takes one, is what may move it. Omp's `daily_driver_set_session_title` accepts
-whatever the runtime's session-name limit is; the forty-character cap applies
-there too, because the cap is this skill's, not the tool's.
+Every harness's title tool accepts far more than forty. Forty is this skill's
+own cap, chosen rather than measured — short enough to survive the mobile list
+at the width it is read on, long enough to say which session this is. A
+measurement, when someone takes one, is what may move it. The cap is this
+skill's and not the tool's, so it holds on every harness, whatever that
+harness's own limit turns out to be.
 
 - **Hard cap, 40 characters**, counting the whole string, `#123 ` prefix
   included. Past that the title is cut where the renderer reaches rather than
@@ -94,21 +94,14 @@ A short noun phrase naming what the session is actually doing.
 Setting it
 ==========
 
-The call differs by harness, and each harness names its own surface.
+Setting the title is the harness's own call — each harness names its own
+surface, and how many calls that takes differs between them:
+[`references/claude.md`](references/claude.md) and
+[`references/omp.md`](references/omp.md) give the exact path.
 
-**Claude Code Remote.** `mcp__Claude_Code_Remote__set_session_title`
-requires a `session_id`, and the one that matters is this session's. Get it
-from `mcp__Claude_Code_Remote__get_session` with `session_id` omitted,
-which describes the caller — the current two-call session-id path: read the
-session, then set the title on the session id it answered.
-
-**Omp.** `daily_driver_set_session_title({ title })` takes the title alone;
-the runtime adapter (`extensions/daily-driver.js`) applies it to the
-current session, so there is no session id to look up first.
-
-Where neither surface exists — a laptop session without the Code Remote
-tools and outside Omp — there is no way to set the title from here: say so
-and stop, rather than reaching for a substitute.
+Where no such surface exists — a session on neither harness — there is no
+way to set the title from here: say so and stop, rather than reaching for a
+substitute.
 
 
 When to set it

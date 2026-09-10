@@ -25,6 +25,11 @@ the body structure in `pr-body`; invoke each rather than restating it, so that
 a later edit to a title or a body follows the same rules whether or not it
 arrived through here.
 
+The GitHub calls behind each step below differ by harness.
+[`references/claude.md`](references/claude.md) and
+[`references/omp.md`](references/omp.md) name them, operation by operation,
+in the order this file raises them.
+
 
 Branch
 ------
@@ -38,8 +43,8 @@ Branch
 Already Existing PR
 -------------------
 
-First check whether there is already a PR for this branch. If there is, update
-the existing PR.
+First check whether there is already a PR for this branch — see the
+reference files for the check itself. If there is, update the existing PR.
 - Update both title and body of existing PR — the title under `pr-title`,
   which does not rewrite a type this session did not write
 
