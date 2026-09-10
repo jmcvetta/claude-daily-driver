@@ -8,7 +8,9 @@ description: >-
   review?", and including any call Claude makes on its own initiative to the
   built-in `/code-review` aimed at a pull request, to
   `mcp__github__add_reply_to_pull_request_comment`, or to
-  `mcp__github__resolve_review_thread`. Supplies the wait for CI on the pushed
+  `mcp__github__resolve_review_thread` — and, on Omp, to a
+  `github.run_watch` on a pull request's head, to the `reviewer` task agent
+  for a review, or to a GitHub CLI/API review-thread operation. Supplies the wait for CI on the pushed
   head — the mechanism, not only the rule — the review invocation and its
   named effort level, the protocol every finding is answered under, and the
   test for whether a later push has earned a second round. Do NOT use this skill for opening a pull request or bringing
@@ -22,10 +24,12 @@ One round: **review, answer, and decide whether it goes again.** A pull request
 is reviewed once per diff, every finding it raises is closed out, and a push
 that only answered the review does not buy a second review.
 
-The analysis is the session's built-in `/code-review`. What this skill supplies
+The analysis is the harness's own review surface: Claude's built-in
+`/code-review`, or Omp's `reviewer` task agent dispatched through the
+`task` tool. What this skill supplies
 is the four things around it — the wait for CI, the level, the thread protocol,
-and the re-review test — none of which the built-in has an opinion about, and
-all four of which are the ones that go wrong.
+and the re-review test — none of which either surface has an opinion about,
+and all four of which are the ones that go wrong.
 
 Callers keep their own gates. `undertake` runs this round between its `Open the
 draft` and `Ready for review` steps, runs it again where its `Keep it current`
@@ -39,7 +43,7 @@ The round
 
 | # | Stage | Owner |
 | - | ----- | ----- |
-| 1 | `Review the head` | the built-in `/code-review` |
+| 1 | `Review the head` | the harness's review surface (`/code-review`, or the `reviewer` task agent) |
 | 2 | `Fix, answer, resolve, push` | this skill |
 | 3 | `Does it go again?` | this skill |
 
@@ -54,7 +58,7 @@ inserted and a name does not.
 **A round entered on findings that already exist starts at `Fix, answer,
 resolve, push`.** Half the register arrives that way — *"address the review
 feedback"*, *"reply to the review comments"*, *"resolve those threads"* — and
-the findings are then a human's, a bot's, or an earlier `/code-review`'s.
+the findings are then a human's, a bot's, or an earlier round's.
 Running `Review the head` over them would post a fresh set on top of the ones
 somebody asked to have answered, which is worse than not firing at all.
 `Review the head` is for a head nobody has reviewed yet; `Does it go again?`
@@ -71,21 +75,41 @@ The wait ends when every check has reported, whichever way it reported: a red
 check is a fact about the branch, not a reason to hold the review, and
 `Fix, answer, resolve, push` is where it is answered.
 
-Then run the session's built-in **`/code-review`** against the pull request,
-with `--comment`.
+Then run the review against the pull request:
+
+- **Claude** — the built-in **`/code-review`** with `--comment`, so findings
+  land on the pull request as resolvable review threads.
+- **Omp** — dispatch the **`reviewer`** task agent over the pull request
+  (its `pr://` diff), and take its findings as the round's findings.
 
 How to wait
 -----------
 
-**Subscribe to the pull request, and let the events wake the session.** Nothing
-in the toolkit blocks until CI reports, so the wait was once a poll: read the
+The wait is the harness's mechanism, and the two harnesses wait differently.
+
+**Claude — subscribe, and let the events wake the session.** Nothing in the
+Claude toolkit blocks until CI reports, so the wait was once a poll: read the
 checks, wake two minutes later, read again. The poll is still here, as the
 backstop rather than as the mechanism.
 
 Four parts, and the last one is not optional: a wait that subscribes and arms a
 timer has two things running that outlive it.
 
-### Subscribe
+**Omp — `github.run_watch`.** The built-in `github` tool's `run_watch` op
+watches the head commit's Actions runs and streams until every one has
+reported; success is double-checked with one more poll before it returns, and
+a failure names the failed jobs. It is the blocking watch Claude has no
+equivalent of, so no subscription and no backstop are needed around it. Where
+a later wake is *actually* required — the round must hand the pull request
+back to itself after work that spans turns — schedule it with
+`daily_driver_schedule` and cancel it with `daily_driver_cancel_schedule`. A
+wake scheduled with nothing to do on it is the noise
+[`0010`](../../docs/notes/0010-the-wake-slot-is-never-empty.md) exists to
+prevent, so the Omp rule is narrower than Claude's: schedule only when the
+round genuinely must come back, never on a wait `run_watch` already
+completed.
+
+### Subscribe (Claude)
 
 - **Subscribe** with `mcp__github__subscribe_pr_activity`, once, before the
   first read. CI results then arrive as `<wake reason="external-event">`
@@ -102,7 +126,7 @@ timer has two things running that outlive it.
   `mcp__Claude_Code_Remote__subscribe_pr_activity` with the same contract;
   where both exist, use the GitHub one, and use one namespace throughout.
 
-### The read
+### The read (Claude)
 
 - **Every wake ends in a read**, and the read is what decides. The event is a
   wake, never a verdict. Webhook delivery is not a guarantee: the harness's own
@@ -131,7 +155,7 @@ timer has two things running that outlive it.
   on with what the turn was doing. A wake arriving after the wait is over is a
   no-op for the same reason.
 
-### The backstop
+### The backstop (Claude)
 
 - **Wake** with `mcp__Claude_Code_Remote__send_later`, two minutes out,
   carrying the instruction to read again — then end the turn. The scheduler is
@@ -161,7 +185,7 @@ timer has two things running that outlive it.
   wait exists not to guess at, and a check stuck for fifteen minutes is a
   report to the user rather than a longer wait.
 
-### End the wait
+### End the wait (Claude)
 
 Both halves are running until something stops them, and neither stops itself.
 On the wake that ends the wait — every check reported, however it reported, or
@@ -207,21 +231,24 @@ cannot wake the session, which is the report this mechanism answers.
 what was rejected with it.
 
 Where a surface has neither the subscription nor the scheduler — a laptop
-session — the wait is what that surface can block on, with a human watching the
-terminal: `gh pr checks --watch <number>` where the CLI is installed, inside
-the Bash timeout. Failing that, read the checks once, and where they have not
-all reported, say so and stop. A session that cannot wake itself cannot wait,
-and a wait it only claims to perform is worse than the stop.
+Claude session — the wait is what that surface can block on, with a human
+watching the terminal: `gh pr checks --watch <number>` where the CLI is
+installed, inside the Bash timeout. Failing that, read the checks once, and
+where they have not all reported, say so and stop. A session that cannot wake
+itself cannot wait, and a wait it only claims to perform is worse than the
+stop. On Omp this case does not arise the same way: `github.run_watch` is
+present wherever the `github` tool is enabled, which is the laptop Omp surface
+too.
 
 
 Name the level
 --------------
 
-**Name it; never inherit the remembered one.** `medium` by default, `high`
-where the diff is large, or where it touches authentication, cryptography,
-access policy, or a data migration. Naming it is what makes two rounds on one
-branch comparable — `/code-review` otherwise reuses whatever level was typed
-last, in some other session, about some other diff.
+**Claude: name it; never inherit the remembered one.** `medium` by default,
+`high` where the diff is large, or where it touches authentication,
+cryptography, access policy, or a data migration. Naming it is what makes two
+rounds on one branch comparable — `/code-review` otherwise reuses whatever
+level was typed last, in some other session, about some other diff.
 
 **Nothing deeper is selectable here.** `xhigh` and `max` belong to the author,
 who names one in the moment and unambiguously. The round is unattended and it
@@ -232,27 +259,35 @@ fires on a renamed CI job, and misses the one-line change to a comparison that
 decides access. At `high` that guess is cheap and worth making. Above it, the
 same guess is not.
 
-A reviewer, not a subagent
---------------------------
+**Omp: there is no level to name.** The `reviewer` task agent takes no effort
+argument; the round names the agent and nothing more. The depth judgement is
+the agent's, and the two bullets above exist because Claude's built-in
+remembers a level — on Omp there is nothing to remember.
 
-Not "dispatch a subagent to code review the branch". A bare subagent inherits
-no rubric, has no level anybody chose, and posts nothing — its findings die in
-the transcript, and `Fix, answer, resolve, push` has nothing to answer. The
-built-in is the reviewer, and `--comment` is what makes its findings survive
-the session.
+A reviewer, not a bare subagent
+------------------------------
 
-`--comment` is also what carries the findings out of the terminal and onto the
-pull request, where they remain the record of why the branch was judged ready.
-They arrive as **resolvable review threads**, inline on the diff under a
-submitted `COMMENT` review — measured on live pull requests at `medium` and
-again at `max`, CLI 2.1.263, 2026-09-07, and recorded in
-[`0001`](../../docs/notes/0001-built-in-review-surface.md) §4. The default level
-is measured rather than assumed from a deeper level's result, so the
-reply-and-resolve of `Fix, answer, resolve, push` is the ordinary path rather
-than a hoped-for one.
+The reviewer is a named surface the round chose, never a bare subagent. "Bare
+subagent" means an ad-hoc dispatch with no rubric: it inherits nothing, has no
+level anybody chose, and posts nothing — its findings die in the transcript,
+and `Fix, answer, resolve, push` has nothing to answer.
 
-Should a later CLI post plain issue comments instead, `Fix, answer, resolve,
-push` degrades to reply-only: read them with `get_comments` rather than
+- **Claude** — the built-in `/code-review` is the reviewer, and `--comment`
+  is what makes its findings survive the session and land on the pull request
+  as resolvable review threads — measured on live pull requests at `medium`
+  and again at `max`, CLI 2.1.263, 2026-09-07, and recorded in
+  [`0001`](../../docs/notes/0001-built-in-review-surface.md) §4. The default level
+  is measured rather than assumed from a deeper level's result, so the
+  reply-and-resolve of `Fix, answer, resolve, push` is the ordinary path rather
+  than a hoped-for one.
+- **Omp** — the `reviewer` task agent is that named surface: a code-review
+  specialist, dispatched through the `task` tool with the type it names and
+  taking the review brief for the pull request. Its findings survive because
+  the round writes them from the agent's result into `Fix, answer, resolve,
+  push`; they do not arrive on the pull request as threads by themselves.
+
+Should a later Claude CLI post plain issue comments instead, `Fix, answer,
+resolve, push` degrades to reply-only: read them with `get_comments` rather than
 `get_review_comments`, answer with `mcp__github__add_issue_comment`, and read
 *resolve* as *answered in a comment* — in this file **and in the caller's
 gate**, where a bullet asking for no unresolved thread would otherwise be a
@@ -305,10 +340,17 @@ it into a discussion reopens the thread the rule just closed.
 The clients, and the identifier trap
 ------------------------------------
 
-Read the threads with `mcp__github__pull_request_read` using its
-`get_review_comments` method, reply with
-`mcp__github__add_reply_to_pull_request_comment`, close with
-`mcp__github__resolve_review_thread`.
+The clients differ by harness; the identifiers and the trap are the same.
+
+- **Claude** — read the threads with `mcp__github__pull_request_read` using
+  its `get_review_comments` method, reply with
+  `mcp__github__add_reply_to_pull_request_comment`, close with
+  `mcp__github__resolve_review_thread`.
+- **Omp** — the built-in `github` tool has no review-thread operation, so the
+  round uses the GitHub CLI/API: read the threads from the pull request's
+  review comments, reply with `gh api` (POST
+  `/repos/{owner}/{repo}/pulls/{n}/comments/{comment_id}/replies`), and close
+  with the `resolveReviewThread` GraphQL mutation.
 
 **The two calls take different identifiers, and only one of them is a field.**
 Measured 2026-09-06: resolve wants the thread's `id`, a `PRRT_…` node ID, read

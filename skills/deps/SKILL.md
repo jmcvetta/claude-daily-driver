@@ -5,13 +5,15 @@ description: >-
   upgraded in bulk, or whenever open Dependabot pull requests are the thing to
   answer — including when the user says "/deps", "dependabot is complaining",
   "upgrade the deps", "these dependency PRs are piling up", or "bump
-  everything". Noticing open Dependabot pull requests during other work is
+  "bump everything". Noticing open Dependabot pull requests during other work is
   worth a line to the user and is not itself a trigger, because a bulk upgrade
   started mid-task is scope nobody asked for. Supplies the one-branch bulk
   upgrade, the bulk command each manager already has, green CI as the whole
   acceptance test, and the boundary an unattended run stays inside — no merge,
   no code edited around a breaking change, and nothing outside the pull
-  request it opens. Not for a
+  request it opens — and names the harness's PR routes (`mcp__github__…` MCP
+  calls on Claude, Omp's `github` tool and `gh` routes for the same
+  operations). Not for a
   single named dependency, which is ordinary work, and not for a major version
   bump, which this skill reports and hands to `undertake`.
 ---
@@ -57,7 +59,8 @@ run:
   request, nothing closed, and no issue opened. Opening the pull request and
   marking it ready are the run's whole footprint on GitHub.
 - **Ready is the end, and only on green.** `pr` opens a draft; the run marks
-  it ready with `mcp__github__update_pull_request` once every check has
+  it ready with `mcp__github__update_pull_request` (Claude) / `gh pr ready`
+  (Omp) once every check has
   reported green, and leaves it a draft with the failure named when one has
   not. No round runs in between — see `Green CI is the acceptance test` — so
   there is nothing else for the draft to wait on.
@@ -68,10 +71,14 @@ The pass
 
 **Read what is behind from the open Dependabot pull requests**, rather than
 guessing at it from the manifest. `mcp__github__search_pull_requests` with
-`is:open author:app/dependabot` is the list, and each title names the
+`is:open author:app/dependabot` (Claude), or `github.search_prs` with the
+same query (Omp — the `github` tool's search op, the same underlying `gh pr
+list --search`), is the list, and each title names the
 dependency and the version it wants. Not `mcp__github__list_pull_requests`:
 it takes no author, so a filter written for it is one the server never
-applies, and a busy repository answers with everybody's pull requests.
+applies, and a busy repository answers with everybody's pull requests — and
+the Omp `github` tool exposes no list op either, so `search_prs` is the
+list route on both harnesses.
 
 **Upgrade every ecosystem the repository declares, on one branch.** One CI run
 over the whole upgrade is the point. `.github/dependabot.yml` says which

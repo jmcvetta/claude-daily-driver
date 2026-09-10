@@ -181,13 +181,22 @@ is all a web worker has. It closes the traps described below by construction —
 it takes issue references, never raw ids, refuses a pull request at either
 end, and verifies every write from the other end.
 
-Always invoke it through `${CLAUDE_PLUGIN_ROOT}`. A skill's Bash runs in the
-user's project, not in the plugin, so a relative `scripts/issue-deps.sh` is
-"No such file or directory" — or worse, silently runs an unrelated file in a
-project that has its own `scripts/`.
+Always invoke it through the harness's own skill-directory path. A skill's
+Bash runs in the user's project, not in the plugin, so a relative
+`scripts/issue-deps.sh` is "No such file or directory" — or worse, silently
+runs an unrelated file in a project that has its own `scripts/`. Each
+harness injects the path differently:
+
+- **Claude** — through `${CLAUDE_PLUGIN_ROOT}`, the plugin root the harness
+  injects into a skill's Bash.
+- **Omp** — through the injected skill-directory path, resolved as
+  `skill://issue-deps/scripts/issue-deps.sh`; Omp's Bash resolves the
+  `skill://` URL to the plugin's skill directory, which is where this script
+  lives.
 
 ```sh
-deps="${CLAUDE_PLUGIN_ROOT}/skills/issue-deps/scripts/issue-deps.sh"
+deps="${CLAUDE_PLUGIN_ROOT}/skills/issue-deps/scripts/issue-deps.sh"   # Claude
+deps="skill://issue-deps/scripts/issue-deps.sh"                        # Omp
 
 "$deps" blocked-by 191            # what #191 waits on
 "$deps" blocking   188            # what waits on #188

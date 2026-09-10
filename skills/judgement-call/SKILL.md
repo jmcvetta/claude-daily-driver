@@ -2,13 +2,14 @@
 name: judgement-call
 description: >-
   This skill should be used at the moment a choice between ways of doing the
-  same task is about to be put to the user — on Claude's own use of
-  `AskUserQuestion`, on a reply about to offer alternatives where one is
-  quicker, less complete, or a departure from the standard way ("fix it
-  properly, or leave a TODO?", "which approach do you prefer?", "should I …,
-  or …?"), and when the user hands the same choice back ("properly, or a
-  TODO?", "you decide"). It also fires on "/judgement-call", "just decide",
-  "you pick", "use your judgement" (or "judgment") and "stop asking me".
+  same task is about to be put to the user — on the harness's own use of the
+  question widget (Claude's `AskUserQuestion` or Omp's `ask`), on a reply
+  about to offer alternatives where one is quicker, less complete, or a
+  departure from the standard way ("fix it properly, or leave a TODO?",
+  "which approach do you prefer?", "should I …, or …?"), and when the user
+  hands the same choice back ("properly, or a TODO?", "you decide"). It also
+  fires on "/judgement-call", "just decide", "you pick", "use your judgement"
+  (or "judgment") and "stop asking me".
   Supplies the test that separates a question only the user can answer from one
   Claude can answer himself, and the rule that answers the second kind. It
   waives no confirmation another rule requires — `issue-deps`'s edge
@@ -94,12 +95,16 @@ genuinely does not settle it:
   skill overrides none of them.
 
 **A question that survives is asked in prose, not in the widget.**
-`AskUserQuestion` is denied by a `PreToolUse` hook — `hooks/ask-in-chat.py`,
-and [`0009`](../../docs/notes/0009-deny-the-question-widget.md) is why — so the
-question goes in the chat reply: the question written out, the options as a
-short list, and the one recommended named with its reason. That hook and this
-gate are ordered rather than overlapping. It decides how a question is put;
-this skill decides whether there is one.
+The widget is closed on both harnesses by each one's own adapter — Claude
+denies `AskUserQuestion` through the `PreToolUse` hook
+`hooks/ask-in-chat.py`, and Omp blocks its `ask` tool in the runtime
+adapter `extensions/daily-driver.js`, telling the model not to retry and to
+ask in chat. [`0009`](../../docs/notes/0009-deny-the-question-widget.md) is
+why either harness closes the widget at all. So the question goes in the
+chat reply: the question written out, the options as a short list, and the
+one recommended named with its reason. That hook and this gate are ordered
+rather than overlapping. It decides how a question is put; this skill
+decides whether there is one.
 
 Irreversible, destructive and outward-facing actions sit outside this gate
 entirely. The rules governing them — the constitution's non-negotiables among
