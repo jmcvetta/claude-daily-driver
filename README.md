@@ -214,6 +214,11 @@ marketplace entry together — `claude plugin validate --strict` fails when
 those two disagree. Each pull request gets a comment saying which tags merging
 it would cut, from [projected-releases-action][pra].
 
+`bump-minor-pre-major` is on, so below `1.0.0` a breaking change bumps the
+minor rather than the major. Nothing reaches `1.0.0` on its own: it takes an
+explicit `Release-As: 1.0.0` trailer, which makes the first stable release a
+decision someone makes rather than one the next `!` confers.
+
 [pra]: https://github.com/jmcvetta/projected-releases-action
 
 ## Don't install this

@@ -188,6 +188,11 @@ What the type releases
 | `revert` | patch | yes, under *Reverts* |
 | `docs` `style` `chore` `refactor` `test` `build` `ci` | patch | hidden |
 
+Below `1.0.0` a repository can set release-please's `bump-minor-pre-major`,
+under which a breaking change bumps the minor and only an explicit
+`Release-As` reaches `1.0.0`. This repository sets it. The rest of the table
+is unaffected.
+
 The list is release-please's, checked by the *PR Title Check* workflow; a
 type outside it (`wip`, `hotfix`) is rejected there, and a miscased one
 (`Feat:`) is worse — it passes the changelog and bumps a patch. `feature` is
