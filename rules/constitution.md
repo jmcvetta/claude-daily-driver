@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+---
+
 # Constitution
 
 Supreme law of a Claude session. Injected in full by the `SessionStart` hook,

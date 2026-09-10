@@ -25,6 +25,13 @@ plus the original prompt. Two injection points reading one file is not
 sufficient for them to agree — they could still wrap it differently — so the
 agreement is asserted byte for byte rather than argued for in a comment.
 
+The file also carries Omp's contract now: `rules/constitution.md` is the one
+source for both harnesses, so this script proves the `alwaysApply: true`
+frontmatter Omp's rule provider needs is present and exact, and that the body
+the hook strips for Claude is the body Omp injects — frontmatter and YAML
+delimiters gone. That is the Omp half of "one canonical source" that a
+credential-free check can hold.
+
 No third-party imports: this runs from a Makefile on a laptop and from CI, and
 a dependency install between the two is a place for them to differ.
 """
@@ -43,7 +50,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 HOOKS_JSON = ROOT / "hooks" / "hooks.json"
 SCRIPT = ROOT / "hooks" / "inject-constitution.py"
-CONSTITUTION = ROOT / "context" / "constitution.md"
+CONSTITUTION = ROOT / "rules" / "constitution.md"
 EVALS = ROOT / "evals"
 
 # The live half needs one string that a session can only have got from the
@@ -58,6 +65,38 @@ EVALS = ROOT / "evals"
 # first. The grader does not need to: the subagent reports on a single line,
 # which its prompt asks for and `file_matches_regex` reads as one.
 MARKER = "Doubt outranks the register"
+
+# The frontmatter the canonical file must carry so Omp injects it everywhere.
+# Omp's rule provider reads `rules/*.md`, strips the frontmatter and — because
+# there is no `agents` filter — injects the body into the main agent and every
+# subagent when `alwaysApply` is true. That is the Omp half of "one canonical
+# source, two harnesses": the body Omp injects must be identical to the body
+# this hook injects for Claude, which is why the exact block is asserted here.
+CONSTITUTION_FRONTMATTER = "alwaysApply: true"
+
+
+def constitution_body() -> str:
+    """The constitution without its Omp frontmatter, as both harnesses inject it.
+
+    Mirrors the strip in `hooks/inject-constitution.py` and, for `alwaysApply`
+    files, in Omp's own rule provider: the YAML delimiters and everything
+    between them come off, leaving the body both harnesses deliver. This is
+    what the byte-equality between the two injection points is asserted on, so
+    the frontmatter cannot silently leak into a session.
+    """
+    text = CONSTITUTION.read_text(encoding="utf-8")
+    return _strip_frontmatter(text)
+
+
+def _strip_frontmatter(text: str) -> str:
+    """Remove a leading `---`-delimited frontmatter block, like Omp's provider."""
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return text
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            return "\n".join(lines[i + 1 :])
+    return text
 
 # The tool names a subagent spawn can arrive under. `Agent` is current; `Task`
 # is what the same tool was called for years, and a matcher that admits only
@@ -249,7 +288,7 @@ def check_wiring(errors: list[str]) -> None:
 
 def check_delivery(errors: list[str]) -> None:
     """Both injection points carry the constitution, and carry the same one."""
-    body = CONSTITUTION.read_text(encoding="utf-8").rstrip()
+    body = constitution_body().rstrip()
 
     start = hook_specific(
         run_hook("session-start", SESSION_START_EVENT),
@@ -329,11 +368,11 @@ def check_one_loud_failure(errors: list[str], label: str, content: bytes | None)
     with tempfile.TemporaryDirectory() as tmp:
         fake_root = Path(tmp) / "daily-driver"
         (fake_root / "hooks").mkdir(parents=True)
-        (fake_root / "context").mkdir()
+        (fake_root / "rules").mkdir()
         broken = fake_root / "hooks" / SCRIPT.name
         shutil.copy2(SCRIPT, broken)
         if content is not None:
-            (fake_root / "context" / CONSTITUTION.name).write_bytes(content)
+            (fake_root / "rules" / CONSTITUTION.name).write_bytes(content)
 
         for mode, event, event_name in (
             ("session-start", SESSION_START_EVENT, "SessionStart"),
@@ -414,6 +453,54 @@ def collapse(text: str) -> str:
     return " ".join(text.split())
 
 
+def check_omp_metadata(errors: list[str]) -> None:
+    """The canonical file carries Omp's contract, and the hook delivers its body.
+
+    Omp's acceptance requires two things of a shared source. First, the file
+    must announce itself to Omp: `alwaysApply: true` (there is no `agents`
+    filter, so this is what makes it reach the main agent *and* every subagent
+    from the one `rules/` file). Second, the body Omp injects must be the body
+    Claude's hook injects — frontmatter stripped, YAML delimiters included —
+    or Omp and Claude would disagree about what the constitution says. Both are
+    asserted here; the frontmatter check catches drift in the Omp contract, and
+    the body check catches the frontmatter leaking into a Claude session.
+    """
+    body = constitution_body()
+
+    text = CONSTITUTION.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        errors.append(
+            "rules/constitution.md has no '---' frontmatter; Omp's rule "
+            "provider will not treat it as an Omp rule"
+        )
+    else:
+        try:
+            close = next(
+                i for i in range(1, len(lines)) if lines[i].strip() == "---"
+            )
+        except StopIteration:
+            errors.append("rules/constitution.md frontmatter is never closed")
+        else:
+            block = "\n".join(lines[1:close]).strip()
+            if block != CONSTITUTION_FRONTMATTER:
+                errors.append(
+                    "rules/constitution.md frontmatter is "
+                    f"{block!r}; expected exactly {CONSTITUTION_FRONTMATTER!r} "
+                    "for Omp's always-apply rule"
+                )
+
+    if "---" in body or CONSTITUTION_FRONTMATTER in collapse(body):
+        errors.append(
+            "the constitution body still carries its Omp frontmatter; the "
+            "hook must deliver the body without YAML delimiters, or Omp and "
+            "Claude would receive different texts"
+        )
+
+    if not body.strip():
+        errors.append("rules/constitution.md is empty after frontmatter")
+
+
 def check_eval_marker(errors: list[str]) -> None:
     """The live half asserts on a phrase the constitution still says.
 
@@ -432,7 +519,7 @@ def check_eval_marker(errors: list[str]) -> None:
     """
     if MARKER not in collapse(CONSTITUTION.read_text(encoding="utf-8")):
         errors.append(
-            f"context/constitution.md no longer says {MARKER!r}, which the "
+            f"rules/constitution.md no longer says {MARKER!r}, which the "
             f"live half asserts a subagent got; pick a phrase the file does "
             f"say and change MARKER and the grader together"
         )
@@ -556,6 +643,7 @@ def main() -> int:
         check_wiring(errors)
         check_delivery(errors)
         check_loud_failure(errors)
+        check_omp_metadata(errors)
         check_eval_marker(errors)
         check_bad_input(errors)
     except Failed as failure:
@@ -567,8 +655,8 @@ def main() -> int:
         return 1
     print(
         "constitution delivery holds: both hooks carry "
-        f"{CONSTITUTION.relative_to(ROOT)} verbatim, identically, and fail "
-        "loudly when it is missing"
+        f"{CONSTITUTION.relative_to(ROOT)}'s body verbatim, identically, and "
+        "fail loudly when it is missing or malformed"
     )
     return 0
 

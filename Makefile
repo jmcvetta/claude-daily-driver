@@ -80,8 +80,9 @@ check-manifests:
 	python3 scripts/check-manifests.py
 
 # The credential-free half of the constitution's acceptance test: run both
-# delivery hooks against synthetic event JSON and assert the constitution comes
-# back, identically, from each. The live half needs a model and therefore
+# delivery hooks against synthetic event JSON and assert the constitution's
+# body comes back, identically, from each — with the Omp `alwaysApply`
+# frontmatter validated and stripped. The live half needs a model and therefore
 # credentials, so it is `make evals-run TASKS='tasks/constitution/*.yaml'`
 # rather than a leg here -- see the script's docstring for where the seam is
 # and why.
