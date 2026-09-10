@@ -7,6 +7,12 @@ does not reach subagents — measured, not assumed; the evidence table is in
 injection point on the `Agent` tool is what keeps a plugin-delivered
 constitution from being strictly weaker than the `CLAUDE.md` it replaces.
 
+The file lives at `rules/constitution.md`, the one source for both Claude Code
+and Oh My Pi. Omp's rule provider reads it from `rules/`, strips the
+`alwaysApply` frontmatter and injects the body into the main agent and every
+subagent; this hook reads the same file, validates that exact frontmatter and
+strips it, so the two harnesses inject the identical body.
+
 Two injection points are two chances to disagree with each other. They are
 kept honest structurally rather than by discipline: one script holds both, so
 there is one path constant (`CONSTITUTION`, no glob) and one renderer
@@ -37,7 +43,18 @@ from pathlib import Path
 # deletes a documented failure cause (R1's "missing ${CLAUDE_PLUGIN_ROOT}")
 # instead of defending against it.
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-CONSTITUTION = PLUGIN_ROOT / "context" / "constitution.md"
+CONSTITUTION = PLUGIN_ROOT / "rules" / "constitution.md"
+
+# The frontmatter the canonical file must carry, exactly. Omp's rule provider
+# reads `rules/*.md`, strips this frontmatter and injects the body into the
+# main agent and every subagent when `alwaysApply` is true — there is no
+# `agents` filter, so `alwaysApply: true` is the only metadata the file may
+# have. Claude does not read the frontmatter at all; this hook strips it so
+# Claude's body is identical to Omp's, and validates it so a drift in the Omp
+# contract is a loud failure rather than a silent change of behaviour. The
+# block is matched exactly: no other key, no extra whitespace, no shorthand.
+FRONTMATTER_OPEN = "---"
+FRONTMATTER_BLOCK = "alwaysApply: true"
 
 MODES = ("session-start", "pre-tool-use")
 
@@ -77,7 +94,7 @@ def render() -> tuple[str, str | None]:
     the silent failure R1 is about.
     """
     try:
-        body = CONSTITUTION.read_text(encoding="utf-8")
+        text = CONSTITUTION.read_text(encoding="utf-8")
     except OSError as error:
         reason = f"could not read {CONSTITUTION}: {error.strerror or error}"
         return BANNER.format(reason=reason), reason
@@ -89,11 +106,45 @@ def render() -> tuple[str, str | None]:
         reason = f"{CONSTITUTION} is not valid UTF-8: {error}"
         return BANNER.format(reason=reason), reason
 
+    if not text.strip():
+        reason = f"{CONSTITUTION} is empty"
+        return BANNER.format(reason=reason), reason
+
+    # The canonical file carries frontmatter for Omp. Claude must get the body
+    # alone — never the YAML delimiters or the metadata — so the frontmatter is
+    # stripped here, and validated so that a file whose metadata no longer
+    # says `alwaysApply: true` is a loud failure rather than a silent one.
+    # This is the same strip Omp's rule provider performs; the two harnesses
+    # inject the same body, which is the point of the shared source.
+    lines = text.splitlines()
+    if not lines or lines[0] != FRONTMATTER_OPEN:
+        reason = f"{CONSTITUTION} is missing its {FRONTMATTER_OPEN} frontmatter"
+        return BANNER.format(reason=reason), reason
+    try:
+        close = next(
+            i for i in range(1, len(lines)) if lines[i] == FRONTMATTER_OPEN
+        )
+    except StopIteration:
+        reason = f"{CONSTITUTION} frontmatter is never closed"
+        return BANNER.format(reason=reason), reason
+
+    found = "\n".join(lines[1:close])
+    if found != FRONTMATTER_BLOCK:
+        reason = (
+            f"{CONSTITUTION} frontmatter is {found!r}, expected exactly "
+            f"{FRONTMATTER_BLOCK!r}"
+        )
+        return BANNER.format(reason=reason), reason
+
+    # Omp trims the body after extracting frontmatter. Match that behaviour,
+    # including its removal of the conventional blank line after the closing
+    # delimiter, so both harnesses receive the same bytes.
+    body = "\n".join(lines[close + 1 :]).strip()
     if not body.strip():
         reason = f"{CONSTITUTION} is empty"
         return BANNER.format(reason=reason), reason
 
-    return f"{HEADER}\n\n{body.rstrip()}", None
+    return f"{HEADER}\n\n{body}", None
 
 
 def emit(payload: dict, reason: str | None) -> int:
