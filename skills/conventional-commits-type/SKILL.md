@@ -76,7 +76,9 @@ nothing below it runs.
 1. **Does it break anyone?** A caller, a configuration, or a workflow that
    worked before the merge and does not after it. Then the type it would
    otherwise have carries `!` — `feat!:`, `fix!:` — and the body carries a
-   `BREAKING CHANGE:` footer saying what broke. Major bump.
+   `BREAKING CHANGE:` footer saying what broke. Major bump — or a minor one
+   below `1.0.0` where the repository sets `bump-minor-pre-major`; see
+   *What the type releases*.
 
 2. **Does the behaviour change — what the thing returns, what it decides,
    what it does as a side effect?** If none of those move, the change is one
@@ -187,6 +189,12 @@ What the type releases
 | `perf` | patch | yes, under *Performance Improvements* |
 | `revert` | patch | yes, under *Reverts* |
 | `docs` `style` `chore` `refactor` `test` `build` `ci` | patch | hidden |
+
+Below `1.0.0` a repository can set release-please's `bump-minor-pre-major`,
+under which a breaking change bumps the minor and only an explicit
+`Release-As` reaches `1.0.0`. Whether a given repository sets it is in its
+`release-please-config.json`, and for the pull request at hand the *Projected
+Releases* comment is the answer. The rest of the table is unaffected.
 
 The list is release-please's, checked by the *PR Title Check* workflow; a
 type outside it (`wip`, `hotfix`) is rejected there, and a miscased one
