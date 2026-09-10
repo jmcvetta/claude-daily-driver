@@ -351,15 +351,21 @@ def check_loud_failure(errors: list[str]) -> None:
     R1's whole point: the interesting failure is not the hook that crashes, it
     is the hook that returns cleanly having delivered nothing. So this stands
     up a plugin root whose constitution cannot be used and insists on the
-    noise. Three ways it cannot be used, because they leave the script by three
-    different doors: absent (`OSError`), present but blank (no exception at
-    all), and present but not decodable (`UnicodeDecodeError`, which is a
-    `ValueError` and so walks straight past a bare `except OSError`).
+    noise. Ways it cannot be used, each leaving the script by its own door:
+    absent (`OSError`), present but blank (no exception at
+    all), present but not decodable (`UnicodeDecodeError`, which is a
+    `ValueError` and so walks straight past a bare `except OSError`), and —
+    since the file now carries Omp frontmatter the hook must strip — present
+    with a frontmatter block that is missing, unclosed, or not exactly
+    `alwaysApply: true`, all of which fail validation rather than vanish.
     """
     for label, content in (
         ("missing", None),
         ("empty", b"\n   \n"),
         ("non-UTF-8", b"# Constitution\n\xff\xfe not text\n"),
+        ("no-frontmatter", b"# Constitution\n\nNo YAML block at all.\n"),
+        ("unclosed-frontmatter", b"---\nalwaysApply: true\n# never closed\n"),
+        ("bad-frontmatter", b"---\nalwaysApply: false\n---\n\nbody\n"),
     ):
         check_one_loud_failure(errors, label, content)
 
