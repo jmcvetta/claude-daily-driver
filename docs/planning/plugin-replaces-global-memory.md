@@ -41,7 +41,7 @@ Established by reading the plugin and hooks references, not by assumption.
    emitting
    `hookSpecificOutput.additionalContext`. The plugin ships `hooks/hooks.json`
    plus a script that reads exactly one file,
-   `${CLAUDE_PLUGIN_ROOT}/context/constitution.md` — not a glob over that
+   `${CLAUDE_PLUGIN_ROOT}/rules/constitution.md` — not a glob over that
    directory. D12 feeds the subagent hook from the same file, and a glob is how
    the two injection points would silently diverge the day a second file landed.
    Being harness-executed, the script behaves the same on CLI and web.

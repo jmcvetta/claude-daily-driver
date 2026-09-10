@@ -10,7 +10,7 @@ read it, do not go further.
 
 ## What's in it
 
-The **constitution** — `context/constitution.md`, delivered to every session
+The **constitution** — `rules/constitution.md`, delivered to every session
 by hook — plus **two hooks that enforce rather than instruct**, and eleven
 skills:
 
@@ -39,7 +39,7 @@ loaded, and [its README](attic/README.md) says what is kept and why.
 
 ## The constitution
 
-`context/constitution.md` is the always-on layer, in force in every session and
+`rules/constitution.md` is the always-on layer, in force in every session and
 every subagent. Nine sections:
 
 | Section | What it settles |
@@ -87,7 +87,7 @@ not followed.
 
 | Hook | Event | What it does |
 | ---- | ----- | ------------ |
-| `inject-constitution.py` | `SessionStart`, and `PreToolUse` on `Agent`/`Task` | Delivers `context/constitution.md` to the session and to every subagent. |
+| `inject-constitution.py` | `SessionStart`, and `PreToolUse` on `Agent`/`Task` | Delivers `rules/constitution.md` to the session and to every subagent. |
 | `ask-in-chat.py` | `PreToolUse` on `AskUserQuestion` | Denies the multiple-choice widget, and tells Claude to ask the question in the chat reply instead. |
 
 **Why the second one is a hook** and not a skill or a constitution rule: the
@@ -114,7 +114,7 @@ claude-daily-driver/
 ├── .claude-plugin/         plugin.json (the version releases bump) and
 │                           marketplace.json (what `claude plugin install` reads)
 ├── attic/                  kept but not shipped; nothing here is loaded
-├── context/constitution.md always-on rules, one file, read at both injection points
+├── rules/constitution.md    always-on rules, one file, read at both injection points
 ├── docs/                   how this repository is meant to be used
 ├── evals/                  the trigger suites, and the constitution's live half
 ├── hooks/                  the constitution's two injection points, and the

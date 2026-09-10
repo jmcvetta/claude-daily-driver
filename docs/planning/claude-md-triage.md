@@ -107,7 +107,7 @@ says so.
 
 ## What the sibling issues inherit
 
-- **#15, constitution delivery** — `context/constitution.md` now holds real
+- **#15, constitution delivery** — `rules/constitution.md` now holds real
   content, and at the time this was written it ended with a token the
   acceptance test could assert on instead of injecting a synthetic one. The
   token was removed in #89; the test now asserts on a phrase the file says in

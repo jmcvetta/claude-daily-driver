@@ -8,7 +8,7 @@ a judgement, and prose that asks for it is prose that can be read and not
 followed. So the tool is denied, and the denial reason carries the instruction
 that replaces it.
 
-This is deliberately not a rule in `context/constitution.md`. That file states
+This is deliberately not a rule in `rules/constitution.md`. That file states
 its own admission test — a rule earns its place only if it changes behaviour in
 most sessions, hangs off a nameable moment, and says something the harness does
 not already say — and it is paid for in tokens in every session and every

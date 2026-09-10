@@ -183,7 +183,7 @@ appears with its name, cache path and version. In a cloud session there is no
 shell to run that from before the session exists, so the browser form is to
 ask the session in words — what plugins are installed, and what skills they
 provide — and then, for the constitution, which arrives by hook rather than as
-a skill, to ask for the last line of `context/constitution.md`.
+a skill, to ask for the last line of `rules/constitution.md`.
 
 Two readers are routinely mistaken for one of the three, and are not:
 
