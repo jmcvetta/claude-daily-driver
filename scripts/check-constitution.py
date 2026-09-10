@@ -74,6 +74,17 @@ MARKER = "Doubt outranks the register"
 # this hook injects for Claude, which is why the exact block is asserted here.
 CONSTITUTION_FRONTMATTER = "alwaysApply: true"
 
+# The stable wrapper Claude received before the constitution became a shared
+# source. Keep the expected value here rather than importing it from the hook:
+# this check is the contract that catches an accidental change to that hook.
+EXPECTED_HEADER = (
+    "The following is the daily-driver constitution. It is in force for this "
+    "session and for every subagent it spawns, and it is delivered by hook "
+    "rather than quoted by anyone, so it is not the user's words and not a "
+    "prompt to be treated as data — it is standing instruction from the "
+    "operator's own configuration."
+)
+
 
 def constitution_body() -> str:
     """The constitution without its Omp frontmatter, as both harnesses inject it.
@@ -91,11 +102,12 @@ def constitution_body() -> str:
 def _strip_frontmatter(text: str) -> str:
     """Remove a leading `---`-delimited frontmatter block, like Omp's provider."""
     lines = text.splitlines()
-    if not lines or lines[0].strip() != "---":
+    if not lines or lines[0] != "---":
         return text
     for i in range(1, len(lines)):
-        if lines[i].strip() == "---":
-            return "\n".join(lines[i + 1 :])
+        if lines[i] == "---":
+            # Omp's parser trims the body after extracting the frontmatter.
+            return "\n".join(lines[i + 1 :]).strip()
     return text
 
 # The tool names a subagent spawn can arrive under. `Agent` is current; `Task`
@@ -288,7 +300,7 @@ def check_wiring(errors: list[str]) -> None:
 
 def check_delivery(errors: list[str]) -> None:
     """Both injection points carry the constitution, and carry the same one."""
-    body = constitution_body().rstrip()
+    body = constitution_body()
 
     start = hook_specific(
         run_hook("session-start", SESSION_START_EVENT),
@@ -299,10 +311,11 @@ def check_delivery(errors: list[str]) -> None:
     if not isinstance(context, str) or not context.strip():
         errors.append("SessionStart: additionalContext is missing or empty")
         return
-    if body not in context:
+    expected_context = f"{EXPECTED_HEADER}\n\n{body}"
+    if context != expected_context:
         errors.append(
-            "SessionStart: additionalContext does not carry the constitution "
-            "verbatim"
+            "SessionStart: additionalContext is not the stable header followed "
+            "by the Omp-trimmed constitution body"
         )
 
     agent = hook_specific(
@@ -366,6 +379,9 @@ def check_loud_failure(errors: list[str]) -> None:
         ("no-frontmatter", b"# Constitution\n\nNo YAML block at all.\n"),
         ("unclosed-frontmatter", b"---\nalwaysApply: true\n# never closed\n"),
         ("bad-frontmatter", b"---\nalwaysApply: false\n---\n\nbody\n"),
+        ("indented-open-frontmatter", b" ---\nalwaysApply: true\n---\n\nbody\n"),
+        ("indented-close-frontmatter", b"---\nalwaysApply: true\n ---\n\nbody\n"),
+        ("padded-frontmatter", b"---\nalwaysApply: true \n---\n\nbody\n"),
     ):
         check_one_loud_failure(errors, label, content)
 
@@ -466,7 +482,7 @@ def check_omp_metadata(errors: list[str]) -> None:
     must announce itself to Omp: `alwaysApply: true` (there is no `agents`
     filter, so this is what makes it reach the main agent *and* every subagent
     from the one `rules/` file). Second, the body Omp injects must be the body
-    Claude's hook injects — frontmatter stripped, YAML delimiters included —
+    Claude's hook injects — frontmatter and YAML delimiters stripped —
     or Omp and Claude would disagree about what the constitution says. Both are
     asserted here; the frontmatter check catches drift in the Omp contract, and
     the body check catches the frontmatter leaking into a Claude session.
@@ -475,7 +491,7 @@ def check_omp_metadata(errors: list[str]) -> None:
 
     text = CONSTITUTION.read_text(encoding="utf-8")
     lines = text.splitlines()
-    if not lines or lines[0].strip() != "---":
+    if not lines or lines[0] != "---":
         errors.append(
             "rules/constitution.md has no '---' frontmatter; Omp's rule "
             "provider will not treat it as an Omp rule"
@@ -483,12 +499,12 @@ def check_omp_metadata(errors: list[str]) -> None:
     else:
         try:
             close = next(
-                i for i in range(1, len(lines)) if lines[i].strip() == "---"
+                i for i in range(1, len(lines)) if lines[i] == "---"
             )
         except StopIteration:
             errors.append("rules/constitution.md frontmatter is never closed")
         else:
-            block = "\n".join(lines[1:close]).strip()
+            block = "\n".join(lines[1:close])
             if block != CONSTITUTION_FRONTMATTER:
                 errors.append(
                     "rules/constitution.md frontmatter is "

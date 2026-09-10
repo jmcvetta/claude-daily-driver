@@ -117,18 +117,18 @@ def render() -> tuple[str, str | None]:
     # This is the same strip Omp's rule provider performs; the two harnesses
     # inject the same body, which is the point of the shared source.
     lines = text.splitlines()
-    if not lines or lines[0].strip() != FRONTMATTER_OPEN:
+    if not lines or lines[0] != FRONTMATTER_OPEN:
         reason = f"{CONSTITUTION} is missing its {FRONTMATTER_OPEN} frontmatter"
         return BANNER.format(reason=reason), reason
     try:
         close = next(
-            i for i in range(1, len(lines)) if lines[i].strip() == FRONTMATTER_OPEN
+            i for i in range(1, len(lines)) if lines[i] == FRONTMATTER_OPEN
         )
     except StopIteration:
         reason = f"{CONSTITUTION} frontmatter is never closed"
         return BANNER.format(reason=reason), reason
 
-    found = "\n".join(lines[1:close]).strip()
+    found = "\n".join(lines[1:close])
     if found != FRONTMATTER_BLOCK:
         reason = (
             f"{CONSTITUTION} frontmatter is {found!r}, expected exactly "
@@ -136,12 +136,15 @@ def render() -> tuple[str, str | None]:
         )
         return BANNER.format(reason=reason), reason
 
-    body = "\n".join(lines[close + 1 :])
+    # Omp trims the body after extracting frontmatter. Match that behaviour,
+    # including its removal of the conventional blank line after the closing
+    # delimiter, so both harnesses receive the same bytes.
+    body = "\n".join(lines[close + 1 :]).strip()
     if not body.strip():
         reason = f"{CONSTITUTION} is empty"
         return BANNER.format(reason=reason), reason
 
-    return f"{HEADER}\n\n{body.rstrip()}", None
+    return f"{HEADER}\n\n{body}", None
 
 
 def emit(payload: dict, reason: str | None) -> int:
