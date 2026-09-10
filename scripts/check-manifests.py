@@ -20,6 +20,11 @@ are checked here, each measured against the CLI rather than assumed:
   between the marketplace and the repository it names. `validate` reads one
   manifest at a time, so it never compares them. (It *does* compare the
   `version` fields, so those are its job and not this script's.)
+- Root `package.json` (the Omp runtime adapter's manifest, name
+  `daily-driver`) disagreeing with plugin.json or the marketplace entry about
+  the plugin name or version, or missing or mispointing the Omp extension
+  entry. Release-please bumps the three manifests together, so a tree where
+  they disagree has already drifted.
 - A copy of the repository stanza — the template, this repository's own
   `.claude/settings.json`, a fenced block in the documentation — that has
   drifted from the marketplace and plugin names it enables. `validate` does not
@@ -203,6 +208,41 @@ def main() -> int:
     plugin = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text())
     marketplace_path = ROOT / ".claude-plugin" / "marketplace.json"
     marketplace = json.loads(marketplace_path.read_text())
+
+    # The Omp runtime adapter lives in the root package.json (name
+    # `daily-driver`), which for Omp is the plugin manifest. It must agree
+    # with the Claude plugin manifest and its marketplace entry about the
+    # plugin name and version, so one release keeps both harnesses in lock-step
+    # (release-please bumps the three of them together via extra-files).
+    package_path = ROOT / "package.json"
+    if not package_path.exists():
+        errors.append("package.json: missing (the Omp runtime adapter's manifest)")
+    else:
+        load_json(package_path, errors)
+        package = load_json(package_path, errors)
+        if isinstance(package, dict):
+            if package.get("name") != plugin["name"]:
+                errors.append(
+                    f"package.json name is {package.get('name')!r} "
+                    f"but plugin.json says {plugin['name']!r}"
+                )
+            if package.get("version") != plugin["version"]:
+                errors.append(
+                    f"package.json version is {package.get('version')!r} "
+                    f"but plugin.json says {plugin['version']!r}"
+                )
+            if package.get("version") != marketplace["plugins"][0].get("version"):
+                errors.append(
+                    f"package.json version is {package.get('version')!r} "
+                    "but the marketplace entry says "
+                    f"{marketplace['plugins'][0].get('version')!r}"
+                )
+            omp = package.get("omp")
+            if not isinstance(omp, dict) or omp.get("extensions") != ["./extensions/daily-driver.js"]:
+                errors.append(
+                    "package.json omp.extensions must list exactly "
+                    "'./extensions/daily-driver.js'"
+                )
 
     # The marketplace names the repository people install from -- `claude
     # plugin marketplace add jmcvetta/claude-daily-driver` resolves through

@@ -8,8 +8,9 @@ SHELL := /bin/bash
 .SHELLFLAGS := -o pipefail -c
 
 .PHONY: git_sync check check-plugin check-skills check-agents check-scripts \
-	check-manifests check-constitution check-ask-in-chat check-eval-fixtures \
-	check-step-names check-infra evals-install evals-plan evals-run mcp-usage
+	check-manifests check-constitution check-ask-in-chat check-omp-extension \
+	check-eval-fixtures check-step-names check-infra evals-install evals-plan \
+	evals-run mcp-usage
 
 # The `coder_eval` release the eval suites are written against. Pinned on
 # purpose: being able to hold a version back is the whole reason the suites are
@@ -41,7 +42,8 @@ git_sync:
 # than restating its legs, so a leg added here is a leg CI gains — and there
 # is no second command line to fall behind this one.
 check: check-plugin check-skills check-agents check-scripts check-manifests \
-	check-constitution check-ask-in-chat check-eval-fixtures check-step-names
+	check-constitution check-ask-in-chat check-omp-extension \
+	check-eval-fixtures check-step-names
 
 # `claude plugin validate --strict` reads one manifest at a time and picks the
 # marketplace when handed a directory, so the plugin manifest is named
@@ -97,6 +99,15 @@ check-constitution:
 # rather than believed by a session. See the script's docstring.
 check-ask-in-chat:
 	python3 scripts/check-ask-in-chat.py
+
+# The acceptance test for the Omp runtime adapter: import extensions/
+# daily-driver.js with a fake ExtensionAPI and assert the Omp `ask` tool is
+# blocked (with a reason that sends the question to chat), that the title and
+# schedule/cancel tools behave, and that package.json wires the extension.
+# Credential-free like the other script legs, so it runs on a laptop and CI
+# alike. Node ships with the harness; no package install is involved.
+check-omp-extension:
+	node scripts/check-omp-extension.mjs
 
 # check-scripts: lint the shell a skill ships. `claude plugin validate` reads
 # manifests and never opens a `scripts/` file, so without this leg the plugin's
