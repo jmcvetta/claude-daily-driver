@@ -32,12 +32,32 @@ head commit's Actions runs and streams until every one has reported. Success is
 double-checked with one more poll before it returns, and a failure names the
 failed jobs.
 
-It is a blocking watch, so the wait is one call. No subscription, no backstop,
-no timer — the three things `claude.md` needs exist because Claude has nothing
-that blocks. `SKILL.md`'s rules that hold either way still hold: the union of
-the checks and the commit statuses is what *reported* means, an empty answer is
-not an answer, and the fifteen-minute cap is a report to the user rather than a
-longer wait.
+It is a blocking watch, so the Actions half of the wait is one call. No
+subscription, no backstop, no timer — the three things `claude.md` needs exist
+because Claude has nothing that blocks.
+
+**`run_watch` answers for Actions runs and nothing else**, and `SKILL.md` says
+*reported* means the union of the check runs and the commit statuses. So the
+wait is two reads, not one:
+
+| Half | Call |
+| ---- | ---- |
+| The Actions runs | `github.run_watch` on the head commit |
+| The commit statuses | `gh api /repos/{owner}/{repo}/commits/{sha}/status` |
+
+Read the statuses **after** `run_watch` returns. A repository that posts none
+answers with an empty `statuses` array and a `state` of `pending`, which is the
+empty answer rather than a report: where the repository is known to post none,
+it reports nothing and there is nothing to wait for; where one is expected and
+has not arrived, keep reading.
+
+**`run_watch` returns immediately on a pull request with zero Actions runs**,
+which is the same empty answer and not the end of the wait. A head pushed
+seconds ago has registered nothing yet.
+
+**The fifteen-minute cap is the round's to keep**, because one blocking call
+has nowhere to put it. Time the wait from the first read. On the cap, stop and
+name what has not reported, as `SKILL.md` says.
 
 `run_watch` is present wherever the `github` tool is enabled, which includes
 the laptop Omp surface. The surface `SKILL.md` says cannot wait does not arise

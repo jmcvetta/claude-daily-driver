@@ -190,8 +190,10 @@ has its own `scripts/`. Each harness injects this path under its own name;
 [`references/omp.md`](references/omp.md) give the exact form.
 
 ```sh
-# $deps is this skill's own script, resolved per the reference file for the
-# harness in use — references/claude.md or references/omp.md.
+# $deps is this skill's own script. The assignment differs by harness —
+# references/claude.md or references/omp.md gives the exact form — and the
+# guard makes an unresolved path fail loudly rather than run an empty command.
+: "${deps:?resolve the script path per the reference files}"
 
 "$deps" blocked-by 191            # what #191 waits on
 "$deps" blocking   188            # what waits on #188

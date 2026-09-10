@@ -19,7 +19,7 @@ WHAT IT FLAGS
         mcp__                     a Claude MCP tool, either server
         AskUserQuestion           Claude's question widget
         /code-review              Claude's built-in review surface
-        ${CLAUDE_PLUGIN_ROOT}     Claude's injected plugin root
+        $CLAUDE_PLUGIN_ROOT      Claude's injected plugin root, braced or not
         daily_driver_             an Omp runtime-adapter tool
         run_watch                 the Omp `github` tool's blocking watch
         skill://                  Omp's injected skill-directory path
@@ -60,7 +60,7 @@ ROUTES = {
     "mcp__": re.compile(r"mcp__"),
     "AskUserQuestion": re.compile(r"AskUserQuestion"),
     "/code-review": re.compile(r"/code-review"),
-    "${CLAUDE_PLUGIN_ROOT}": re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}"),
+    "${CLAUDE_PLUGIN_ROOT}": re.compile(r"\$\{?CLAUDE_PLUGIN_ROOT\}?"),
     "daily_driver_": re.compile(r"daily_driver_"),
     "run_watch": re.compile(r"run_watch"),
     "skill://": re.compile(r"skill://"),

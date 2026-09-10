@@ -155,10 +155,10 @@ Beyond the claim itself the comment carries three things:
 - **The branch** the work will be committed on, named before it is cut and
   **linked** — `[branch](https://github.com/OWNER/REPO/tree/BRANCH)`.
   `OWNER/REPO` is the repository the branch will be **pushed to**, which on a
-  fork is not the repository the issue is in: read it from
-  `session_context.outcomes[].git_repository.git_info.repo`, the same entry
-  `Cut the branch`'s first source reads, or from the `origin` remote where
-  the harness has no such call. Built from the issue's repository instead, the link 404s for good
+  fork is not the repository the issue is in: read it from the harness's
+  session call, which answers it beside the branch `Cut the branch`'s first
+  source reads, or from the `origin` remote where the harness has no such
+  call. Built from the issue's repository instead, the link 404s for good
   rather than only until the push, and the trade below stops holding. A reader
   of the issue can otherwise reach the session but not the code: until the pull
   request opens at `Open the draft` nothing on GitHub ties the issue to a
@@ -168,16 +168,15 @@ Beyond the claim itself the comment carries three things:
   nothing to see, and the alternative is a name the reader must build a URL
   from by hand. `Cut the branch` owns where the name comes from; this step
   announces it, and is bound to what was announced.
-- **The model that served the turn** — `external_metadata.last_served_model`,
-  which is what actually ran and moves with a fallback that leaves the rest of
-  the session untouched. Where `session_context.model` or `configured_model`
-  disagrees with it, name that too: the gap between what a session was set to
-  run and what ran is the half of the record worth having. Never a name
-  recalled instead of read — a provenance record that guesses is worse than
-  one that says nothing.
-- **The session**, as `https://claude.ai/code/session_…` built from the same
-  call's session id. The identifier is what the reader needs; the link is that
-  identifier and somewhere to go with it.
+- **The model that served the turn**, which is what actually ran and moves
+  with a fallback that leaves the rest of the session untouched. Where the
+  model the session was *set* to run disagrees with it, name that too: the gap
+  between the two is the half of the record worth having. Never a name recalled
+  instead of read — a provenance record that guesses is worse than one that
+  says nothing. The reference file names the fields that answer both.
+- **The session**, as a link built from the same call's session id. The
+  identifier is what the reader needs; the link is that identifier and
+  somewhere to go with it, and the reference file has its form.
 
 The model and the session come from the harness's session call, where it has
 one — the call `session-title` documents — and so does the branch, where the
@@ -281,7 +280,7 @@ and the branch was already reviewed at `Review the head` — whether that review
 is stale is `review-cycle`'s provenance test and is answered inside the round,
 not here.
 Where `review` is live rather than in `attic/skills/`, this is also what
-discharges the `draft: false` trigger in its description: it fires on exactly
+discharges the leaving-draft trigger in its description: it fires on exactly
 the moment this step occupies, and a round already run on this head is that
 trigger already answered.
 
