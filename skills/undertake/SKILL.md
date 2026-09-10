@@ -327,7 +327,9 @@ an empty slot rather than a particular kind of wake: a wake with the timer
 still in flight arms nothing, and a wake that found nothing to do still leaves
 a wake behind it. A turn that ends with no timer and no subscription is a
 session asleep on a pull request nobody else is watching, which is the report
-[`0010`](../../docs/notes/0010-the-wake-slot-is-never-empty.md) records.
+[`0010`](../../docs/notes/0010-the-wake-slot-is-never-empty.md) records, and
+[`0011`](../../docs/notes/0011-two-harnesses-one-skill-tree.md) scopes to
+Claude Code.
 
 **Two minutes, the same interval `review-cycle` waits on CI with.** A busy
 `master` takes a commit every few minutes, so a slower check-in is a branch

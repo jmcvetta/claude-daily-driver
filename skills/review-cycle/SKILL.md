@@ -150,6 +150,8 @@ timer has two things running that outlive it.
   [`0010`](../../docs/notes/0010-the-wake-slot-is-never-empty.md) is the
   decision, and the report behind it is a session that emptied the slot and
   slept through a green run.
+  [`0011`](../../docs/notes/0011-two-harnesses-one-skill-tree.md) scopes it to
+  Claude Code: a harness without a durable wake has no slot to fill.
 - **A slot already occupied is the backstop.** A wait entered while the
   caller's cadence timer is in flight — `undertake`'s `Keep it current`,
   which holds one for the life of the pull request — arms nothing: that timer
