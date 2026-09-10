@@ -76,8 +76,10 @@ function fakeApi(overrides = {}) {
 	const tools = new Map();
 	const timers = fakeTimers();
 
-	// A chainable fake zod sufficient for the adapter's three tools: z.string,
-	// z.integer with .min/.max, and z.object returning the spec keyed by name.
+	// A chainable fake zod that mirrors the Omp (omptype-backed) zod surface the
+// adapter actually targets: z.string, z.number().int().min().max(), and
+// z.object returning the spec keyed by name. It deliberately excludes
+// `z.integer` so a schema written against real Zod's alias fails here too.
 	function schemaNode(meta = {}) {
 		return {
 			describe(desc) {
@@ -89,6 +91,9 @@ function fakeApi(overrides = {}) {
 			max(n) {
 				return schemaNode({ ...meta, max: n });
 			},
+			int() {
+				return schemaNode({ ...meta, int: true });
+			},
 			_meta: () => meta,
 		};
 	}
@@ -97,7 +102,8 @@ function fakeApi(overrides = {}) {
 			return spec;
 		},
 		string: () => schemaNode({ type: "string" }),
-		integer: () => schemaNode({ type: "integer" }),
+		number: () => schemaNode({ type: "number" }),
+		// No `integer:` — intentional, so an `.integer()` misuse is caught.
 	};
 
 	const pi = {
@@ -218,7 +224,8 @@ check("schedule schema bounds delaySeconds to 1..86400", () => {
 	const s = makeSession();
 	const schedule = s.tools.get("daily_driver_schedule");
 	const delay = schedule.parameters.delaySeconds._meta();
-	assert.equal(delay.type, "integer", "delaySeconds must be an integer");
+	assert.equal(delay.type, "number", "delaySeconds must be a number");
+	assert.equal(delay.int, true, "delaySeconds must be an integer");
 	assert.equal(delay.min, 1, "delaySeconds minimum is 1");
 	assert.equal(delay.max, 86400, "delaySeconds maximum is 86400");
 });

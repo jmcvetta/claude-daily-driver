@@ -218,7 +218,6 @@ def main() -> int:
     if not package_path.exists():
         errors.append("package.json: missing (the Omp runtime adapter's manifest)")
     else:
-        load_json(package_path, errors)
         package = load_json(package_path, errors)
         if isinstance(package, dict):
             if package.get("name") != plugin["name"]:

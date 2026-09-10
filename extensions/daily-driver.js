@@ -135,7 +135,8 @@ export default function dailyDriverExtension(pi) {
 			"daily_driver_cancel_schedule to cancel it before it fires.",
 		parameters: z.object({
 			delaySeconds: z
-				.integer()
+				.number()
+				.int()
 				.min(1)
 				.max(86400)
 				.describe("Seconds until the reminder fires, 1 to 86400"),
