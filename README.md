@@ -1,4 +1,4 @@
-# claude-daily-driver
+# daily-driver
 
 Daily-driver skills for [Claude Code][cc], packaged as a plugin.
 
@@ -113,7 +113,7 @@ The plugin is the repository root — `"source": "./"` in the marketplace
 manifest — so there is no nested plugin directory.
 
 ```
-claude-daily-driver/
+daily-driver/
 ├── .claude-plugin/         plugin.json (the version releases bump) and
 │                           marketplace.json (what `claude plugin install` reads)
 ├── attic/                  kept but not shipped; nothing here is loaded
@@ -137,8 +137,8 @@ point at a plugin, it can never carry one.
 On a laptop, two commands, once per machine:
 
 ```sh
-claude plugin marketplace add jmcvetta/claude-daily-driver
-claude plugin install daily-driver@claude-daily-driver
+claude plugin marketplace add jmcvetta/daily-driver
+claude plugin install daily-driver@daily-driver
 ```
 
 In the cloud the same commands go in the environment's **Setup script**, which
@@ -153,13 +153,13 @@ the cloud icon above the message box at [claude.ai/code][web].
 #
 # The environment snapshots itself on this script's text and later sessions
 # skip it. Bump the number to reinstall at the current release.
-claude plugin marketplace add jmcvetta/claude-daily-driver
-claude plugin install --yes daily-driver@claude-daily-driver
+claude plugin marketplace add jmcvetta/daily-driver
+claude plugin install --yes daily-driver@daily-driver
 
 # Both commands can return 0 while leaving the plugin uncached, so check
 # what the loader actually reads.
-grep -qF '"daily-driver@claude-daily-driver"' ~/.claude/plugins/installed_plugins.json &&
-  compgen -G ~/.claude/plugins/cache/claude-daily-driver/daily-driver/*/.claude-plugin/plugin.json >/dev/null
+grep -qF '"daily-driver@daily-driver"' ~/.claude/plugins/installed_plugins.json &&
+  compgen -G ~/.claude/plugins/cache/daily-driver/daily-driver/*/.claude-plugin/plugin.json >/dev/null
 ```
 
 No `|| true`: a script that exits zero on a failed install snapshots the
@@ -169,7 +169,7 @@ announces a plugin that failed to load —
 > Without reading any file, say what the constitution tells you about
 > production systems. Then list the skills available to you whose names begin
 > `daily-driver:`. Then run `ls
-> ~/.claude/plugins/cache/claude-daily-driver/daily-driver/`.
+> ~/.claude/plugins/cache/daily-driver/daily-driver/`.
 
 Do **not** ask what plugins are installed: that question has a known wrong
 answer. After a release, bump the `CACHEBUST` number and ask again — an
