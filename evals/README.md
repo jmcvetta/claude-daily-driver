@@ -144,6 +144,14 @@ direction `Keep it current` does not go: that step merges the base branch into
 the pull request, and the word it put in the description is the word this row
 keeps from sweeping in the other one.
 
+One collision is asserted from the other side. `pr/02-open-a-pr.yaml` carries an
+`undertake` distractor, because "get it to a pull request" is in `undertake`'s
+register too and the only thing separating them is that the prompt has no issue
+to undertake. Its `pr` criterion is unarmed for that reason: a pass-stop there
+would end the run the moment `pr` fires, and the distractor would pass
+vacuously. The reverse assertion is absent on purpose — `undertake` invokes
+`pr` at `Open the draft`, so `pr` firing on an undertake prompt is correct.
+
 `deps/` asks where the line falls between a bulk upgrade and one dependency.
 `01` is the slash command and `02` is the register the skill was written for —
 Dependabot's pull requests named, the whole set asked for. `03` and `04` are the rows

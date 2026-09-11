@@ -31,5 +31,20 @@ success_criteria:
     description: "`pr` fires when a pull request is being opened"
     expected_skill: pr
     skill_name: pr
-    stop_early:
-      on_pass: stop
+    # Unarmed, unlike the other fire rows in this suite. The distractor below
+    # needs the whole run to establish an absence, and a pass-stop here would
+    # end it the moment `pr` fires — leaving that row to pass vacuously on
+    # every replicate.
+    stop_early: {}
+
+  - type: skill_triggered
+    description: "`undertake` does not fire on a branch that is already written"
+    # This row's ground truth is `pr`, so naming `undertake` here asserts its
+    # absence. It is the one collision `undertake` creates: "get it to a pull
+    # request" is in its register too, and what separates them is that this
+    # prompt has no issue to undertake. The reverse assertion is deliberately
+    # absent — `undertake` invokes `pr` at `Open the draft`, so `pr` firing on
+    # "take #7" is correct behaviour rather than a collision.
+    expected_skill: pr
+    skill_name: undertake
+    stop_early: {}
