@@ -135,6 +135,13 @@ blocked by an open one is a stop, not a start** — say which issue blocks it
 and wait. Reading the graph is free and needs no confirmation; `issue-deps`
 says so.
 
+**An issue too big for one pull request is `epic`'s, not this sequence's**, and
+this is where that is noticed — here rather than at `Open the issue`, which is
+skipped in the common case where the issue was handed over. `epic` sizes it,
+decomposes it, and each task issue it opens comes back here as the issue this
+sequence takes in. **An epic itself is a stop**, under `Where it stops and
+waits`.
+
 The comments too, because `Claim the issue` needs to know whether it is claimed
 already — by this session, which means the sequence is being re-entered, or by
 another.
@@ -435,16 +442,21 @@ for the second round.
 Where it stops and waits
 ========================
 
-Autonomy is the point, so each pause has to earn itself. Seven stop the
+Autonomy is the point, so each pause has to earn itself. Eight stop the
 sequence. Five stop it to *ask* — the ambiguous issue, the request too vague
 to write one for, the failing approach, a designated branch the harness states
-ambiguously, and a base merge whose conflict is a real one. A blocked issue and
-a running check stop it to report, and wait on something other than an answer.
+ambiguously, and a base merge whose conflict is a real one. A blocked issue, an
+epic, and a running check stop it to report, and wait on something other than
+an answer.
 
 - **A blocked issue, an issue whose intent is genuinely ambiguous, or a
   request too vague to write an issue for.** The constitution forbids guessing
   at intent; this is that rule, at `Open the issue` and at `Read the issue and
   its edges`.
+- **An epic**, at `Read the issue and its edges`. An epic carries no code, so
+  there is no branch to cut and no pull request to open. Say which issue is the
+  epic, name the tasks that are ready, and undertake one of those — `epic` owns
+  the stop and the wording.
 - **More than one designated branch** for this repository, at `Cut the
   branch`'s first source. Guessing which one the harness will accept risks a
   claim already posted at `Claim the issue` that no push can honour.
@@ -481,6 +493,9 @@ Non-goals
 - **Does not fire on reading an issue.** Discussing #191 is not undertaking
   it. "What does #191 say", "summarise #191", "is #191 still relevant" are
   questions; answer them, and do not cut a branch.
+- **Does not undertake an epic.** An epic carries no code, so there is no
+  branch to cut and no pull request to open. `epic` owns that stop, and says
+  to undertake one of the epic's ready tasks instead.
 - **Does not fire on work it was not asked to undertake.** "Implement a retry
   loop", with neither an issue nor an invocation, is ordinary work, and running
   eleven steps and a review round over it would be the heaviest possible way

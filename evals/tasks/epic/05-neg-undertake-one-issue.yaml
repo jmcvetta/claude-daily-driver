@@ -1,0 +1,37 @@
+task_id: epic-05-neg-undertake-one-issue
+description: >-
+  One task issue, handed over to be worked, and stated in the prompt to be one
+  pull request's worth. `undertake` is the right answer, and `epic` must not
+  read every issue as a candidate for decomposition — that is the sweep its
+  non-goals forbid.
+
+  The prompt says how big #12 is because the row denies every read tool. Left
+  as a bare "Undertake #12." the model cannot tell a task from an epic, and
+  `epic` does fire on an attempt to undertake an epic — so the row would have
+  gone red on a trajectory the skills intend.
+tags: [trigger-accuracy, epic, no-fire]
+
+initial_prompt: "Undertake #12 — it is the one-line fix to the retry loop."
+
+agent:
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`undertake` fires"
+    expected_skill: undertake
+    skill_name: undertake
+    # Armed so the watcher counts it as pass-capable and defers the
+    # distractor's fail-stop until recall is decided; `on_pass` stays at its
+    # default `continue`, so this never truncates a run itself.
+    stop_early: {}
+  - type: skill_triggered
+    description: "`epic` does not fire on one issue being undertaken"
+    expected_skill: undertake
+    skill_name: epic
+    stop_early: {}

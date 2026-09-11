@@ -1,0 +1,24 @@
+task_id: epic-03-split-an-existing-issue
+description: >-
+  An issue already in hand, and too big. `Open the issues` turns that issue
+  into the epic rather than opening a second one beside it, so this row is the
+  path that must not reach `undertake` instead.
+tags: [trigger-accuracy, epic, fire]
+
+initial_prompt: "Split #142 up — it is three separate pieces of work, not one."
+
+agent:
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`epic` fires on an issue being split into several"
+    expected_skill: epic
+    skill_name: epic
+    stop_early:
+      on_pass: stop
