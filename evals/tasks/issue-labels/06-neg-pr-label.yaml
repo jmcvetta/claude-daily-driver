@@ -3,8 +3,9 @@ description: >-
   A label on a pull request, written by a bot rather than by the standard this
   skill owns. The word "label" is the whole temptation, and the skill's own
   description refuses it twice: the standard covers issues, and a bot's label
-  is machine state. `deps` is the distractor, because release-please's labels
-  are the ones it already reports on.
+  is machine state. `deps` is the distractor because it is the one skill whose
+  subject is a bot's pull requests, which is the nearest neighbourhood this
+  prompt sits in.
 tags: [trigger-accuracy, issue-labels, no-fire]
 
 initial_prompt: >-
