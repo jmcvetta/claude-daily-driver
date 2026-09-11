@@ -229,6 +229,24 @@ class OmpAgent(Agent[OmpAgentConfig]):
                 "Install Omp with `curl -fsSL https://omp.sh/install | sh`."
             )
 
+        unenforced = [
+            field
+            for field in ("allowed_tools", "disallowed_tools", "system_prompt", "system_prompt_file")
+            if getattr(self.config, field, None)
+        ]
+        if unenforced:
+            # Said out loud once per task rather than left to be discovered from
+            # a report. `disallowed_tools` is what the trigger rows use to keep
+            # a denied `Read` of `skills/<name>/SKILL.md` from scoring as an
+            # engagement, and this arm cannot enforce it: Omp's RPC mode takes
+            # no per-session tool allowlist. A no-fire row is therefore weaker
+            # here than on Claude Code, and `evals/README.md` says so.
+            logger.warning(
+                "omp: %s set but NOT enforced — Omp's RPC mode has no equivalent knob, so the run is "
+                "unconstrained by them; do not read them as a boundary.",
+                ", ".join(unenforced),
+            )
+
         self.working_directory = working_directory
         self._env_path_prepend = list(env_path_prepend or [])
         self._home = tempfile.TemporaryDirectory(prefix="coder-eval-omp-")
