@@ -95,6 +95,11 @@ invented for it is scope the pull request is then measured against. No
 permission is asked — the invocation is the authorisation, and an issue is
 cheap to close.
 
+**Work too big for one issue is `epic`'s, not this step's.** This step writes
+one issue for one pull request's worth of work. Where the request will not fit
+that, `epic` decomposes it into task issues under an epic, and each of those
+task issues comes back here as the issue this sequence takes in.
+
 **A request too vague to write an issue for is a stop.** This is the intent
 gate of `Read the issue and its edges` arriving early, and the constitution's
 rule against guessing at intent: an issue that guesses at what "done" means is
@@ -478,6 +483,9 @@ Non-goals
 - **Does not fire on reading an issue.** Discussing #191 is not undertaking
   it. "What does #191 say", "summarise #191", "is #191 still relevant" are
   questions; answer them, and do not cut a branch.
+- **Does not undertake an epic.** An epic carries no code, so there is no
+  branch to cut and no pull request to open. `epic` owns that stop, and says
+  to undertake one of the epic's ready tasks instead.
 - **Does not fire on work it was not asked to undertake.** "Implement a retry
   loop", with neither an issue nor an invocation, is ordinary work, and running
   eleven steps and a review round over it would be the heaviest possible way
