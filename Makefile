@@ -9,8 +9,8 @@ SHELL := /bin/bash
 
 .PHONY: git_sync check check-plugin check-skills check-agents check-scripts \
 	check-manifests check-constitution check-ask-in-chat check-omp-extension \
-	check-eval-fixtures check-step-names check-infra evals-install evals-plan \
-	evals-run mcp-usage
+	check-eval-fixtures check-step-names check-infra evals-install \
+	evals-plan evals-run mcp-usage
 
 # The `coder_eval` release the eval suites are written against. Pinned on
 # purpose: being able to hold a version back is the whole reason the suites are
@@ -77,7 +77,13 @@ check-agents:
 # passes an agent with an empty description, one whose name disagrees with its
 # filename, and two agents claiming the same name — the last of which makes one
 # of them permanently unreachable. This is the leg that catches those, for
-# skills and agents alike. See the docstring in the script.
+# skills and agents alike.
+#
+# It is also the leg that holds `0011`'s split: no SKILL.md body names a
+# harness's own tool routes, every reference file is linked from the body, and
+# every reference link resolves. A route written back into a body reads
+# correctly on the harness it was written for, so nothing else catches it.
+# See the docstring in the script.
 check-manifests:
 	python3 scripts/check-manifests.py
 

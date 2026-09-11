@@ -7,8 +7,9 @@ description: >-
   "raise a pull request", or "update the PR", and including any call Claude
   makes on its own initiative to `mcp__github__create_pull_request`, to
   `mcp__github__update_pull_request` for anything wider than the title or the
-  body alone, or to `gh pr create` / `gh pr edit` on a harness that still
-  reaches for them. Supplies the branch guard, the existing-PR check, draft
+  body alone, to `gh pr create` / `gh pr edit` on a harness that still
+  reaches for them, or to Omp's `github` tool (`pr_create` op, and `gh pr
+  edit` for updates). Supplies the branch guard, the existing-PR check, draft
   state and the call on whether there is an issue to reference; the title
   comes from `pr-title` and the body, issue reference included, from
   `pr-body`.
@@ -24,6 +25,11 @@ the body structure in `pr-body`; invoke each rather than restating it, so that
 a later edit to a title or a body follows the same rules whether or not it
 arrived through here.
 
+The GitHub calls behind each step below differ by harness.
+[`references/claude.md`](references/claude.md) and
+[`references/omp.md`](references/omp.md) name them, operation by operation,
+in the order this file raises them.
+
 
 Branch
 ------
@@ -37,8 +43,8 @@ Branch
 Already Existing PR
 -------------------
 
-First check whether there is already a PR for this branch. If there is, update
-the existing PR.
+First check whether there is already a PR for this branch — see the
+reference files for the check itself. If there is, update the existing PR.
 - Update both title and body of existing PR — the title under `pr-title`,
   which does not rewrite a type this session did not write
 

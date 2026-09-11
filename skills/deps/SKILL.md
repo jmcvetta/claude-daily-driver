@@ -11,7 +11,9 @@ description: >-
   upgrade, the bulk command each manager already has, green CI as the whole
   acceptance test, and the boundary an unattended run stays inside — no merge,
   no code edited around a breaking change, and nothing outside the pull
-  request it opens. Not for a
+  request it opens — and names the harness's PR routes (`mcp__github__…` MCP
+  calls on Claude, Omp's `github` tool and `gh` routes for the same
+  operations). Not for a
   single named dependency, which is ordinary work, and not for a major version
   bump, which this skill reports and hands to `undertake`.
 ---
@@ -26,6 +28,12 @@ The upgrades themselves are the package manager's work, never a hand-edited
 manifest or lockfile. That rule is the constitution's, under `Dependencies`,
 and it is not restated here.
 
+**The routes are per harness, and they live beside this file.** Every
+operation below is named in words here and resolved to a call there:
+[`references/claude.md`](references/claude.md) for Claude Code,
+[`references/omp.md`](references/omp.md) for Oh My Pi. Read the one for the
+harness in use before the first search or write call.
+
 
 Green CI is the acceptance test
 ===============================
@@ -34,9 +42,8 @@ Green CI is the acceptance test
 
 The suite is the only thing that can say whether a new version broke
 something; reading a lockfile diff by eye says nothing. So this skill runs no
-`/code-review` round and is not `undertake` work — a review of a lockfile
-spends quota for no finding. It opens the pull request through `pr` and waits
-on CI.
+review round and is not `undertake` work — a review of a lockfile spends quota
+for no finding. It opens the pull request through `pr` and waits on CI.
 
 A red suite is the upgrade talking. It is answered by finding which upgrade
 broke what, and never by pinning around the failure, skipping the test, or
@@ -57,21 +64,23 @@ run:
   request, nothing closed, and no issue opened. Opening the pull request and
   marking it ready are the run's whole footprint on GitHub.
 - **Ready is the end, and only on green.** `pr` opens a draft; the run marks
-  it ready with `mcp__github__update_pull_request` once every check has
-  reported green, and leaves it a draft with the failure named when one has
-  not. No round runs in between — see `Green CI is the acceptance test` — so
-  there is nothing else for the draft to wait on.
+  it ready once every check has reported green, and leaves it a draft with
+  the failure named when one has not. No round runs in between — see `Green
+  CI is the acceptance test` — so there is nothing else for the draft to
+  wait on. The reference file for the harness in use names the call that
+  marks it ready.
 
 
 The pass
 ========
 
 **Read what is behind from the open Dependabot pull requests**, rather than
-guessing at it from the manifest. `mcp__github__search_pull_requests` with
-`is:open author:app/dependabot` is the list, and each title names the
-dependency and the version it wants. Not `mcp__github__list_pull_requests`:
-it takes no author, so a filter written for it is one the server never
-applies, and a busy repository answers with everybody's pull requests.
+guessing at it from the manifest. A search for open pull requests authored
+by Dependabot is the list, and each title names the dependency and the
+version it wants — not a plain listing of pull requests, which cannot
+filter by author, and not the manifest. The reference file for the harness
+in use names the exact search call, and the trap in reaching for the wrong
+one instead.
 
 **Upgrade every ecosystem the repository declares, on one branch.** One CI run
 over the whole upgrade is the point. `.github/dependabot.yml` says which

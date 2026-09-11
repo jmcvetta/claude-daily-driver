@@ -1,0 +1,152 @@
+# Claude Code routes — review-cycle
+
+`SKILL.md` names each operation in words. This file names the call, for a
+session running in Claude Code. Omp's routes are in [`omp.md`](omp.md).
+
+
+The review surface
+==================
+
+The session's built-in **`/code-review`**, run against the pull request with
+**`--comment`**.
+
+`--comment` is what carries the findings out of the terminal and onto the pull
+request. They arrive as **resolvable review threads**, inline on the diff under
+a submitted `COMMENT` review — measured on live pull requests at `medium` and
+again at `max`, CLI 2.1.263, 2026-09-07, and recorded in
+[`0001`](../../../docs/notes/0001-built-in-review-surface.md) §4. The default
+level is measured rather than assumed from a deeper level's result.
+
+**The level is named on every invocation.** `/code-review` otherwise reuses
+whatever level was typed last, in some other session, about some other diff.
+`SKILL.md`'s `Name the level` is the rule; this is the surface that makes it
+load-bearing.
+
+Should a later CLI post plain issue comments instead of threads, read them with
+`get_comments` rather than `get_review_comments` and answer with
+`mcp__github__add_issue_comment` — the degradation `SKILL.md` describes under
+`A reviewer, not a bare subagent`.
+
+
+The wait
+========
+
+**Nothing in the Claude toolkit blocks until CI reports**, so the wait was once
+a poll: read the checks, wake two minutes later, read again. The poll is still
+here, as the backstop rather than as the mechanism.
+
+Four parts, and the last one is not optional: a wait that subscribes and arms a
+timer has two things running that outlive it.
+
+Subscribe
+---------
+
+- **Subscribe** with `mcp__github__subscribe_pr_activity`, once, before the
+  first read. CI results then arrive as `<wake reason="external-event">`
+  envelopes that start a turn on their own — no interval to tune, and a green
+  run is answered in the seconds after it goes green rather than at the next
+  poll.
+- **Read the tool result.** Where a PR Steward already watches the pull
+  request, the call succeeds and the events go to the steward instead — the
+  result says so. That is the case with no subscription in it, and the backstop
+  is the whole wait.
+- **Its absence is its own condition**, not `send_later`'s. A session can hold
+  one call and not the other, so a surface without the scheduler may still have
+  the subscription and should still take it. There is a
+  `mcp__Claude_Code_Remote__subscribe_pr_activity` with the same contract;
+  where both exist, use the GitHub one, and use one namespace throughout.
+
+The read
+--------
+
+- **Read** with `mcp__github__pull_request_read` — **both** `get_check_runs`
+  and `get_status`. `SKILL.md` says why the union of the two is what *reported*
+  means; these are the two methods that answer it.
+- Webhook delivery is not a guarantee, which is why every wake ends in a read.
+  The harness's own pull request guidance, delivered alongside the
+  `subscription.created` event, says webhooks *"don't reliably deliver CI
+  success, new pushes, or merge-conflict transitions"*.
+
+The backstop
+------------
+
+- **Wake** with `mcp__Claude_Code_Remote__send_later`, two minutes out,
+  carrying the instruction to read again — then end the turn. The scheduler is
+  what brings the session back when no event does, which is what makes the wait
+  survive a dropped webhook and a steward-held subscription alike. Two minutes,
+  unchanged: the backstop is what bounds the worst case, so making it lazier
+  because the subscription usually beats it would slow down exactly the case it
+  exists for.
+- **Exactly one timer, ever, and never none.** Keep the `trigger_id` the call
+  returns: that is the session's one wake slot. **The test is whether the slot
+  is empty, not what woke the turn** — a wake with the timer still in flight
+  arms nothing, and a turn whose slot is empty arms one before it ends.
+  Re-arming on every wake regardless puts a timer in flight per check that
+  reports, each of which wakes and re-arms again, and a wait that spends more
+  turns than the poll it replaced has replaced nothing.
+  [`0010`](../../../docs/notes/0010-the-wake-slot-is-never-empty.md) is the
+  decision, and the report behind it is a session that emptied the slot and
+  slept through a green run.
+  [`0011`](../../../docs/notes/0011-two-harnesses-one-skill-tree.md) scopes it
+  to Claude Code, which is why the rule lives in this file: a harness without a
+  durable wake has no slot to fill.
+- **A slot already occupied is the backstop.** A wait entered while the
+  caller's cadence timer is in flight — `undertake`'s `Keep it current`, which
+  holds one for the life of the pull request — arms nothing: that timer is two
+  minutes out too, and every wake ends in a read whatever the wake was for.
+  Note whose it is, because `End the wait` cancels the timer in the slot and
+  hands the slot back to that owner.
+
+End the wait
+------------
+
+Both halves are running until something stops them, and neither stops itself.
+On the wake that ends the wait — every check reported, however it reported, or
+the fifteen-minute cap:
+
+- **Cancel the timer in the slot** with
+  `mcp__Claude_Code_Remote__delete_trigger` — the backstop this wait armed, or
+  the caller's cadence timer it borrowed under `The backstop`. An armed
+  `send_later` does not lapse, it fires: left pending, it injects *read the
+  checks again* as a user turn in the middle of the review, restarting a wait
+  on a run that finished.
+- **Unsubscribe** with `mcp__github__unsubscribe_pr_activity`. The subscription
+  is this wait's, taken for it and dropped with it — the next wait on this pull
+  request takes it again, and the call is idempotent. Left standing it is the
+  round's own echo chamber, waking the session for every thread the round posts
+  and every reply it writes.
+- **Hand the slot back to the caller**, where the caller keeps a standing
+  cadence and the surface has the scheduler that cadence needs. The wait does
+  not arm that timer itself: the caller arms it under its own rule, before the
+  turn ends, so a check-in cannot fire into the round this cancel was clearing
+  the way for. What this bullet forbids is standing down instead — no timer and
+  no subscription, on a pull request the caller is still driving, which is the
+  session asleep through a green run that
+  [`0010`](../../../docs/notes/0010-the-wake-slot-is-never-empty.md) records.
+  **A wait with no such caller arms nothing.** A round run on its own — no
+  `undertake` around it — has no cadence to resume and no step that would ever
+  end one, so a check-in armed here would wake a session that has stopped
+  driving anything. This wait owns the reading loop, never the caller's watch.
+
+A laptop with neither
+---------------------
+
+Where a Claude session has neither the subscription nor the scheduler, the wait
+is what that surface can block on, with a human watching the terminal:
+`gh pr checks --watch <number>` where the CLI is installed, inside the Bash
+timeout. Failing that, this is the surface `SKILL.md` says cannot wait: read
+the checks once, and where they have not all reported, say so and stop.
+
+
+The review threads
+==================
+
+| Operation | Call |
+| --------- | ---- |
+| Read the threads | `mcp__github__pull_request_read`, `get_review_comments` method |
+| Reply on a thread | `mcp__github__add_reply_to_pull_request_comment` |
+| Resolve a thread | `mcp__github__resolve_review_thread` |
+
+The identifier trap `SKILL.md` states applies to the last two: resolve takes
+the thread's `PRRT_…` node ID, reply takes the `#discussion_r…` number from the
+comment's `html_url`.
