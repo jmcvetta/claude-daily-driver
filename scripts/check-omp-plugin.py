@@ -252,8 +252,19 @@ def ask_for_commands(omp: str, env: dict[str, str], stderr_path: Path, plugin_di
                     ready = True
                     # Asked only once ready, because a command sent before the
                     # ready frame is not guaranteed to be processed.
-                    process.stdin.write(json.dumps(REQUEST) + "\n")
-                    process.stdin.flush()
+                    #
+                    # Omp can be gone by the time this runs -- it writes the
+                    # ready frame before it has a model, and exits a moment
+                    # later where it has none -- and the write then raises
+                    # rather than returning. Swallowed here so the loop drains
+                    # to EOF and the failure is reported as `omp exited
+                    # without answering`, with its stderr, instead of as a
+                    # traceback that says only `BrokenPipeError`.
+                    try:
+                        process.stdin.write(json.dumps(REQUEST) + "\n")
+                        process.stdin.flush()
+                    except (BrokenPipeError, OSError, ValueError):
+                        pass
                 elif (
                     kind == "response"
                     and frame.get("command") == "get_available_commands"
@@ -349,7 +360,7 @@ def link_plugin(omp: str, env: dict[str, str]) -> None:
 def main() -> None:
     omp = shutil.which("omp")
     if omp is None:
-        raise CheckFailed("omp is not on PATH; the Makefile leg is what decides to skip")
+        raise CheckFailed("omp is not on PATH; install it before `make check-omp-plugin`")
 
     expected = expected_skill_commands()
     if not expected:

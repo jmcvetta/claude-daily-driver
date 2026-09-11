@@ -14,7 +14,7 @@ read it, do not go further.
 
 The **constitution** — `rules/constitution.md`, delivered to every session by
 hook on Claude Code and by the rule provider on Omp — plus **an adapter per
-harness that enforces rather than instructs**, and thirteen
+harness that enforces rather than instructs**, and fourteen
 skills:
 
 | Skill | What it does |
@@ -119,7 +119,7 @@ Omp's rule provider injects `rules/*.md` carrying `alwaysApply: true`.
 `scripts/check-ask-in-chat.py` run both hooks against synthetic event JSON, and
 `scripts/check-omp-extension.mjs` does the same job for the Omp adapter — all
 three in `make check`, with `scripts/check-omp-plugin.py` covering discovery
-from its own workflow. An adapter that stops firing does not
+from CI's `omp` job. An adapter that stops firing does not
 fail; it silently reverts the behaviour it was installed for, which is the one
 failure nothing else would report.
 
