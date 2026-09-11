@@ -19,7 +19,7 @@ skills:
 | `pr` | Opens the pull request for the current branch, or brings an open one up to date: branch guard, existing-PR check, draft state. Delegates the title and the body. |
 | `pr-title` | The title: concise, and Conventional Commits, which is what release-please reads to decide the next version. |
 | `conventional-commits-type` | Picks the type — `fix`, `feat`, `refactor` and the rest — from what the change *does*, never from what the diff looks like. |
-| `pr-body` | The body: a one-line summary, a salutation in verse, an executive summary, engineering detail, and the `Issues` section that closes it. |
+| `pr-body` | The body: a one-line summary, a salutation in verse, the `Issues` section that follows it, an executive summary, and engineering detail. |
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which pull request closes what. |
 | `issue-labels` | The five labels an issue may carry — `epic`, `task`, `bug`, `proposal`, `research` — and the readiness each one states, which is what decides whether an agent may start unattended. |
 | `session-title` | Names the session for the Claude web and mobile lists: forty characters, `#123 shortened issue title` while an issue is in hand. |
@@ -233,8 +233,8 @@ decision someone makes rather than one the next `!` confers.
 **That trailer goes in the squash-commit message, edited at the merge box,
 and nothing may follow it.** release-please reads the note out of the commit
 subject and body, and voids it where non-trailer text sits below — which a
-pull request body always has here, since `pr-body` ends one with an `Issues`
-section and the attribution lines land under that. A voided note is silent:
+pull request body always has here, since `pr-body` ends one with engineering
+detail and the attribution lines land under that. A voided note is silent:
 the version comes out as the arithmetic says and nothing logs a reason.
 
 [pra]: https://github.com/jmcvetta/projected-releases-action
