@@ -63,10 +63,11 @@ The sequence
 | 6 | `Recover a session` | this skill |
 | 7 | `Report the epic ready` | this skill |
 
-`Take the wave` is the loop point rather than `Read the epic`: a wave that
-comes in returns there, and the epic is read again from GitHub each time,
-because the graph moved while the wave was at sea. `Recover a session` is
-reached from `Watch the wave` and returns to it.
+`Take the wave` is the loop point rather than `Read the epic`, and it is the
+router: a wave that comes in returns there, the epic is read again from GitHub
+because the graph moved while the fleet was out, and what it finds decides
+whether the next wave sails, the watch resumes, or the epic is reported.
+`Recover a session` is reached from `Watch the wave` and returns to it.
 
 0 — Read the epic
 -----------------
@@ -114,12 +115,27 @@ once per invocation of this skill — re-entering after the watching session die
 is the case this rule exists for, and launching a second session on a task
 already claimed is two agents writing one branch.
 
+**The latest entry wins.** `Recover a session` posts a replacement entry when
+it retires a session, so a task named twice on the epic is read at its most
+recent one. The earlier entry names a session that is gone, and reading it is
+how a resumed watcher loses the live one.
+
 **A claim from a session this skill did not open is worth a line to the user**,
 and is still not a reason to launch a second one. That collision is the thing
 `undertake`'s claim exists to make visible.
 
-Where every open task is blocked by something open, there is no wave, and that
-is a stop that reports.
+**An empty batch is three different things, and only one of them is a stop.**
+This step is the router, and the wave that comes in at `Watch the wave` returns
+here to be routed again:
+
+- **No open task issue left at all.** The epic is worked out. Go to `Report the
+  epic ready`.
+- **Every task still open is at sea.** The fleet is out and this session has
+  nothing to launch — which is exactly the state a watcher resumed after the
+  last one died finds. Go to `Watch the wave`, over the tasks at sea.
+- **Every task still open is blocked by something open.** There is no wave.
+  Name the issue that blocks, and wait: that is the stop of that name below,
+  and it is the only one of the three.
 
 3 — Open the sessions
 ---------------------
@@ -163,7 +179,7 @@ somebody who did not ask for it. The wave's heading from `Sequencing`, and then
 one row per task:
 
 ```markdown
-### Wave 2 — after #143 · at sea
+### Wave 2 — after #143 · in progress
 
 | Task | Session | Model |
 | ---- | ------- | ----- |
@@ -176,10 +192,15 @@ one row per task:
 the `Model:` line exists.
 
 **The wave headings carry state, and nothing else moves it.** `epic` writes
-`done` and `in progress` into the epic's `Sequencing` at decomposition time and
-never returns. This skill marks the wave as it launches and again as it comes
-in, in the epic's own body and in `epic`'s own form. That is the one edit this
-skill makes to an epic body; everything else about it is `epic`'s.
+that state into the epic's `Sequencing` at decomposition time and never
+returns. This skill marks a wave `in progress` as it launches and `done` as it
+comes in, in the epic's own body. That is the one edit this skill makes to an
+epic body; everything else about it is `epic`'s.
+
+**Those two words are the whole vocabulary**, because they are `epic`'s and
+`epic` owns the format. A third state invented here — *at sea*, however well it
+reads — is one `epic` does not know, and its `Fill in the epic` replaces the
+body outright, so the invention survives exactly until the next edit there.
 
 5 — Watch the wave
 ------------------
@@ -199,7 +220,11 @@ So on every wake:
   names it merges, and that is the test for a task being home — not the session
   status, which reports a session that has stopped, never a job that is done.
 - **The wave is in when every task issue in it is closed.** Mark the wave `done`
-  in the epic's body, and go back to `Take the wave`.
+  in the epic's body, and go back to `Take the wave`, which routes what happens
+  next — the following wave, or `Report the epic ready`.
+- **A pull request closed without merging is somebody's decision.** Its task
+  issue stays open and its session is spent, so nothing here re-dispatches it:
+  say which task it was, and leave it to the person who closed it.
 
 **This skill does not manage the branches.** `undertake`'s `Keep it current`
 already merges the base branch into each head on its own two-minute cadence, so
@@ -221,12 +246,20 @@ already holding five two-minute cadences of its own. A second-by-second watch
 over the top of them is quota spent on nothing, and the constitution's
 *Delegation* rule says whose money that is.
 
-**A quiet pull request is what the backstop is for.** Quiet means its session is
-no longer running while its pull request is open and unmerged, or its pull
-request has not moved across two check-ins while its session says it is.
-Neither is a verdict on its own — a session can be running and stuck, and a
-pull request can be legitimately waiting on a person — so read the pull request
-before acting, and act at `Recover a session`.
+**A quiet task is what the backstop is for.** Three ways one goes quiet:
+
+- Its session is no longer running while its pull request is open and unmerged.
+- Its pull request has not moved across two check-ins while its session says it
+  is running.
+- **It has no pull request at all across two check-ins.** A session that died
+  before `undertake`'s `Open the draft` leaves nothing to watch, which is why
+  the first two clauses cannot see it — and left unwatched it is a task that is
+  at sea for ever and a wave that never comes in.
+
+None of the three is a verdict on its own: a session can be running and stuck,
+a pull request can be legitimately waiting on a person, and a large task can
+take two check-ins to reach its draft. Read the task's pull request and its
+session before acting, and act at `Recover a session`.
 
 **A pull request green, ready for review and unmerged is waiting on a person.**
 Say so once, and then let the check-ins run silently. Repeating it on every
@@ -240,6 +273,10 @@ Reached from `Watch the wave`, and it returns there.
 - **Steer a running session**: interrupt it first, then send the correction.
   A message to a session mid-turn queues behind whatever that turn is doing,
   which is usually the thing being corrected.
+- **A session is addressed by the name the agent listing gives it**, which is
+  not the identifier the muster roll records. The reference file has the two
+  calls and their order. A fleet member that the listing does not name cannot
+  be steered at all, and is reopened instead.
 - **Messaging is one way.** The session receives it and cannot answer, so the
   result of a correction is read from the pull request, never from the session.
 - **Reopen a session that cannot be recovered**: archive it, and open a fresh
@@ -247,17 +284,30 @@ Reached from `Watch the wave`, and it returns there.
   of its own. The branch is recorded twice already — in the claim comment
   `undertake` posted on the task issue, and as the head of the pull request if
   one is open — and either is read rather than guessed. Given that branch the
-  new session re-enters `undertake` on work in progress: the claim is found,
-  the open pull request is found, and the work is resumed rather than started
-  again beside itself.
-- **A session that stopped to ask is a stop**, and it is this skill's fourth.
-  The question cannot be read from here, so it cannot be answered from here.
+  replacement picks the work up where it was left: `pr`'s existing-PR check
+  finds the open pull request rather than opening a second one, and the commits
+  already pushed are on the branch it is handed.
+- **The replacement claims the task again, and that is correct.**
+  `undertake`'s `Claim the issue` suppresses a second claim only for a session
+  re-entering its own sequence, and reports a claim from any other session as a
+  collision. The replacement is another session, so it does both — and the
+  collision it reports is a true statement about the task, which now carries
+  two claims because the first session is gone.
+- **Post the replacement to the epic.** One comment naming the task, the
+  session retired and the session that took over. The muster roll is what
+  `Take the wave` reads at-sea status from, so a recovery nobody wrote down is
+  a record pointing at an archived session — and the next watcher follows it.
+- **A session that stopped to ask is a stop**, named under `Where it stops and
+  waits`. The question cannot be read from here, so it cannot be answered from
+  here.
 
 7 — Report the epic ready
 -------------------------
 
-When the last wave is in: one comment on the epic saying it is ready to be
-closed, and stop. The check-ins end there.
+Reached from `Take the wave`, when no task issue of the epic is open any
+longer. One comment on the epic saying it is ready to be closed, and stop —
+the backstop is cancelled and every pull request subscription is dropped, so
+the check-ins end there.
 
 **The epic is not closed here.** `epic` states that no pull request closes an
 epic and that it is closed by hand against its own `Summary`, which is a test

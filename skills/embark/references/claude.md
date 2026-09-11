@@ -35,7 +35,8 @@ The sessions
 | `Open the sessions` | Open one per task | `mcp__Claude_Code_Remote__create_session` |
 | `Watch the wave` | Read a task session's status | `mcp__Claude_Code_Remote__get_session` |
 | `Recover a session` | Stop the current turn | `mcp__Claude_Code_Remote__interrupt_session` |
-| `Recover a session` | Send a correction | `SendMessage`, to the session id |
+| `Recover a session` | Name the session as an address | `ListAgents` |
+| `Recover a session` | Send a correction | `SendMessage`, to that name |
 | `Recover a session` | Retire one | `mcp__Claude_Code_Remote__archive_session` |
 
 What `create_session` is given
@@ -60,6 +61,23 @@ sentence's reason.
 does not itself have pre-approved are dropped, so a child never carries a grant
 its parent lacks. There is nothing to pass here, and passing one would read as
 a grant that was not made.
+
+Addressing a session
+--------------------
+
+**`SendMessage` is addressed by name, never by a session id.** Its `to` takes
+the name a row of `ListAgents` prints — that name is the address, and there is
+no other syntax for one. The `session_01AbC…` identifier `create_session`
+returns, and that the muster roll records, is not one: passing it fails to
+resolve, and `SKILL.md`'s *messaging is one way* means nothing reads back that
+it did.
+
+So a correction is two calls, in order. `ListAgents` lists this account's cloud
+sessions among its rows; match the fleet member there and send to the name it
+printed, appending the row's ` [ref]` only where an error asks for it. **A
+member the listing does not name cannot be reached** — a session that has
+already stopped is the usual reason — and that is the reopen path in
+`Recover a session` rather than a retry.
 
 **There is no effort parameter.** Effort is session configuration —
 `session_context.effort_level` — rather than a dispatch argument, which is why
