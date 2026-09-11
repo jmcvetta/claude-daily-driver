@@ -139,8 +139,16 @@ all, and `issue-labels` says what each one means. **An `epic` and a `proposal`
 are both stops.** An epic coordinates issues rather than describing work, so
 say which child to work instead and wait; a proposal has its shape still open,
 so decomposing it into tasks is a decision and it goes to the user. `task`,
-`bug` and `research` run through, and an issue carrying no label runs through
-too — name the label `issue-labels` picks for it, and go on.
+`bug` and `research` run through.
+
+**An issue carrying no label is labelled here rather than merely noted.** It
+runs through — unlabelled is not blocked — and it is the only place the
+standard's one-label-per-issue invariant is ever repaired: `Open the issue`
+labels everything it writes, so an unlabelled issue is one a person opened.
+`issue-labels` picks the label and `mcp__github__issue_write` applies it, on
+the same call that needs no permission for the claim a moment later. Naming
+the label and moving on leaves the next session asking the same question of
+the same issue.
 
 The comments too, because `Claim the issue` needs to know whether it is claimed
 already — by this session, which means the sequence is being re-entered, or by

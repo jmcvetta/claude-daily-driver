@@ -85,9 +85,12 @@ its edges`, and it is a stop in two cases:
 request contains, not in whether one is opened.
 
 An issue carrying **no** label is not a stop. It is unlabelled rather than
-blocked, and the label to add is the one `Picking one` returns — say which
-one it is, and go on. `Open the issue` labels every issue it writes, so an
-unlabelled issue is one a person opened.
+blocked, and the answer is to label it: `Picking one` returns the label and
+`mcp__github__issue_write` applies it, in passing, before the work goes on.
+`Open the issue` labels every issue it writes, so an unlabelled issue is one a
+person opened — which makes this the one moment the invariant at the top of
+this file is ever put back. Naming the label without writing it leaves the
+next session to name it again.
 
 
 What a label is not
@@ -146,6 +149,11 @@ Two consequences worth knowing:
 - **Applying is a person's job.** `make check-infra` validates the stack
   without credentials, and CI runs it; the apply needs a token with admin
   rights and is not something a session does on its own.
+- **A label applied to an issue before that apply creates itself.** GitHub
+  makes a missing label the moment one is set on an issue, with a colour
+  nobody chose — and the label then exists, so the first apply fails on it
+  exactly as it would on `bug`. Import it, the way `import.sh` imports `bug`,
+  rather than reading the failure as a broken stack.
 
 Applying the standard to a repository that does not run this Tofu stack means
 copying `labels.tf`, or creating the five by hand with the descriptions in
