@@ -246,6 +246,11 @@ Every task whose blockers are closed can start now, each in its own session,
 each through `undertake`. Name them, rather than leaving the reader to derive
 the list the first time.
 
+**Putting that wave to sea is `embark`'s**, where the harness can open sessions
+at all: one session per task, watched to merge, and the next wave after it. The
+list named here is what it takes in, and it is also the whole hand-off on a
+harness that cannot.
+
 **The epic is never undertaken**, which is the stop of that name under
 `Where it stops and waits`. It carries no code; the tasks named above are what
 a session takes.
