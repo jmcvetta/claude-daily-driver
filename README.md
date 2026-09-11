@@ -182,6 +182,12 @@ The same tree is read by more than one harness. **Claude Code** discovers it as
 a plugin. **[oh-my-pi][omp]** (`omp`) reads Claude Code plugins natively, so it
 needs no separate port; a checkout loads with `omp --plugin-dir <path>`.
 
+One tree, one release, and a thin runtime adapter per harness — `hooks/` for
+Claude Code, `extensions/daily-driver.js` for Omp. Where a rule holds on only
+one of them, [`docs/notes/0011`](docs/notes/0011-two-harnesses-one-skill-tree.md)
+is the decision: it says why there is one skill tree, where a harness route
+lives, and which rules are Claude Code only.
+
 [omp]: https://omp.sh
 
 ## Checks
