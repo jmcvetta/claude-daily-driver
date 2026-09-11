@@ -159,8 +159,10 @@ nothing. Do not write one.
 ------------------
 
 The one stop. Put the plan in the reply — each task as a title, a line, and the
-model it suggests, each edge as what it waits on, and the gates' answer from
-`Size the work` — and write nothing until the user agrees.
+model it suggests, each edge as what it waits on, the gates' answer from
+`Size the work`, and, where an existing issue is to become the epic, which
+issue that is and that its body is replaced — and write nothing until the user
+agrees.
 
 It clears `judgement-call`'s gate twice over. A decomposition is a statement of
 scope: it says what the pieces are and what done means for each, and craft does
@@ -185,6 +187,15 @@ epic**. Do not open a second one beside it: rewrite its body the way a new
 epic's is written here, and the rest of the sequence then runs unchanged —
 `Write the graph` attaches the children, and `Fill in the epic` adds
 `Sequencing`.
+
+**That rewrite replaces the body rather than adding to it**, so the prose the
+user wrote is gone from the issue the moment it lands. Two things make that
+safe, and neither is optional. `Agree the plan` names the issue and says its
+body is replaced, so the conversion is agreed rather than done to somebody.
+And nothing in the original is dropped: what it says about the whole change
+becomes `Summary` and `Justification`, and what it says about one part goes
+into that part's task issue, which is where the person doing the work will
+read it.
 
 The epic first, then the tasks, because a task names the epic as its parent and
 the parent must exist to be named. The epic's body at this point is `Summary`
