@@ -22,6 +22,14 @@
 # sticky, and holds every later release at that version until the line is
 # removed.
 #
+# The release pull request opens under `## New Release` rather than
+# release-please's default ":robot: I have created a release *beep* *boop*".
+# `pull-request-header` is another config-file-only key, so manifest mode is
+# what makes it reachable. The string is literal — release-please interpolates
+# nothing into it, and the version is already in the pull request title — and
+# it must not contain `---`, which is the delimiter release-please splits the
+# body on when it re-parses its own pull request.
+#
 # `.release-please-manifest.json` says `0.0.0`, which is release-please's
 # sentinel for "nothing released yet" — `Manifest.buildPullRequests` skips its
 # backfill for exactly that string. plugin.json and the marketplace entry say
