@@ -46,6 +46,15 @@ is deliberately credential-free. What *is* part of `make check` is
 `check-eval-fixtures`, which builds every review-depth fixture repository with
 nothing but git — see "The git problem" below for why that leg exists.
 
+**`llm_judge` needs its own transport, separate from the agent's.** `coder_eval`
+does not fail a run over a missing judge transport — it scores the criterion
+0.0 and keeps going, which reads like a real result in the report and is not
+one. `make evals-run` runs `scripts/evals-preflight.py` first and refuses to
+start when that would happen; see
+[`docs/notes/0012-the-judge-needs-its-own-transport.md`](../docs/notes/0012-the-judge-needs-its-own-transport.md).
+"Two defaults, decided on purpose" below covers how `.env` factors into which
+transport gets picked.
+
 **Run `plan` before every `run`.** It is free, and it catches the config errors
 that otherwise cost a paid run to discover. `make evals-run` depends on
 `evals-plan` for exactly that reason.
