@@ -1,6 +1,6 @@
 # Evals
 
-Fourteen suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
+Fifteen suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
 than by `claude plugin eval`. The reasoning for the harness is
 [`docs/notes/0002-eval-harness.md`](../docs/notes/0002-eval-harness.md);
 the short version is that the built-in cannot be run on this account, is
@@ -9,7 +9,9 @@ the `claude` binary, so there is no version to hold back.
 
 ```
 evals/
-├── experiments/with-without.yaml   the ablation every case is measured under
+├── experiments/
+│   ├── with-without.yaml           the ablation every Claude case is measured under
+│   └── omp.yaml                    the same suites, on Omp — see "The Omp arm"
 ├── tasks/
 │   ├── pr/              does `pr` fire when a PR is opened, and only then?
 │   ├── pr-title/        … when a title is written, and only then?
@@ -27,9 +29,10 @@ evals/
 │   ├── session-title/   … when the session is named, and not the PR?
 │   ├── constitution/    does the constitution reach a subagent, and land?
 │   └── review-depth/    does `review` send the right panel at the diff?
-└── fixtures/review-depth/
-    ├── shared/          builds the git repository every case starts from
-    └── cases/<name>/    one `case.sh`, mounted alone beside `shared/`
+├── fixtures/review-depth/
+│   ├── shared/          builds the git repository every case starts from
+│   └── cases/<name>/    one `case.sh`, mounted alone beside `shared/`
+└── coder-eval-omp/      the `omp` agent kind, so the same cases run on Omp
 ```
 
 ## Running them
@@ -41,7 +44,14 @@ make evals-run        # the whole suite, both arms. Costs real money.
 
 make evals-run TASKS='tasks/pr/*.yaml'     # one suite
 make evals-run TASKS='tasks/*/*-neg-*.yaml' # just the no-fire half
+
+make evals-run-omp    # the same suites on Omp. Needs `omp` and a model.
 ```
+
+The `*-neg-*` selector is a filename glob, and one absence assertion does not
+live in a file it matches: `tasks/pr/02-open-a-pr.yaml` is a fire case that
+also asserts `undertake` stays silent. Add `tasks/pr/*.yaml` when the question
+being asked is about collisions rather than about the no-fire cases as such.
 
 Not part of `make check`. The cases need a live model and this repository's CI
 is deliberately credential-free. What *is* part of `make check` is
@@ -87,9 +97,13 @@ the one adjacent request where a type is tempting and wrong: a commit
 message, which is prose by the constitution's rule. Each suite has two
 halves, and the second is the one that earns its keep:
 
-- **Fire cases** — four per skill, covering the literal `/pr`, natural
-  phrasings, and Claude's own use of `mcp__github__create_pull_request` /
-  `mcp__github__update_pull_request`.
+- **Fire cases** — four per skill, covering the literal slash command,
+  natural phrasings, and Claude's own use of the call that skill's description
+  names. That call is `mcp__github__create_pull_request` /
+  `mcp__github__update_pull_request` on the three PR suites, and it is
+  whatever the skill actually routes to elsewhere —
+  `mcp__Claude_Code_Remote__set_session_title` on `session-title`, which is
+  not a GitHub call at all.
 - **No-fire cases** — two per skill, drawn from the *adjacent* skills rather
   than from unrelated work. "Fix just the title" asserts that `pr-title` fires
   and `pr` does not; a request to write a commit message asserts that none of
@@ -144,6 +158,15 @@ direction `Keep it current` does not go: that step merges the base branch into
 the pull request, and the word it put in the description is the word this row
 keeps from sweeping in the other one.
 
+One collision is asserted from the other side. `pr/02-open-a-pr.yaml` carries an
+`undertake` distractor, because "get it to a pull request" is in `undertake`'s
+register too and the only thing separating them is that the prompt has no issue
+to undertake. Its `pr` criterion is armed bare rather than
+pass-stopped for that reason: a pass-stop there would end the run the moment
+`pr` fires and the distractor would pass vacuously, while the bare arm keeps
+that criterion pass-capable so the distractor's fail-stop stays deferred. The reverse assertion is absent on purpose — `undertake` invokes
+`pr` at `Open the draft`, so `pr` firing on an undertake prompt is correct.
+
 `deps/` asks where the line falls between a bulk upgrade and one dependency.
 `01` is the slash command and `02` is the register the skill was written for —
 Dependabot's pull requests named, the whole set asked for. `03` and `04` are the rows
@@ -167,6 +190,32 @@ yet filed, an epic-or-task choice, and the readiness question asked of a whole
 backlog — the last of which is the question the standard exists to answer and
 the one `undertake` asks on every issue it is handed.
 
+`session-title/` is the pair that sits closest together: two skills about a
+*title*, one noun apart, and two of `session-title`'s natural phrasings live
+inside `pr-title`'s vocabulary. So the boundary is asserted in both
+directions rather than one. `02` renames the session, and `pr-title/08-neg-session-title` asserts
+`pr-title` stays out of that same prompt; `05` fixes a pull request title
+with the session name ruled out, and asserts `session-title` stays out. The
+two directions sit in different suites because a `-neg-` row belongs to the
+skill it keeps silent, which is what
+`make evals-run TASKS='tasks/*/*-neg-*.yaml'` selects on. A suite that only proved
+`session-title` fires would stay green with both descriptions collapsed into
+one.
+
+`04` is the row that had to be designed rather than written down. It is the
+initiative trigger — work on an issue beginning, and nothing in the prompt
+asking for a title or a name — so the issue it quotes decides whether the row
+tests anything. It quotes `session-title`'s own #212 worked example, whose
+title shares no vocabulary with the skill. Quote an issue called "set the
+session title" instead and the row passes on a keyword match without ever
+reaching the clause it exists for.
+
+`07-get-session-before-set` is the suite's behaviour row, and it grades the
+reading rather than the triggering: `SKILL.md` sends the caller to the
+reference file for the call, and the reference file is where the two-call
+order lives — `get_session` with no id first, then `set_session_title` with
+the id it returned.
+
 `constitution/` is not a trigger-accuracy suite: it is the live half of the
 constitution's own test, described under "Checks" in the repository README. Its credential-free half is
 `scripts/check-constitution.py`.
@@ -185,6 +234,10 @@ every pull request opened — rather than on a restated line from
 `skills/review/SKILL.md`. A suite that restates the spec catches
 drift away from the depth table and can never catch the depth table being
 wrong.
+
+The Omp arm is the exception, and it says so: it carries no bare-Omp variant,
+so it reports the treated side alone. See "The Omp arm" for what stands in for
+the delta there.
 
 ## The two moods, and `expected_skill: none`
 
@@ -569,6 +622,93 @@ stops building does not turn the suite red, it turns every case into a silent 0.
 These cases run in **Local mode**: there is no GitHub MCP in the sandbox, so the
 pull-request lookup finds nothing and the skill assembles the diff from git.
 
+## The Omp arm
+
+The same suites, the same plugin, a second harness. `docs/notes/0013-the-omp-arm.md`
+is the decision; this is how it is run.
+
+```sh
+make evals-run-omp                          # the Omp arm
+make evals-run-omp TASKS='tasks/pr/*.yaml'  # one suite of it
+```
+
+It needs `omp` on PATH and a model configured in the caller's own
+`~/.omp/agent/`. The agent borrows that directory by symlink into a throwaway
+Omp home and writes nothing back into it.
+
+**`agent: {type: omp}` is not a built-in kind.** It comes from
+`coder-eval-omp/`, a `coder_eval` plugin in this repository, installed beside
+the pinned harness by `make evals-install`. Its README says what the adapter
+has to normalise and why each of those is a silent zero rather than an error;
+the short version is that Omp engages a skill by reading `skill://<name>`,
+which `skill_triggered` cannot see, and that `coder_eval` builds the
+`[RESULT - …]` transcript these rubrics anchor on for its Claude agent alone.
+
+**Two experiment files, two runs, and tags in between.** Ten rows cannot be
+graded identically on both harnesses — the call they name differs, or the rule
+is Claude Code only per `0011` — so each is two files, tagged `claude-only` and
+`omp-only`, with `-omp` on the second's `task_id`. A `coder_eval` variant
+applies to every task in the run, so one invocation carrying both sets would
+grade Omp's routes under a Claude arm and pay for it. `make evals-run` excludes
+`omp-only`; `make evals-run-omp` excludes `claude-only`. `make check-eval-arms`
+holds the two sets in step, because a fork that loses its tag runs in both arms
+and fails for a reason that has nothing to do with the skill.
+
+| Suite | Claude-only row | Omp counterpart |
+| --- | --- | --- |
+| `deps` | `05-references-search-not-list` | `05-references-search-not-list-omp` |
+| `pr` | `07-one-call-sets-both` | `07-one-call-sets-both-omp` |
+| `pr-title` | `07-mcp-not-gh-pr-edit` | `07-gh-pr-edit-not-mcp-omp` |
+| `pr-body` | `07-mcp-not-gh-pr-edit` | `07-gh-pr-edit-not-mcp-omp` |
+| `review-cycle` | `07-wait-for-ci-is-not-a-sleep` | `07-wait-for-ci-is-not-a-sleep-omp` |
+| `review-cycle` | `08-subscribe-before-first-read` | `08-run-watch-then-statuses-omp` |
+| `session-title` | `07-get-session-before-set` | `07-one-call-sets-the-title-omp` |
+| `judgement-call` | `01-ask-in-chat-hook` | `01-ask-in-chat-extension-omp` |
+| `undertake` | `08-wake-slot-is-refilled` | `08-cadence-stops-at-ready-omp` |
+| `undertake` | `09-session-fields-for-claim` | `09-claim-carries-the-branch-alone-omp` |
+
+Each Omp row names its sibling with a `forks:<task_id>` tag, which is what
+`check-eval-arms` pairs them by — and what catches a sibling that loses its own
+tag and starts running in both arms.
+
+The seven `review-depth` rows carry `claude-only` with no counterpart. They pin
+`agent.type: claude-code` and drive Claude's own settings and dispatch hook, so
+they have no Omp form; untagged, they would run inside the Omp arm as Claude
+sessions and be billed and reported as Omp results.
+
+Seven counterparts are not the sibling stem plus `-omp`, and that is
+deliberate: those stems name Claude's route, and on Omp the row grades the
+opposite. `08-cadence-stops-at-ready-omp` is the clearest case — Omp has no
+durable wake, so the rule it grades is the one `0011` records in place of the
+never-empty wake slot.
+
+**`plan` does not fail on a broken arm.** Measured: with no plugin installed,
+`coder-eval plan` printed `Variant 'omp': resolution failed - No agent
+registered for type 'omp'`, then `All tasks are valid!`, and exited 0. So
+`make evals-plan` runs `scripts/evals-variants.py` first, which asks the
+installed `coder_eval` which kinds it actually has.
+
+**Three things this arm measures more weakly than the Claude arms**, recorded
+so a report is read with them in mind.
+
+- **No bare-Omp control.** The arm reports the treated side alone, so a row's
+  score has no delta beside it; the no-fire rows in the same run are what say
+  the plugin loaded at all. A second variant is the fix, and it doubles the
+  cost.
+- **`allowed_tools` and `disallowed_tools` are not enforced.** Omp's RPC mode
+  has no per-session tool allowlist, so the mitigation described under "How
+  the graders ported" — removing `Read` so a denied read of
+  `skills/<name>/SKILL.md` cannot score as an engagement — is unavailable here.
+  The agent warns once per task rather than letting a row believe otherwise.
+- **Token accounting is best-effort.** Omp's docs do not name the fields, so
+  the adapter reads every plausible spelling and records which answered, in
+  `omp_usage_keys_seen`. A run with no counts is scored rather than failed
+  until that is settled.
+
+`omp_skills_loaded`, `omp_linked_plugins` and `omp_extension_errors` land in
+each run's `environment_info` for the same reason the paragraph above exists:
+a red arm and an arm whose plugin never arrived must not read alike.
+
 ## Two defaults, decided on purpose
 
 - **Telemetry is off.** `coder_eval` sends usage telemetry by default to a
@@ -602,7 +742,7 @@ criteria are checked, so equal values mean a turn that uses its budget is killed
 as a TIMEOUT before it can be graded. The headroom is the difference.
 
 `run_limits` caps turns and wall clock per task, but nothing caps the bill. The
-35 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
+64 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
 and the fire half stops the moment the skill fires. `review-depth` is not: its six fire
 cases each dispatch a real reviewer panel over a real diff, five times, in the
 `with-plugin` arm. The `bare` arm is cheaper but not free: it has no `review`

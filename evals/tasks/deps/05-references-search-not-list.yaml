@@ -31,7 +31,7 @@ task_id: deps-05-references-search-not-list
 description: >-
   A bulk upgrade names the exact call used to find Dependabot's open pull
   requests, and why the plainer-sounding listing tool is the wrong one.
-tags: [deps, references, fire, behaviour]
+tags: [deps, references, fire, behaviour, claude-only]
 
 initial_prompt: >-
   Dependabot has a pile of PRs open on this repo and I want them all rolled

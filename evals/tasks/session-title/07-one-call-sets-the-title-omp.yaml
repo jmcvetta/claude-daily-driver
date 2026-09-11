@@ -1,0 +1,97 @@
+# The Omp half of `07-get-session-before-set`, which is tagged `claude-only`
+# because the sequence it grades is Claude's. `SKILL.md`'s `Setting it` says
+# only that setting the title "is the harness's own call… how many calls that
+# takes differs between them" and points at the reference files. That sentence
+# is the whole reason these two rows exist, and
+# `skills/session-title/references/omp.md` gives the Omp answer: "One call:
+# `daily_driver_set_session_title({ title })`. It takes the title alone — the
+# runtime adapter (`extensions/daily-driver.js`) applies it to the current
+# session, so there is no session id to look up first." A row that passes
+# without the reference file being read is wrong, so the graded content is
+# that single call, its name, and the absence of any lookup before it.
+#
+# Why the Claude sibling could not be reused: it grades two calls in order,
+# `get_session` then `set_session_title`, and on this harness that answer is
+# the failure. The count is the finding on both sides, and it differs.
+#
+# What this row can and cannot see. The sandbox has no Omp runtime adapter, so
+# `daily_driver_set_session_title` cannot actually be called here — there is
+# no real session to title. What is observable is what the agent says it will
+# do, so the graded assertion is an `llm_judge` on the reply, plus the skill
+# having fired at all. A positive check that the title was set needs a live
+# Omp session with the adapter loaded, which is not a sandbox this harness can
+# build.
+#
+# Why this fails the `without` arm: `daily_driver_set_session_title` is this
+# plugin's own tool, registered by its runtime adapter. A model with no plugin
+# loaded has no reason to know the tool exists, let alone its name. It also
+# has no reason to know the session needs no id — a session-titling call that
+# takes a session id is the ordinary shape, and it is what the other harness
+# does.
+
+task_id: session-title-07-one-call-sets-the-title-omp
+description: >-
+  Titling the session for work on an issue is one call carrying the title
+  alone, with no session id looked up first.
+tags: [session-title, references, fire, behaviour, omp-only, forks:session-title-07-get-session-before-set]
+
+initial_prompt: >-
+  I'm starting on issue #40, "New skill: set the Claude session title." Title
+  this session for it — and tell me exactly which call or calls you're making
+  to do that.
+
+agent:
+  allowed_tools: [Read, Grep, Glob, Skill, Bash]
+  disallowed_tools: [Write, Edit, NotebookEdit, Agent, Task]
+
+run_limits:
+  max_turns: 10
+  turn_timeout: 300
+  task_timeout: 600
+
+success_criteria:
+  # Without this, a run that never reached the skill could still be judged on
+  # a plausible-sounding reply. Left unarmed for the reason `undertake/08`
+  # gives: there is no fail-stopping criterion here for a bare arm to defer.
+  - type: skill_triggered
+    description: "`session-title` fires on Claude's own initiative when issue work begins"
+    expected_skill: session-title
+    skill_name: session-title
+
+  # The finding.
+  - type: llm_judge
+    description: The reply sets the title in one call, with no id looked up first
+    include_agent_output: true
+    include_reference: false
+    weight: 2
+    prompt: |
+      You are grading one reply against a single rule.
+
+      FIRST, FIND THE REPLY. The AGENT OUTPUT block you have been given is a
+      whole-turn transcript, not a reply. `[ASSISTANT] …` starts each block of
+      the agent thinking aloud — only the first line of a block carries that
+      tag — and a final `[RESULT - SUCCESS] …` or `[RESULT - ERROR] …` carries
+      the answer the user actually received.
+
+      **The reply is the text from the last `[RESULT - …]` tag to the end of
+      the AGENT OUTPUT block**, starting after the tag on its own line.
+      Nothing outside the AGENT OUTPUT block is the agent's.
+
+      Begin your rationale with `ANCHOR: result` or `ANCHOR: none`. Where
+      there is no `[RESULT - …]` tag, write `ANCHOR: none` and score 0.0.
+
+      The rule: the reply must name ONE call,
+      `daily_driver_set_session_title`, taking the title alone. A plausible
+      name variant ("the daily-driver set-session-title tool") is acceptable.
+      The reply must not describe any call made before it to learn the
+      session's own id: the adapter applies the title to the current session,
+      so there is no id to look up.
+
+      Score 1.0 if the REPLY names that single call with the title as its
+      only argument, and describes no lookup before it.
+      Score 0.5 if it names that call but is unclear about what it takes —
+      for example, claiming it also needs a session id — while still
+      describing no separate lookup call.
+      Score 0.0 if the reply describes a separate call to read the session or
+      its id before setting the title, names a different titling call, or
+      names no specific call at all.

@@ -19,7 +19,7 @@ not fail the run when it gets `None` — it returns score 0.0 with
 **continues**. Only the DIRECT backend can be unconfigured this way; BEDROCK
 and LITELLM always carry a usable transport.
 
-Running `tasks/session-title/01-get-session-before-set.yaml` with no
+Running `tasks/session-title/07-get-session-before-set.yaml` with no
 `ANTHROPIC_API_KEY` set made this concrete. `experiment.md` reported `Score
 0.000 (bare) / 0.333 (with-plugin)`, `Best: with-plugin`, `Win Rates —
 with-plugin: 1/1 tasks (100%)`. That reads as a clean ablation. The row's

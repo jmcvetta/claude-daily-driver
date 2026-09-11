@@ -250,8 +250,11 @@ shell script; `scripts/check-manifests.py` for what `validate` lets through,
 such as a skill whose frontmatter `name` disagrees with its directory; `scripts/check-constitution.py`, which drives
 both hooks against synthetic event JSON and asserts the constitution comes back
 from each; `scripts/check-labels.py`, which asserts the issue-label standard
-says the same thing in `issue-labels` and in the OpenTofu that declares it; and
-`scripts/check-eval-fixtures.sh`.
+says the same thing in `issue-labels` and in the OpenTofu that declares it;
+`scripts/check-eval-fixtures.sh`; `scripts/check-omp-agent.py`, which drives
+the Omp eval arm's frame reduction against recorded frames; and
+`scripts/check-eval-arms.py`, which keeps the Claude and Omp halves of the
+forked eval rows in step.
 
 **One of its legs is Omp's.** `scripts/check-omp-extension.mjs` imports the
 adapter under Node with a faked `ExtensionAPI` and asserts the `ask` deny and
@@ -271,9 +274,9 @@ can actually break the integration — `package.json`, `.claude-plugin/`,
 whether or not the gate opens, so a broken Omp integration blocks a merge; its
 comment says why each file is on the list, and why `skills/` is not.
 `make check-infra` parses the OpenTofu
-stack — see [infra/github/README.md](infra/github/README.md). `make evals-run`
-needs a live model, and CI here is credential-free — see
-[evals/README.md](evals/README.md); `TASKS='tasks/constitution/*.yaml'` is the
+stack — see [infra/github/README.md](infra/github/README.md). `make evals-run` — and `make evals-run-omp`, the same
+suites on the second harness — needs a live model, and CI here is
+credential-free — see [evals/README.md](evals/README.md); `TASKS='tasks/constitution/*.yaml'` is the
 other half of the constitution's test, since only a real session can prove the
 harness honours the subagent hook.
 

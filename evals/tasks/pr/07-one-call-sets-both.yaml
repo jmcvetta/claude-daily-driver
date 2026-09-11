@@ -38,7 +38,7 @@ task_id: pr-07-one-call-sets-both
 description: >-
   An existing pull request needing both a new title and a new body is updated
   in one call carrying both fields, not two separate calls.
-tags: [pr, references, fire, behaviour]
+tags: [pr, references, fire, behaviour, claude-only]
 
 initial_prompt: >-
   PR #14 is already open on this branch. The title's wrong and the body's
