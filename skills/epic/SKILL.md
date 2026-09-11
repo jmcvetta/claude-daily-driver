@@ -57,7 +57,7 @@ The sequence
 | - | ---- | ----- |
 | 0 | `Size the work` | this skill |
 | 1 | `Draft the plan` | this skill |
-| 2 | `Agree the plan` | this skill, `judgement-call`, `issue-deps` |
+| 2 | `Agree the plan` | this skill, `judgement-call` |
 | 3 | `Open the issues` | this skill, `undertake` |
 | 4 | `Write the graph` | `issue-deps` |
 | 5 | `Fill in the epic` | this skill |
@@ -164,13 +164,17 @@ model it suggests, each edge as what it waits on, the gates' answer from
 issue that is and that its body is replaced — and write nothing until the user
 agrees.
 
-It clears `judgement-call`'s gate twice over. A decomposition is a statement of
+It clears `judgement-call`'s gate on scope. A decomposition is a statement of
 scope: it says what the pieces are and what done means for each, and craft does
-not pick one split over another. And `issue-deps` writes an edge only on
-confirmation, which `judgement-call` explicitly does not waive.
+not pick one split over another.
 
-**One agreement covers the whole plan**, edges included. They are not confirmed
-again, one at a time, at `Write the graph`.
+The edges are agreed here too, and not because `issue-deps` asks for them — it
+writes an edge from evidence and reports the write. They are agreed because
+they **are** the plan: an edge says which task waits on which, so the order of
+the work is as much a statement of scope as the split is.
+
+**One agreement covers the whole plan**, edges included. `Write the graph`
+writes them and reports each one, and asks nothing a second time.
 
 3 — Open the issues
 -------------------

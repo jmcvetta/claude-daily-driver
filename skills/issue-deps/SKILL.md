@@ -13,8 +13,8 @@ description: >-
   `get_sub_issues` or `get_parent`, `mcp__github__issue_write` with
   `parent_issue_number`, or of a `Closes #123` line in a pull request body.
   Supplies the three clients these relationships need and the probe that picks
-  one, the script for a token without `gh`, and the rule that a relationship
-  is proposed from evidence and confirmed by the user, never asserted.
+  one, the script for a token without `gh`, and the rule that an edge the
+  evidence supports is written and reported, never asked about first.
 ---
 
 # Issue relationships
@@ -91,26 +91,45 @@ is the client:
    that, rather than a session discovering it by failing.
 
 
-Propose from evidence; never assert
-===================================
+Write from evidence; report every write
+=======================================
 
 The failure mode of this skill is **inventing relationships**. An agent handed
 a job feels obliged to produce output, and this job's output is edges.
 
-- A wrong edge is worse than a missing one. It blocks work silently, and nobody
-  thinks to look for a relationship they did not create.
-- So: state the evidence, name the edge it implies, and **ask**. Write only on
-  confirmation.
-- Reading is free and needs no confirmation. Writing never is.
+A wrong edge is still worse than a missing one, and the reason is **silence**:
+it blocks work nobody knows is blocked, and nobody thinks to look for a
+relationship they did not create. Silence is cured by announcing the write,
+not by asking before it. An edge is also undone with one `remove`, so it is
+not the hard-to-reverse or outward-facing action the constitution holds for
+confirmation.
 
-The firing moment is real and specific — a dependency is *discovered* while
-planning work, or while writing a PR body and realising it cannot merge first.
-That is when to speak. A sweep of the issue list looking for edges to add is
-the manufacturing failure, not the skill working.
+So: state the evidence, name the edge it implies, **write it**, and report the
+write.
 
-None of this moved when the transport did. In the session that found the `gh`
-path, this rule is what stopped an edge being written between two issues that
-merely shared a subject.
+- **Report every write, prominently.** The edge, both ends by repository and
+  number, and the evidence it came from. The write is verified from the
+  blocking side anyway — `The traps` says why — so the fact is in hand before
+  the report is written.
+- **Reading is free**, and needs neither a confirmation nor a report.
+- **The one stop is contradiction.** Where the edge contradicts something the
+  user has said, name both and ask. Nothing else here waits.
+
+**The evidence test is now the whole guard**, so it is stated exactly. Both of
+these must hold before an edge is written:
+
+- **The dependency was discovered in the work in hand** — while planning a
+  change, or while writing a PR body and realising it cannot merge first. Not
+  while reading the issue list for edges to add.
+- **The evidence is a statement about the code.** One issue reads a function
+  the other adds; one issue's fix is in a file the other deletes. A shared
+  subject is not evidence, and neither is a shared label, milestone or author.
+
+A sweep of the issue list looking for edges to add is the manufacturing
+failure, not the skill working. In the session that found the `gh` path, the
+second test is what stopped an edge being written between two issues that
+merely shared a subject. The confirmation would have caught that edge as well;
+with the confirmation gone, the test is the only thing that catches it.
 
 
 What is a blocker
