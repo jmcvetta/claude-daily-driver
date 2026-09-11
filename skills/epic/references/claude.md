@@ -24,13 +24,20 @@ The parent, at creation
 =======================
 
 `mcp__github__issue_write` with `method: create` takes `parent_issue_number`,
-and attaches the new issue to that parent in the same operation. So a task
-opened at `Open the issues` is already a sub-issue of the epic, and the parent
-half of `Write the graph` has nothing left to do.
+and attaches the new issue to that parent in the same operation. Where that
+field is available, a task opened at `Open the issues` arrives parented and
+`Write the graph` has only the edge to verify — it still verifies, because the
+write response is the issue you modified and `issue-deps` requires the read
+from the other end regardless of which call made the edge.
 
-It cannot be combined with `issue_fields`, and it is read on `create` only. An
-issue that already exists is re-parented through `issue-deps`' own routes, not
-here.
+**It is not available everywhere.** `issue-deps` records two generations of
+the GitHub MCP server, and the older one has no sub-issue write at all: there,
+`Write the graph` has no parent route and says so rather than reporting a
+parent it did not set. Read that skill's routes before believing this one.
+
+The field cannot be combined with `issue_fields`, and it is read on `create`
+only. An issue that already exists is re-parented through `issue-deps`' own
+routes, not here.
 
 
 The graph

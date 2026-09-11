@@ -38,7 +38,8 @@ says what the skill decides and why. The tool routes that carry it out —
 which call names a pull request, which call sets a title — go in
 `skills/<name>/references/claude.md` and `skills/<name>/references/omp.md`, read
 on demand by the session that needs them. This is the shape the skills are
-being moved to; no skill carries a `references/` directory yet.
+being moved to, and a skill written after this note was recorded is written to
+it from the start: `epic` shipped with one.
 
 The `description` frontmatter is the exception. It is the trigger, so it is
 read before any reference file can be, and it must be complete for both

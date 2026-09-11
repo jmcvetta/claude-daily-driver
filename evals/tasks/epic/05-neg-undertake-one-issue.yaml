@@ -1,11 +1,17 @@
 task_id: epic-05-neg-undertake-one-issue
 description: >-
-  One issue, handed over to be worked. `undertake` is the right answer, and
-  `epic` must not read every issue as a candidate for decomposition — that is
-  the sweep its non-goals forbid.
+  One task issue, handed over to be worked, and stated in the prompt to be one
+  pull request's worth. `undertake` is the right answer, and `epic` must not
+  read every issue as a candidate for decomposition — that is the sweep its
+  non-goals forbid.
+
+  The prompt says how big #12 is because the row denies every read tool. Left
+  as a bare "Undertake #12." the model cannot tell a task from an epic, and
+  `epic` does fire on an attempt to undertake an epic — so the row would have
+  gone red on a trajectory the skills intend.
 tags: [trigger-accuracy, epic, no-fire]
 
-initial_prompt: "Undertake #12."
+initial_prompt: "Undertake #12 — it is the one-line fix to the retry loop."
 
 agent:
   disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]

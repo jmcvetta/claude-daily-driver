@@ -38,8 +38,8 @@ and what the epic body says that nothing else can render.
 steps below need is named in words here and resolved to a route there:
 [`references/claude.md`](references/claude.md) for Claude Code,
 [`references/omp.md`](references/omp.md) for Oh My Pi. Read the one for the
-harness in use before `Open the issues`, which is the first step that writes
-anything.
+harness in use before `Size the work`, which is the first step with a route in
+either table.
 
 **Every step has a name, and the name is how it is cited.** The numbers order
 the sequence and do nothing else: insert a step and all of them move, while a
@@ -185,9 +185,11 @@ cut and no pull request to open. `undertake` aimed at an epic is a stop: say
 which issue is the epic, name the tasks that are ready, and undertake one of
 those instead.
 
-**The epic closes when its children close.** Nothing closes it by hand, and no
-pull request body says it closes the epic — a pull request implements one task,
-and that is the issue it closes.
+**No pull request closes the epic.** A pull request implements one task, and
+that task is the issue its body closes. Closing a sub-issue does not close its
+parent — GitHub has no such rule — so the epic is closed by hand, once its
+`Completion criteria` are met and not merely once its children have all
+closed.
 
 
 The epic body
@@ -220,10 +222,15 @@ under it the tasks with a line each:
 - #145 — Report a validation failure.
 ```
 
-A wave is the set of tasks whose blockers have all closed, so **the waves are
-what answers "which of these can be worked in parallel"**: everything inside
-one heading runs at the same time, in its own session. Say so in the body for
-anything a reader would not assume, the way the line on #146 above does.
+A wave is a batch that runs together: **nothing inside one heading waits on
+anything else inside it**, so everything in a wave runs at the same time, in
+its own session. That is what answers "which of these can be worked in
+parallel".
+
+A task with no blocker at all may still sit in a later wave, as a scheduling
+choice rather than a dependency — and then **its line has to say so**, the way
+the line on #146 above does. Left unsaid, its position reads as a wait, and
+the body has made a *must close first* claim the graph does not carry.
 
 **Optional.** Work that came out of the planning and is not a completion
 criterion. It sits outside the waves so that it never blocks one, and so that
@@ -273,7 +280,8 @@ Non-goals
 - **Does not keep a second copy of what the panel shows.** A wave heading
   carries its own state, because a wave is not something the sub-issue panel
   knows about. A checkbox beside each task is, and it rots.
-- **Does not close the epic**, and does not close a task. Merging does both.
+- **Does not close a task.** Merging its pull request does that. The epic is
+  closed by hand instead, against its `Completion criteria` — see `Hand off`.
 - **Does not sweep the issue list.** An epic is drafted for the work in hand.
   Reading through open issues looking for a set that could be grouped under one
   is `issue-deps`' manufacturing failure, one level up.
