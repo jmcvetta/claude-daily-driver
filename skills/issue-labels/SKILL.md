@@ -29,6 +29,12 @@ Five labels answer it. Every issue carries **exactly one** of them, because a
 second answer to a single question is not extra information — it is a
 disagreement, and nothing resolves it.
 
+**The routes are per harness, and they live beside this file.** Reading a
+label and writing one are named in words here and resolved to a route there:
+[`references/claude.md`](references/claude.md) for Claude Code,
+[`references/omp.md`](references/omp.md) for Oh My Pi. Read the one for the
+harness in use before writing a label.
+
 <!-- labels-table -->
 
 | Label | Description | Ready for an agent |
@@ -86,7 +92,7 @@ request contains, not in whether one is opened.
 
 An issue carrying **no** label is not a stop. It is unlabelled rather than
 blocked, and the answer is to label it: `Picking one` returns the label and
-`mcp__github__issue_write` applies it, in passing, before the work goes on.
+the issue client applies it, in passing, before the work goes on.
 `Open the issue` labels every issue it writes, so an unlabelled issue is one a
 person opened — which makes this the one moment the invariant at the top of
 this file is ever put back. Naming the label without writing it leaves the

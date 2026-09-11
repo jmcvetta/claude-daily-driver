@@ -108,8 +108,8 @@ worse than no issue, because the guess then reads as settled.
 
 **Every issue this step writes carries a label**, and `issue-labels` picks it.
 An unlabelled issue is one nothing can sort and nothing can decide readiness
-from, and the label is free to set at creation — `mcp__github__issue_write`
-takes `labels` on the same call. The issue this step writes is the work in
+from, and the label is free to set at creation — the issue client takes the
+labels on the call that opens the issue. The issue this step writes is the work in
 hand, so it is a `task`, a `bug` or a `research` issue; it is never an `epic`,
 which coordinates issues that already exist, and never a `proposal`, which is
 the vague request this step has already refused to write.
@@ -154,8 +154,8 @@ so decomposing it into tasks is a decision and it goes to the user. `task`,
 runs through — unlabelled is not blocked — and it is the only place the
 standard's one-label-per-issue invariant is ever repaired: `Open the issue`
 labels everything it writes, so an unlabelled issue is one a person opened.
-`issue-labels` picks the label and `mcp__github__issue_write` applies it, on
-the same call that needs no permission for the claim a moment later. Naming
+`issue-labels` picks the label and the issue client applies it, on a write
+that needs no more permission than the claim a moment later. Naming
 the label and moving on leaves the next session asking the same question of
 the same issue.
 

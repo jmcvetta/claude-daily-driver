@@ -10,11 +10,14 @@ The issue
 | Step | Operation | Call |
 | ---- | --------- | ---- |
 | `Open the issue` | Search the open issues | `mcp__github__search_issues` |
-| `Open the issue` | Open one | `mcp__github__issue_write` |
+| `Open the issue` | Open one, labelled | `mcp__github__issue_write`, method `create`, with `labels` |
 | `Read the issue and its edges` | Read the body and the graph | `mcp__github__issue_read` |
+| `Read the issue and its edges` | Label an issue that carries none | `mcp__github__issue_write`, method `update`, with `labels` |
 | `Claim the issue` | Comment on the issue | `mcp__github__add_issue_comment` |
 
-`issue-deps` owns the edge writes, and has its own routes.
+`issue-deps` owns the edge writes, and has its own routes. So does
+`issue-labels`, whose `references/claude.md` carries the one trap in the
+label write: `labels` replaces the whole set rather than adding to it.
 
 
 The pull request
