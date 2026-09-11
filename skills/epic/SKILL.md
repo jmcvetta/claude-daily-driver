@@ -7,9 +7,10 @@ description: >-
   one PR", "split #142", "plan the epic", "make an epic for this", "what can be
   worked in parallel", or "which of these has to land first", and on Claude's
   own move from a request that will not fit one pull request to writing issues
-  for it. It is also where `undertake`'s `Open the issue` sends work too big for
-  the one issue that step writes, and it fires on an attempt to undertake an
-  epic, which carries no code. Supplies the two gates that decide whether there
+  for it. It is also where `undertake` sends work too big for the one
+  issue it takes in — from `Read the issue and its edges`, the step that always
+  runs — and it fires on an attempt to undertake an epic, which carries no
+  code. Supplies the two gates that decide whether there
   is an epic at all, what a task issue is and the model it records for the
   session that will undertake it, the one stop where the plan is agreed
   before anything is written, and the shape of the epic body — the sequencing
@@ -180,13 +181,15 @@ Each task's body records what was asked and ends with its `Model` line, both
 settled at `Draft the plan`.
 
 Where an issue already describes the whole change, **that issue becomes the
-epic**. Rewrite its body to the shape below and give it the tasks as children.
-Do not open a second one beside it.
+epic**. Do not open a second one beside it: rewrite its body the way a new
+epic's is written here, and the rest of the sequence then runs unchanged —
+`Write the graph` attaches the children, and `Fill in the epic` adds
+`Sequencing`.
 
 The epic first, then the tasks, because a task names the epic as its parent and
 the parent must exist to be named. The epic's body at this point is `Summary`
-and `Justification` only — `Sequencing` is made of issue numbers that do not
-exist yet, which is why `Fill in the epic` is a step of its own.
+and `Justification`, and stops there: `Sequencing` is made of issue numbers
+that do not exist yet, which is why `Fill in the epic` is a step of its own.
 
 No permission is asked here. It was asked once at `Agree the plan`, and asking
 again per issue is the same question eight times.
@@ -222,10 +225,9 @@ Every task whose blockers are closed can start now, each in its own session,
 each through `undertake`. Name them, rather than leaving the reader to derive
 the list the first time.
 
-**The epic is never undertaken.** It carries no code, so there is no branch to
-cut and no pull request to open. `undertake` aimed at an epic is a stop: say
-which issue is the epic, name the tasks that are ready, and undertake one of
-those instead.
+**The epic is never undertaken**, which is the stop of that name under
+`Where it stops and waits`. It carries no code; the tasks named above are what
+a session takes.
 
 **No pull request closes the epic.** A pull request implements one task, and
 that task is the issue its body closes. Closing a sub-issue does not close its
@@ -268,16 +270,23 @@ heading per wave, naming what the wave waits on, and under it the tasks with a
 line each:
 
 ```markdown
-### Wave 1 — done
-- #143 — Parse the manifest. Merged in PR #160.
-- #146 — Document the format. Touches no file #143 does.
+### Wave 1 — no blockers · done
+- #143 — Parse the manifest.
+- #147 — Document the format. Touches no file #143 does.
 
-### Wave 2 — in progress
-- #144 — Validate against the schema. Needs #143's parsed manifest.
+### Wave 2 — after #143 · in progress
+- #144 — Validate against the schema.
 
 ### Wave 3 — after #144
 - #145 — Report a validation failure.
 ```
+
+Read the headings, not the lines. **The heading names what the wave waits on**,
+and the state after it — `done`, `in progress` — belongs to the wave rather
+than to any task inside it. A line says only what the graph cannot: #147's says
+why it is safe to run abreast of #143, and #144's says nothing at all, because
+its wait is already in its heading and repeating it on the line is the
+duplicate state `What the body leaves out` forbids.
 
 A wave is a batch that runs together: **nothing inside one heading waits on
 anything else inside it**, so everything in a wave runs at the same time, in
@@ -311,7 +320,7 @@ What the body leaves out
 Where it stops and waits
 ========================
 
-Three, and only the first is routine.
+Four, and only the first is routine.
 
 - **The plan**, at `Agree the plan`. One stop by design, covering the scope
   question and every edge at once.
@@ -322,6 +331,14 @@ Three, and only the first is routine.
   answer you would have preferred.
 - **A gate closing at `Size the work`.** A report rather than a question: say
   which gate closed, and carry on as ordinary work.
+- **An epic handed over to be undertaken.** `undertake` stops at
+  `Read the issue and its edges` and delegates the wording here, and this is
+  the wording: an epic carries no code, so there is no branch to cut and no
+  pull request to open. The sequence does not run on it either — the work is
+  already decomposed, and `Size the work` has nothing left to size. Say which
+  issue is the epic, name the tasks whose blockers are closed, and undertake
+  one of those. An epic whose body or graph is wrong is an edit at
+  `Fill in the epic` or `Write the graph`, not a reason to plan it again.
 
 
 Non-goals

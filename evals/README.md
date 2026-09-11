@@ -1,6 +1,6 @@
 # Evals
 
-Ten suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
+Thirteen suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
 than by `claude plugin eval`. The reasoning for the harness is
 [`docs/notes/0002-eval-harness.md`](../docs/notes/0002-eval-harness.md);
 the short version is that the built-in cannot be run on this account, is
@@ -20,6 +20,9 @@ evals/
 │   ├── undertake/       … when work is undertaken, and only when handed over?
 │   ├── epic/            … when work is broken up, and never when it fits one PR?
 │   ├── deps/            … when the deps are upgraded in bulk, and not for one?
+│   ├── issue-deps/      … when an issue relationship is read or written?
+│   ├── judgement-call/  … when a choice is about to be put to the user?
+│   ├── session-title/   … when the session is named, and not the PR?
 │   ├── constitution/    does the constitution reach a subagent, and land?
 │   └── review-depth/    does `review` send the right panel at the diff?
 └── fixtures/review-depth/

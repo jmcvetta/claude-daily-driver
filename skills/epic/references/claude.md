@@ -59,8 +59,15 @@ training is not one, and the session it opens fails rather than falling back.
 
 **Read one rather than recall one.** `mcp__Claude_Code_Remote__get_session`,
 with `session_id` omitted, reports this session's own identifier at
-`session_context.model` and `configured_model`, which is always a valid answer
-and is the right one for a task no lighter than the planning session.
+`session_context.model` — the model the session is currently set to run, and
+the right answer for a task no lighter than the planning session.
+
+**`configured_model` is not that field and is not safe to copy.** The call's
+own contract says it is echoed as stored, so it may be an alias or carry a
+context-window suffix — which is exactly the identifier `create_session`
+rejects, written into a `Model:` line that reads as correct. Take
+`session_context.model`, and where only `configured_model` is available,
+write no line.
 
 The family, as the harness named it on 2026-09-11:
 
