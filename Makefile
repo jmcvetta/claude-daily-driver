@@ -9,7 +9,7 @@ SHELL := /bin/bash
 
 .PHONY: git_sync check check-plugin check-skills check-agents check-scripts \
 	check-manifests check-constitution check-ask-in-chat check-omp-extension \
-	check-eval-fixtures check-step-names check-infra evals-install \
+	check-eval-fixtures check-step-names check-labels check-infra evals-install \
 	evals-plan evals-run mcp-usage
 
 # The `coder_eval` release the eval suites are written against. Pinned on
@@ -43,7 +43,7 @@ git_sync:
 # is no second command line to fall behind this one.
 check: check-plugin check-skills check-agents check-scripts check-manifests \
 	check-constitution check-ask-in-chat check-omp-extension \
-	check-eval-fixtures check-step-names
+	check-eval-fixtures check-step-names check-labels
 
 # `claude plugin validate --strict` reads one manifest at a time and picks the
 # marketplace when handed a directory, so the plugin manifest is named
@@ -153,6 +153,16 @@ check-eval-fixtures:
 # docstring and docs/notes/0005-steps-are-cited-by-name.md.
 check-step-names:
 	python3 scripts/check-step-names.py
+
+# check-labels: the issue-label standard is written twice -- the table in
+# `issue-labels` and the resources in infra/github/labels.tf -- and this leg
+# asserts the two say the same thing. Part of `check` because it needs nothing
+# but Python, and because neither half's own tooling reads the other: `claude
+# plugin validate` never opens a .tf file and `tofu validate` never opens a
+# skill, so a row that has fallen behind reads exactly like one that has not.
+# See the script's docstring.
+check-labels:
+	python3 scripts/check-labels.py
 
 # check-infra: parse the OpenTofu stack without credentials. Not part of
 # `check`, which must not start requiring OpenTofu on a laptop that is only

@@ -62,9 +62,9 @@ The sequence
 
 | # | Step | Owner |
 | - | ---- | ----- |
-| 0 | `Open the issue` | this skill, `issue-deps` |
+| 0 | `Open the issue` | this skill, `issue-deps`, `issue-labels` |
 | 1 | `Title the session` | `session-title` |
-| 2 | `Read the issue and its edges` | the harness's issue client, `issue-deps` |
+| 2 | `Read the issue and its edges` | the harness's issue client, `issue-deps`, `issue-labels` |
 | 3 | `Claim the issue` | this skill |
 | 4 | `Cut the branch` | this skill |
 | 5 | `Implement` | the constitution |
@@ -106,6 +106,14 @@ gate of `Read the issue and its edges` arriving early, and the constitution's
 rule against guessing at intent: an issue that guesses at what "done" means is
 worse than no issue, because the guess then reads as settled.
 
+**Every issue this step writes carries a label**, and `issue-labels` picks it.
+An unlabelled issue is one nothing can sort and nothing can decide readiness
+from, and the label is free to set at creation — the issue client takes the
+labels on the call that opens the issue. The issue this step writes is the work in
+hand, so it is a `task`, a `bug` or a `research` issue; it is never an `epic`,
+which coordinates issues that already exist, and never a `proposal`, which is
+the vague request this step has already refused to write.
+
 Edges are `issue-deps`' business, and its confirm-before-write rule *does*
 bite here — unlike the closing reference at `Open the draft`, a parent or a
 blocker for a new issue is inferred from evidence rather than given by the
@@ -141,6 +149,29 @@ skipped in the common case where the issue was handed over. `epic` sizes it,
 decomposes it, and each task issue it opens comes back here as the issue this
 sequence takes in. **An epic itself is a stop**, under `Where it stops and
 waits`.
+
+The label too, because it states whether the issue is ready for an agent at
+all, and `issue-labels` says what each one means. The `epic` label is that
+stop arriving as one word. **A `proposal` is a stop as well** — its shape is
+still open, so decomposing it is `epic`'s work and agreeing the plan is the
+user's. **Two of the five on one issue is a stop too**: the label answers the
+readiness question twice, and `issue-labels` says why neither answer wins.
+`task`, `bug` and `research`, one of them and no other, run through — with
+one caveat on the last. **A `research` issue whose answer turns out to be a
+set of issues, or a decision not to do the thing, has nothing to put on a
+branch**, and that is a finished research issue rather than a failed one.
+Where `Implement` reaches that conclusion, say so and stop: the answer goes
+on the issue, `epic` writes the issues where there are issues to write, and
+this sequence does not open a pull request with nothing in it.
+
+**An issue carrying no label is labelled here rather than merely noted.** It
+runs through — unlabelled is not blocked — and it is the only place the
+standard's one-label-per-issue invariant is ever repaired: `Open the issue`
+labels everything it writes and so does `epic`, so an unlabelled issue is one
+a person opened. `issue-labels` picks the label and the issue client applies
+it, on a write that needs no more permission than the claim a moment later.
+Naming the label and moving on leaves the next session asking the same
+question of the same issue.
 
 The comments too, because `Claim the issue` needs to know whether it is claimed
 already — by this session, which means the sequence is being re-entered, or by
@@ -442,9 +473,10 @@ for the second round.
 Where it stops and waits
 ========================
 
-Autonomy is the point, so each pause has to earn itself. Eight stop the
-sequence. Five stop it to *ask* — the ambiguous issue, the request too vague
-to write one for, the failing approach, a designated branch the harness states
+Autonomy is the point, so each pause has to earn itself. Ten stop the
+sequence. Seven stop it to *ask* — the ambiguous issue, the request too vague
+to write one for, an issue labelled `proposal`, an issue carrying two of the
+five labels, the failing approach, a designated branch the harness states
 ambiguously, and a base merge whose conflict is a real one. A blocked issue, an
 epic, and a running check stop it to report, and wait on something other than
 an answer.
@@ -456,7 +488,13 @@ an answer.
 - **An epic**, at `Read the issue and its edges`. An epic carries no code, so
   there is no branch to cut and no pull request to open. Say which issue is the
   epic, name the tasks that are ready, and undertake one of those — `epic` owns
-  the stop and the wording.
+  the stop and the wording, and the `epic` label is what says so in one word.
+- **An issue whose label does not clear it for work**, at `Read the issue and
+  its edges`. A `proposal`'s shape is not yet decided, so deciding it is the
+  user's and decomposing it is `epic`'s; an issue carrying two of the five
+  answers the readiness question twice and answers it neither way.
+  `issue-labels` is what each label claims, and what a contradiction between
+  two of them costs.
 - **More than one designated branch** for this repository, at `Cut the
   branch`'s first source. Guessing which one the harness will accept risks a
   claim already posted at `Claim the issue` that no push can honour.

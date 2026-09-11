@@ -1,0 +1,49 @@
+task_id: issue-labels-06-neg-pr-label
+description: >-
+  A label on a pull request, written by a bot rather than by the standard this
+  skill owns. The word "label" is the whole temptation, and the skill's own
+  description refuses it twice: the standard covers issues, and a bot's label
+  is machine state. `deps` is the distractor because it is the one skill whose
+  subject is a bot's pull requests, which is the nearest neighbourhood this
+  prompt sits in.
+tags: [trigger-accuracy, issue-labels, no-fire]
+
+initial_prompt: >-
+  This pull request has "autorelease: pending" on it. What does that label
+  mean, and should I add anything else to it?
+
+agent:
+  # `allowed_tools` is a permission allowlist, not a tool filter: the model is
+  # still offered `Read` and friends and merely denied at the permission check.
+  # That is not enough here. Telemetry records a `tool_use` block when it is
+  # generated, before any result, and `skill_triggered` counts a `skills/<name>/`
+  # path in ANY tool parameter as engaging that skill — so a *denied* read of
+  # `skills/pr/SKILL.md`, which is exactly what a model weighing two sibling
+  # skills reaches for, would fail a no-fire row. `disallowed_tools` is the one
+  # that actually removes a tool, so the path can never be typed.
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  # `turn_timeout` is the agent's budget; `task_timeout` is the watchdog around
+  # the whole evaluation, armed before the turn starts and still running while
+  # the criteria are checked. Equal values mean a turn that uses its budget is
+  # killed as a TIMEOUT before it can be graded, so `task_timeout` carries
+  # headroom on top. `plan` warns that the larger number cannot extend the
+  # turn; that is the point — it is not meant to.
+  turn_timeout: 120
+
+# `expected_skill: none` names no skill in this plugin, so every criterion
+# below is a distractor and the row passes only in silence.
+success_criteria:
+  - type: skill_triggered
+    description: "`issue-labels` does not fire on a bot-owned pull request label"
+    expected_skill: none
+    skill_name: issue-labels
+    stop_early: {}
+  - type: skill_triggered
+    description: "`deps` does not fire on a bot-owned pull request label"
+    expected_skill: none
+    skill_name: deps
+    stop_early: {}
