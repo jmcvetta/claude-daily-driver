@@ -97,11 +97,18 @@ jobs:
       #     import costs one stderr line and the session runs on without it.
       #   - `scripts/check-omp-plugin.py` — the check.
       #
-      # `skills/**` is deliberately absent: an added or renamed skill is
-      # discovered by Omp exactly as by Claude Code, and the layout rules Omp
-      # is stricter about are already asserted on every push by `claude plugin
-      # validate --strict skills` and check-manifests.py. So is the Makefile,
-      # which holds the command line and not the integration.
+      # `skills/**` is deliberately absent. An added or renamed skill is
+      # discovered by Omp exactly as by Claude Code, so a skill-only diff
+      # cannot break the integration. The tempting objection — that the check's
+      # headline assertion is *about* `skills/` — does not survive reading it:
+      # `expected_skill_commands()` builds the expected set from the same
+      # `skills/*/SKILL.md` glob Omp discovers by, so a layout neither harness
+      # walks (a grouping directory) is absent from both sides of the
+      # comparison and the check passes either way. Running it on skill diffs
+      # would assert nothing a skill diff can change.
+      #
+      # The Makefile is absent too: it holds the command line, not the
+      # integration.
       - name: Decide whether this diff can affect Omp
         id: scope
         env:
