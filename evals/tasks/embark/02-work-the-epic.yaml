@@ -1,0 +1,26 @@
+task_id: embark-02-work-the-epic
+description: >-
+  The natural phrasing, with an epic named and no invocation. An epic whose
+  plan is written and whose tasks are open is what this skill takes in, and
+  "work it" is the ask that turns that plan into sessions.
+tags: [trigger-accuracy, embark, fire]
+
+initial_prompt: >-
+  Epic #142 is planned and its task issues are open. Work it — I want the first
+  wave running in parallel rather than one issue after another.
+
+agent:
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`embark` fires on an epic handed over to be worked in parallel"
+    expected_skill: embark
+    skill_name: embark
+    stop_early:
+      on_pass: stop

@@ -1,0 +1,25 @@
+task_id: embark-03-start-the-next-wave
+description: >-
+  Re-entry. A wave has come in and the next one is asked for, which is the loop
+  back to `Take the wave` rather than a fresh start — and it is the case a
+  watching session that died is resumed through.
+tags: [trigger-accuracy, embark, fire]
+
+initial_prompt: >-
+  The first wave of epic #142 has all merged. Start the next wave.
+
+agent:
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`embark` fires on the next wave of an epic already under way"
+    expected_skill: embark
+    skill_name: embark
+    stop_early:
+      on_pass: stop
