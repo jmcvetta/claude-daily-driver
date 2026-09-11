@@ -9,8 +9,8 @@ SHELL := /bin/bash
 
 .PHONY: git_sync check check-plugin check-skills check-agents check-scripts \
 	check-manifests check-constitution check-ask-in-chat check-omp-extension \
-	check-eval-fixtures check-step-names check-labels check-infra evals-install \
-	evals-plan evals-run mcp-usage
+	check-omp-plugin check-eval-fixtures check-step-names check-labels check-infra \
+	evals-install evals-plan evals-run mcp-usage
 
 # The `coder_eval` release the eval suites are written against. Pinned on
 # purpose: being able to hold a version back is the whole reason the suites are
@@ -42,7 +42,7 @@ git_sync:
 # than restating its legs, so a leg added here is a leg CI gains — and there
 # is no second command line to fall behind this one.
 check: check-plugin check-skills check-agents check-scripts check-manifests \
-	check-constitution check-ask-in-chat check-omp-extension \
+	check-constitution check-ask-in-chat check-omp-extension check-omp-plugin \
 	check-eval-fixtures check-step-names check-labels
 
 # `claude plugin validate --strict` reads one manifest at a time and picks the
@@ -115,6 +115,23 @@ check-ask-in-chat:
 # alike. Node ships with the harness; no package install is involved.
 check-omp-extension:
 	node scripts/check-omp-extension.mjs
+
+# check-omp-plugin: the discovery half of the Omp story, which
+# check-omp-extension cannot reach. It starts a real `omp --mode rpc` and asks
+# the running agent what it got -- the skills on both the `--plugin-dir` and
+# the installed-plugin routes, and the extension on the one route that loads
+# it. Credential-free, against a throwaway HOME. See the script's docstring.
+#
+# Guarded the way check-agents is guarded, and for the same reason: `check`
+# must not start requiring Omp on a laptop that is only editing a skill. CI
+# installs Omp, so CI never takes the skip -- which is what keeps the guard
+# from quietly becoming a way of never running this at all.
+check-omp-plugin:
+	@if command -v omp > /dev/null 2>&1; then \
+		python3 scripts/check-omp-plugin.py; \
+	else \
+		echo 'omp is not on PATH; skipping check-omp-plugin (CI installs Omp and does not skip it)'; \
+	fi
 
 # check-scripts: lint the shell a skill ships. `claude plugin validate` reads
 # manifests and never opens a `scripts/` file, so without this leg the plugin's
