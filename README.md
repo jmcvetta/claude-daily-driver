@@ -1,8 +1,10 @@
 # claude-daily-driver
 
-Daily-driver skills for [Claude Code][cc], packaged as a plugin.
+Daily-driver skills for [Claude Code][cc] and [Omp][omp], packaged as one
+plugin that both read.
 
 [cc]: https://claude.com/claude-code
+[omp]: https://omp.sh
 
 This is one person's working toolkit, published rather than licensed. See
 [ANTI-LICENSE.md](ANTI-LICENSE.md) before going further — and then, having
@@ -10,8 +12,9 @@ read it, do not go further.
 
 ## What's in it
 
-The **constitution** — `rules/constitution.md`, delivered to every session
-by hook — plus **two hooks that enforce rather than instruct**, and thirteen
+The **constitution** — `rules/constitution.md`, delivered to every session by
+hook on Claude Code and by the rule provider on Omp — plus **an adapter per
+harness that enforces rather than instructs**, and thirteen
 skills:
 
 | Skill | What it does |
@@ -31,9 +34,13 @@ skills:
 | `deps` | The bulk dependency upgrade: every ecosystem on one branch through the package managers' own bulk commands, green CI as the whole acceptance test, majors reported rather than taken. |
 
 A skill fires on its slash command where it has one, on natural phrasings of
-the work, and on Claude's own tool calls — `mcp__github__create_pull_request`
-for `pr`, `AskUserQuestion` for `judgement-call`. Each `description` carries its
-own register.
+the work, and on the session's own tool calls. The tool-call triggers are
+written for both harnesses, because a `description` is read before any
+reference file can be: `pr` fires on Claude Code's
+`mcp__github__create_pull_request` and on Omp's `github` tool (`pr_create`)
+alike, and `judgement-call` on `AskUserQuestion` and on `ask`. Those are
+examples rather than the list — each skill's `description` names its own
+triggers, and carries its own register.
 
 The plugin ships no agents. The reviewer panel `review` dispatched went to the
 attic with it. [`attic/`](attic/) holds what no longer ships; nothing there is
@@ -81,11 +88,11 @@ Both read the one file by exact path and fail loudly. The measurement behind
 the second injection point is in [the planning
 doc](docs/planning/plugin-replaces-global-memory.md) under R2.
 
-## The hooks
+## The hooks, and the Omp extension
 
 A plugin cannot ship a `CLAUDE.md`, and it cannot ship a preference either. Two
-hooks do both jobs, and they do them for the same reason: prose can be read and
-not followed.
+hooks do both jobs on Claude Code, and they do them for the same reason: prose
+can be read and not followed.
 
 | Hook | Event | What it does |
 | ---- | ----- | ------------ |
@@ -100,11 +107,19 @@ never reach for the widget, and every session would pay for the rule.
 decision, and `judgement-call` is the skill it is ordered with: that gate
 decides *whether* to ask, the hook decides *how*.
 
+**Omp has no hook mechanism**, so `extensions/daily-driver.js` does the same
+two jobs there: it blocks the `ask` tool with the same wording, and it supplies
+the session-title and reminder tools (`daily_driver_set_session_title`,
+`daily_driver_schedule`, `daily_driver_cancel_schedule`) that Omp's
+`ExtensionAPI` makes natural. The constitution needs no adapter on that side —
+Omp's rule provider injects `rules/*.md` carrying `alwaysApply: true`.
+
 **Whether either still fires**: `scripts/check-constitution.py` and
-`scripts/check-ask-in-chat.py` run both against synthetic event JSON, in
-`make check`. A hook that stops firing does not fail — it silently reverts the
-behaviour it was installed for, which is the one failure nothing else would
-report.
+`scripts/check-ask-in-chat.py` run both hooks against synthetic event JSON, and
+`scripts/check-omp-extension.mjs` and `scripts/check-omp-plugin.py` do the same
+job for Omp — all four in `make check`. An adapter that stops firing does not
+fail; it silently reverts the behaviour it was installed for, which is the one
+failure nothing else would report.
 
 ## Layout
 
@@ -114,31 +129,54 @@ manifest — so there is no nested plugin directory.
 ```
 claude-daily-driver/
 ├── .claude-plugin/         plugin.json (the version releases bump) and
-│                           marketplace.json (what `claude plugin install` reads)
+│                           marketplace.json — the one catalog, which both
+│                           `claude plugin install` and `omp plugin install` read
+├── package.json            the Omp manifest: same name and version, and the
+│                           `omp.extensions` entry that loads the adapter
 ├── attic/                  kept but not shipped; nothing here is loaded
-├── rules/constitution.md    always-on rules, one file, read at both injection points
+├── rules/constitution.md    always-on rules, one file, read by both harnesses
 ├── docs/                   how this repository is meant to be used
 ├── evals/                  the trigger suites, and the constitution's live half
-├── hooks/                  the constitution's two injection points, and the
-│                           PreToolUse deny on AskUserQuestion
+├── extensions/             the Omp runtime adapter
+├── hooks/                  the Claude Code adapter: the constitution's two
+│                           injection points, and the deny on AskUserQuestion
 ├── infra/github/           the repository's own settings, as OpenTofu
 ├── scripts/                the checks CI runs, the stanza, the MCP tally
-├── skills/                 one directory per skill in the table above
+├── skills/                 one directory per skill in the table above, each
+│                           with a references/ file per harness it routes to
 └── template/.claude/       copied into a repository to enable the plugin
 ```
+
+**What is shared, and what is per-harness.** The skills, the catalog and
+`rules/constitution.md` are one copy each, read by both harnesses. Only the
+runtime adapter is doubled — `hooks/` for Claude Code, `extensions/` for Omp —
+and, inside a skill, the tool routes: a `SKILL.md` says what the skill decides,
+and `skills/<name>/references/claude.md` and `references/omp.md` carry the
+calls that do it, opened on demand by the session that needs them.
 
 ## Installing it
 
 Installation is **per-machine — or, in the cloud, per-environment**. The
-plugin's bytes land in `~/.claude` and are read from there; a repository can
-point at a plugin, it can never carry one.
+plugin's bytes land under the harness's own directory and are read from there;
+a repository can point at a plugin, it can never carry one.
 
-On a laptop, two commands, once per machine:
+On a laptop, two commands, once per machine. For Claude Code:
 
 ```sh
 claude plugin marketplace add jmcvetta/claude-daily-driver
 claude plugin install daily-driver@claude-daily-driver
 ```
+
+For Omp, the same two commands against the same catalog — Omp reads
+`.claude-plugin/marketplace.json` as its Claude-compatible fallback, so there
+is one catalog and no second copy to keep in step:
+
+```sh
+omp plugin marketplace add jmcvetta/claude-daily-driver
+omp plugin install daily-driver@claude-daily-driver
+```
+
+`omp plugin list` is what says it took.
 
 In the cloud the same commands go in the environment's **Setup script**, which
 is the one writer that beats the plugin scan. The environment dialog is behind
@@ -181,16 +219,25 @@ the mechanism under all of this, and *the stanza* a repository can carry in
 ## Portability
 
 The same tree is read by more than one harness. **Claude Code** discovers it as
-a plugin. **[oh-my-pi][omp]** (`omp`) reads Claude Code plugins natively, so it
-needs no separate port; a checkout loads with `omp --plugin-dir <path>`.
+a plugin. **Omp** reads the Claude-compatible catalog and the same skills, and
+adds its own runtime adapter — `extensions/daily-driver.js`, wired by
+`omp.extensions` in `package.json`, which brings Omp the behaviour Claude Code
+gets from `hooks/`.
 
-One tree, one release, and a thin runtime adapter per harness — `hooks/` for
-Claude Code, `extensions/daily-driver.js` for Omp. Where a rule holds on only
-one of them, [`docs/notes/0011`](docs/notes/0011-two-harnesses-one-skill-tree.md)
-is the decision: it says why there is one skill tree, where a harness route
-lives, and which rules are Claude Code only.
+**For local development, `omp --plugin-dir <path>`.** It loads the skills
+straight from a checkout, with nothing installed. It does **not** load the
+extension: an extension entry point is read from an *installed* plugin's
+manifest, and a `--plugin-dir` root is never installed. So the `ask` deny and
+the `daily_driver_*` tools are absent on that route — edit a skill with it,
+and install (or `omp plugin link .`) to exercise the adapter. Measured on omp
+18.1.17, and `scripts/check-omp-plugin.py` is what keeps it measured.
 
-[omp]: https://omp.sh
+One tree, one release, and a thin runtime adapter per harness. Where a rule
+holds on only one of them,
+[`docs/notes/0011`](docs/notes/0011-two-harnesses-one-skill-tree.md) is the
+decision: it says why there is one skill tree, where a harness route lives, and
+which rules are Claude Code only — among them the never-empty wake slot, since
+Omp has no timer that outlives its session.
 
 ## Checks
 
@@ -203,6 +250,16 @@ both hooks against synthetic event JSON and asserts the constitution comes back
 from each; `scripts/check-labels.py`, which asserts the issue-label standard
 says the same thing in `issue-labels` and in the OpenTofu that declares it; and
 `scripts/check-eval-fixtures.sh`.
+
+**Two of its legs are Omp's.** `scripts/check-omp-extension.mjs` imports the
+adapter under Node with a faked `ExtensionAPI` and asserts the `ask` deny and
+the three tools behave. `scripts/check-omp-plugin.py` starts a real
+`omp --mode rpc` and asks the running agent what it got: every skill offered as
+a `skill:<name>` command on the `--plugin-dir` route and again on the installed
+route, `omp plugin list` reporting the plugin after `omp plugin link .`, and
+the extension loading rather than failing silently. Both are credential-free
+and call no model; the second runs against a throwaway `HOME`, and skips with
+one line where `omp` is not on `PATH`. CI installs Omp, so CI never skips it.
 
 Two more checks are deliberately outside it. `make check-infra` parses the OpenTofu
 stack — see [infra/github/README.md](infra/github/README.md). `make evals-run`
