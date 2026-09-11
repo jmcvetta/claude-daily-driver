@@ -140,11 +140,16 @@ run's `environment_info`. Until a live run names them, `require_token_telemetry`
 defaults to false — the opposite of the OpenCode agent's default — because a
 missing count is a gap in this adapter rather than proof of a broken turn.
 
-**The arm has not been run.** Nothing here has touched a live `omp` binary or a
-paid run. What is proven is what `make check` proves: the frame reduction maps
-skills, tools, text and usage the way the criteria read them
-(`scripts/check-omp-agent.py`), and the two arms' task sets stay in step
-(`scripts/check-eval-arms.py`). The issue's second acceptance criterion — one
-paid run of a narrow slice, non-zero on a positive row and zero on a negative
-one — is the next thing to do, and it needs `omp` installed and a provider
-configured.
+**The arm has not been run.** Nothing here has touched a live `omp` binary, and
+no paid run has happened. What is measured is:
+
+- `make evals-install` installs the agent kind, and `make evals-plan` resolves
+  `Variant 'omp': omp` on every task it applies to, with no resolution failure
+  and exit 0 — the issue's first acceptance criterion.
+- `make check` proves the frame reduction maps skills, tools, text and usage
+  the way the criteria read them (`scripts/check-omp-agent.py`), and that the
+  two arms' task sets stay in step (`scripts/check-eval-arms.py`).
+
+The second acceptance criterion — one paid run of a narrow slice, non-zero on a
+positive row and zero on a negative one — is the next thing to do. It needs
+`omp` on PATH and a provider configured, which this session had neither of.
