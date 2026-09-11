@@ -29,7 +29,7 @@ task_id: pr-body-07-mcp-not-gh-pr-edit
 description: >-
   Fleshing out the body of an existing pull request on this harness is a
   named MCP call, not the generic `gh pr edit --body`.
-tags: [pr-body, references, fire, behaviour]
+tags: [pr-body, references, fire, behaviour, claude-only]
 
 initial_prompt: >-
   PR #14's description is one thin sentence — flesh it out properly. Before

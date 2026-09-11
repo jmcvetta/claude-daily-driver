@@ -2,7 +2,7 @@ task_id: review-depth-named-depth-outranks-inference
 description: >-
   A one-word typo fix, reviewed at the depth the user named rather than the
   depth the diff implies.
-tags: [review-depth, routing, fire]
+tags: [review-depth, routing, fire, claude-only]
 
 sandbox:
   # Two sources, both mounted at `.fixture`, so the sandbox gets the shared

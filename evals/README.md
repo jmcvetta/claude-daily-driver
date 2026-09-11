@@ -9,7 +9,9 @@ the `claude` binary, so there is no version to hold back.
 
 ```
 evals/
-├── experiments/with-without.yaml   the ablation every case is measured under
+├── experiments/
+│   ├── with-without.yaml           the ablation every Claude case is measured under
+│   └── omp.yaml                    the same suites, on Omp — see "The Omp arm"
 ├── tasks/
 │   ├── pr/              does `pr` fire when a PR is opened, and only then?
 │   ├── pr-title/        … when a title is written, and only then?
@@ -27,9 +29,10 @@ evals/
 │   ├── session-title/   … when the session is named, and not the PR?
 │   ├── constitution/    does the constitution reach a subagent, and land?
 │   └── review-depth/    does `review` send the right panel at the diff?
-└── fixtures/review-depth/
-    ├── shared/          builds the git repository every case starts from
-    └── cases/<name>/    one `case.sh`, mounted alone beside `shared/`
+├── fixtures/review-depth/
+│   ├── shared/          builds the git repository every case starts from
+│   └── cases/<name>/    one `case.sh`, mounted alone beside `shared/`
+└── coder-eval-omp/      the `omp` agent kind, so the same cases run on Omp
 ```
 
 ## Running them
@@ -41,6 +44,8 @@ make evals-run        # the whole suite, both arms. Costs real money.
 
 make evals-run TASKS='tasks/pr/*.yaml'     # one suite
 make evals-run TASKS='tasks/*/*-neg-*.yaml' # just the no-fire half
+
+make evals-run-omp    # the same suites on Omp. Needs `omp` and a model.
 ```
 
 The `*-neg-*` selector is a filename glob, and one absence assertion does not
@@ -229,6 +234,10 @@ every pull request opened — rather than on a restated line from
 `skills/review/SKILL.md`. A suite that restates the spec catches
 drift away from the depth table and can never catch the depth table being
 wrong.
+
+The Omp arm is the exception, and it says so: it carries no bare-Omp variant,
+so it reports the treated side alone. See "The Omp arm" for what stands in for
+the delta there.
 
 ## The two moods, and `expected_skill: none`
 
@@ -612,6 +621,93 @@ stops building does not turn the suite red, it turns every case into a silent 0.
 
 These cases run in **Local mode**: there is no GitHub MCP in the sandbox, so the
 pull-request lookup finds nothing and the skill assembles the diff from git.
+
+## The Omp arm
+
+The same suites, the same plugin, a second harness. `docs/notes/0013-the-omp-arm.md`
+is the decision; this is how it is run.
+
+```sh
+make evals-run-omp                          # the Omp arm
+make evals-run-omp TASKS='tasks/pr/*.yaml'  # one suite of it
+```
+
+It needs `omp` on PATH and a model configured in the caller's own
+`~/.omp/agent/`. The agent borrows that directory by symlink into a throwaway
+Omp home and writes nothing back into it.
+
+**`agent: {type: omp}` is not a built-in kind.** It comes from
+`coder-eval-omp/`, a `coder_eval` plugin in this repository, installed beside
+the pinned harness by `make evals-install`. Its README says what the adapter
+has to normalise and why each of those is a silent zero rather than an error;
+the short version is that Omp engages a skill by reading `skill://<name>`,
+which `skill_triggered` cannot see, and that `coder_eval` builds the
+`[RESULT - …]` transcript these rubrics anchor on for its Claude agent alone.
+
+**Two experiment files, two runs, and tags in between.** Ten rows cannot be
+graded identically on both harnesses — the call they name differs, or the rule
+is Claude Code only per `0011` — so each is two files, tagged `claude-only` and
+`omp-only`, with `-omp` on the second's `task_id`. A `coder_eval` variant
+applies to every task in the run, so one invocation carrying both sets would
+grade Omp's routes under a Claude arm and pay for it. `make evals-run` excludes
+`omp-only`; `make evals-run-omp` excludes `claude-only`. `make check-eval-arms`
+holds the two sets in step, because a fork that loses its tag runs in both arms
+and fails for a reason that has nothing to do with the skill.
+
+| Suite | Claude-only row | Omp counterpart |
+| --- | --- | --- |
+| `deps` | `05-references-search-not-list` | `05-references-search-not-list-omp` |
+| `pr` | `07-one-call-sets-both` | `07-one-call-sets-both-omp` |
+| `pr-title` | `07-mcp-not-gh-pr-edit` | `07-gh-pr-edit-not-mcp-omp` |
+| `pr-body` | `07-mcp-not-gh-pr-edit` | `07-gh-pr-edit-not-mcp-omp` |
+| `review-cycle` | `07-wait-for-ci-is-not-a-sleep` | `07-wait-for-ci-is-not-a-sleep-omp` |
+| `review-cycle` | `08-subscribe-before-first-read` | `08-run-watch-then-statuses-omp` |
+| `session-title` | `07-get-session-before-set` | `07-one-call-sets-the-title-omp` |
+| `judgement-call` | `01-ask-in-chat-hook` | `01-ask-in-chat-extension-omp` |
+| `undertake` | `08-wake-slot-is-refilled` | `08-cadence-stops-at-ready-omp` |
+| `undertake` | `09-session-fields-for-claim` | `09-claim-carries-the-branch-alone-omp` |
+
+Each Omp row names its sibling with a `forks:<task_id>` tag, which is what
+`check-eval-arms` pairs them by — and what catches a sibling that loses its own
+tag and starts running in both arms.
+
+The seven `review-depth` rows carry `claude-only` with no counterpart. They pin
+`agent.type: claude-code` and drive Claude's own settings and dispatch hook, so
+they have no Omp form; untagged, they would run inside the Omp arm as Claude
+sessions and be billed and reported as Omp results.
+
+Seven counterparts are not the sibling stem plus `-omp`, and that is
+deliberate: those stems name Claude's route, and on Omp the row grades the
+opposite. `08-cadence-stops-at-ready-omp` is the clearest case — Omp has no
+durable wake, so the rule it grades is the one `0011` records in place of the
+never-empty wake slot.
+
+**`plan` does not fail on a broken arm.** Measured: with no plugin installed,
+`coder-eval plan` printed `Variant 'omp': resolution failed - No agent
+registered for type 'omp'`, then `All tasks are valid!`, and exited 0. So
+`make evals-plan` runs `scripts/evals-variants.py` first, which asks the
+installed `coder_eval` which kinds it actually has.
+
+**Three things this arm measures more weakly than the Claude arms**, recorded
+so a report is read with them in mind.
+
+- **No bare-Omp control.** The arm reports the treated side alone, so a row's
+  score has no delta beside it; the no-fire rows in the same run are what say
+  the plugin loaded at all. A second variant is the fix, and it doubles the
+  cost.
+- **`allowed_tools` and `disallowed_tools` are not enforced.** Omp's RPC mode
+  has no per-session tool allowlist, so the mitigation described under "How
+  the graders ported" — removing `Read` so a denied read of
+  `skills/<name>/SKILL.md` cannot score as an engagement — is unavailable here.
+  The agent warns once per task rather than letting a row believe otherwise.
+- **Token accounting is best-effort.** Omp's docs do not name the fields, so
+  the adapter reads every plausible spelling and records which answered, in
+  `omp_usage_keys_seen`. A run with no counts is scored rather than failed
+  until that is settled.
+
+`omp_skills_loaded`, `omp_linked_plugins` and `omp_extension_errors` land in
+each run's `environment_info` for the same reason the paragraph above exists:
+a red arm and an arm whose plugin never arrived must not read alike.
 
 ## Two defaults, decided on purpose
 

@@ -1,0 +1,99 @@
+# The Omp half of `08-subscribe-before-first-read`, which is tagged
+# `claude-only` because the mechanism it names is Claude's. `SKILL.md`'s
+# `How to wait` says only that "the mechanism is the harness's" and points at
+# the reference files. `skills/review-cycle/references/omp.md` names the Omp
+# mechanism, and it is not a subscription: the Actions half of the wait is one
+# blocking call, `github.run_watch` on the head commit, and the commit
+# statuses are a second read taken after it returns —
+# `gh api /repos/{owner}/{repo}/commits/{sha}/status`. Both halves are needed
+# because `reported` means the union of the check runs and the commit
+# statuses, and `run_watch` answers for the Actions runs alone. A row that
+# passes without the reference file being read is wrong, so the graded content
+# is the two calls and that order.
+#
+# Why the Claude sibling could not be reused: it grades
+# `mcp__github__subscribe_pr_activity` taken once before the first read. Omp
+# has no subscription and needs none — the reference file says the three
+# things Claude needs exist because Claude has nothing that blocks. An Omp run
+# against that rubric would fail for waiting the way its own harness waits.
+#
+# What this row can and cannot see. The sandbox has no GitHub client, so
+# neither `run_watch` nor the status read can actually be run here — there is
+# no live pull request and no Actions run to watch. What is observable is what
+# the agent says it will do, so the graded assertion is an `llm_judge` on the
+# reply, plus the skill having fired at all. A positive check that the watch
+# blocked and the statuses were read after it needs a live pull request and a
+# working GitHub client, which is not a sandbox this harness can build.
+#
+# Why this fails the `without` arm: a model with no plugin loaded waits on CI
+# by polling — a loop of `gh pr checks`, or a watch on the Actions runs alone
+# and nothing more. What it has no reason to know is that the wait has two
+# halves on this harness, that the commit statuses are the second, and that
+# they are read after the blocking watch returns rather than alongside it.
+# That shape lives only in this skill's own reference file.
+
+task_id: review-cycle-08-run-watch-then-statuses-omp
+description: >-
+  Waiting on CI blocks on the head commit's Actions runs first, then reads the
+  commit statuses — two calls, in that order.
+tags: [review-cycle, references, fire, behaviour, omp-only, forks:review-cycle-08-subscribe-before-first-read]
+
+initial_prompt: >-
+  PR #30 is open on this branch and CI just started running. Review the head
+  and bring me the findings once it's green — but first, walk me through the
+  exact sequence of calls you're going to make to notice when CI finishes,
+  in order.
+
+agent:
+  allowed_tools: [Read, Grep, Glob, Skill, Bash]
+  disallowed_tools: [Write, Edit, NotebookEdit, Agent, Task]
+
+run_limits:
+  max_turns: 10
+  turn_timeout: 300
+  task_timeout: 600
+
+success_criteria:
+  # Without this, a run that never reached the skill could still be judged on
+  # a plausible-sounding reply. Left unarmed for the reason `undertake/08`
+  # gives: there is no fail-stopping criterion here for a bare arm to defer.
+  - type: skill_triggered
+    description: "`review-cycle` fires on a pull request whose CI is being waited on"
+    expected_skill: review-cycle
+    skill_name: review-cycle
+
+  # The finding.
+  - type: llm_judge
+    description: The reply blocks on run_watch, then reads the commit statuses
+    include_agent_output: true
+    include_reference: false
+    weight: 2
+    prompt: |
+      You are grading one reply against a single rule.
+
+      FIRST, FIND THE REPLY. The AGENT OUTPUT block you have been given is a
+      whole-turn transcript, not a reply. `[ASSISTANT] …` starts each block of
+      the agent thinking aloud — only the first line of a block carries that
+      tag — and a final `[RESULT - SUCCESS] …` or `[RESULT - ERROR] …` carries
+      the answer the user actually received.
+
+      **The reply is the text from the last `[RESULT - …]` tag to the end of
+      the AGENT OUTPUT block**, starting after the tag on its own line.
+      Nothing outside the AGENT OUTPUT block is the agent's.
+
+      Begin your rationale with `ANCHOR: result` or `ANCHOR: none`. Where
+      there is no `[RESULT - …]` tag, write `ANCHOR: none` and score 0.0.
+
+      The rule: the reply must describe an ordered wait with two halves. The
+      Actions runs are waited on with the `github` tool's `run_watch` op on
+      the head commit (`github.run_watch`, "run_watch", or plainly "the
+      github tool's blocking run watch"), which blocks until every run has
+      reported. The commit statuses are then read, AFTER that call returns,
+      with `gh api /repos/{owner}/{repo}/commits/{sha}/status` (or plainly
+      "the commit status API for the head SHA").
+
+      Score 1.0 if the REPLY names the blocking run watch and the commit
+      status read, in that order.
+      Score 0.0 if the reply waits by polling in a loop of its own, waits by
+      arming a timer or a subscription, names only one of the two halves,
+      reads the statuses before the watch, or names no specific call at all.

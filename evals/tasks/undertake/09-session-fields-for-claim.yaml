@@ -34,7 +34,7 @@ task_id: undertake-09-session-fields-for-claim
 description: >-
   Claiming an assigned issue reads the designated branch and the model that
   served the turn from specific, distinct fields on the session description.
-tags: [undertake, references, fire, behaviour]
+tags: [undertake, references, fire, behaviour, claude-only]
 
 initial_prompt: >-
   I'm handing you issue #52 to build. Before you post the claim comment, walk

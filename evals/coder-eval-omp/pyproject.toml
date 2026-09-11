@@ -1,0 +1,36 @@
+# The `omp` agent kind, installed beside `coder-eval` so the eval suites can
+# run a third arm on Oh My Pi. See README.md in this directory for what it is,
+# and ../README.md for how the arm is run.
+#
+# It is never published. `make evals-install` installs it from this checkout
+# with `uv tool install --with`, which is why there is no version discipline
+# here beyond a number that exists.
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "coder-eval-omp"
+version = "0.1.0"
+description = "An Omp (oh-my-pi) agent kind for coder-eval, used by the daily-driver eval suites."
+readme = "README.md"
+# Matches `coder-eval`'s own floor. It is installed into that tool's
+# environment, so a lower floor here would buy nothing.
+requires-python = ">=3.13"
+license = { text = "LicenseRef-Anti-License" }
+authors = [{ name = "Jason McVetta", email = "jason.mcvetta@gmail.com" }]
+
+# Deliberately NOT pinned to the exact `CODER_EVAL_VERSION` in the Makefile.
+# `uv tool install coder-eval==<pin> --with .` resolves both, and an equality
+# pin here would fight that pin rather than agree with it. The floor is the
+# release that introduced the bring-your-own-agent entry point.
+dependencies = ["coder-eval>=0.11.6"]
+
+# The seam. `coder_eval` scans installed distributions for this group and calls
+# each target with its agent registry.
+[project.entry-points."coder_eval.plugins"]
+daily_driver_omp = "coder_eval_omp.plugin:register"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/coder_eval_omp"]
