@@ -31,10 +31,14 @@ success_criteria:
     description: "`pr` fires when a pull request is being opened"
     expected_skill: pr
     skill_name: pr
-    # Unarmed, unlike the other fire rows in this suite. The distractor below
-    # needs the whole run to establish an absence, and a pass-stop here would
-    # end it the moment `pr` fires — leaving that row to pass vacuously on
-    # every replicate.
+    # Armed bare rather than `on_pass: stop`, unlike the other fire rows in
+    # this suite, and both halves of that matter. The pass-stop had to go: the
+    # distractor below establishes an absence, which needs the whole run, and a
+    # stop the moment `pr` fires would leave it passing vacuously on every
+    # replicate. The bare arm had to stay: it keeps this criterion in the
+    # watcher's pass-capable set, so the distractor's fail-stop is deferred
+    # while it is undecided. Dropping the key entirely is the false negative
+    # "Both arms, every criterion" in `evals/README.md` describes.
     stop_early: {}
 
   - type: skill_triggered

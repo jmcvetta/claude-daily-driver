@@ -43,6 +43,11 @@ make evals-run TASKS='tasks/pr/*.yaml'     # one suite
 make evals-run TASKS='tasks/*/*-neg-*.yaml' # just the no-fire half
 ```
 
+The `*-neg-*` selector is a filename glob, and one absence assertion does not
+live in a file it matches: `tasks/pr/02-open-a-pr.yaml` is a fire case that
+also asserts `undertake` stays silent. Add `tasks/pr/*.yaml` when the question
+being asked is about collisions rather than about the no-fire cases as such.
+
 Not part of `make check`. The cases need a live model and this repository's CI
 is deliberately credential-free. What *is* part of `make check` is
 `check-eval-fixtures`, which builds every review-depth fixture repository with
@@ -147,9 +152,10 @@ keeps from sweeping in the other one.
 One collision is asserted from the other side. `pr/02-open-a-pr.yaml` carries an
 `undertake` distractor, because "get it to a pull request" is in `undertake`'s
 register too and the only thing separating them is that the prompt has no issue
-to undertake. Its `pr` criterion is unarmed for that reason: a pass-stop there
-would end the run the moment `pr` fires, and the distractor would pass
-vacuously. The reverse assertion is absent on purpose — `undertake` invokes
+to undertake. Its `pr` criterion is armed bare rather than
+pass-stopped for that reason: a pass-stop there would end the run the moment
+`pr` fires and the distractor would pass vacuously, while the bare arm keeps
+that criterion pass-capable so the distractor's fail-stop stays deferred. The reverse assertion is absent on purpose — `undertake` invokes
 `pr` at `Open the draft`, so `pr` firing on an undertake prompt is correct.
 
 `deps/` asks where the line falls between a bulk upgrade and one dependency.
