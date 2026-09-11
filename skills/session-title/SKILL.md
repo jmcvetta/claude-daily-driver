@@ -20,6 +20,11 @@ The name this session carries in the Claude session lists, web and mobile
 alike. It is read in a column of a dozen siblings, on a phone, at a glance.
 That is the whole design constraint.
 
+**The call that sets the title is per harness, and it lives beside this
+file.** [`references/claude.md`](references/claude.md) is the route for
+Claude Code, [`references/omp.md`](references/omp.md) for Oh My Pi. Read
+the one for the harness in use before the first call.
+
 
 Budget: 40 characters
 =====================
@@ -95,9 +100,8 @@ Setting it
 ==========
 
 Setting the title is the harness's own call — each harness names its own
-surface, and how many calls that takes differs between them:
-[`references/claude.md`](references/claude.md) and
-[`references/omp.md`](references/omp.md) give the exact path.
+surface, and how many calls that takes differs between them. The reference
+file for the harness in use gives the exact path.
 
 Where no such surface exists — a session on neither harness — there is no
 way to set the title from here: say so and stop, rather than reaching for a

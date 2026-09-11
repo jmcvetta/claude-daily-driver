@@ -36,6 +36,12 @@ The one thing that is *written* as prose is the `Closes #123` line in a pull
 request body. Treat the graph as the artifact and that line as one unvalidated
 writer into it.
 
+**The exact form is per harness, and it lives beside this file.** Every
+operation below is named in words here and resolved to a call there:
+[`references/claude.md`](references/claude.md) for Claude Code,
+[`references/omp.md`](references/omp.md) for Oh My Pi. Read the one for the
+harness in use before the first call.
+
 
 Which client
 ============
@@ -186,8 +192,7 @@ never a relative one. A skill's Bash runs in the user's project, not in the
 plugin, so a relative `scripts/issue-deps.sh` is "No such file or
 directory" — or worse, silently runs an unrelated file in a project that
 has its own `scripts/`. Each harness injects this path under its own name;
-[`references/claude.md`](references/claude.md) and
-[`references/omp.md`](references/omp.md) give the exact form.
+the reference file for the harness in use gives the exact form.
 
 ```sh
 # $deps is this skill's own script. The assignment differs by harness —

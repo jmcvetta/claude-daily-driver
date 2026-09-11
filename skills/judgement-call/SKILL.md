@@ -24,6 +24,12 @@ user: do it properly, or hack it; fix it now, or leave a TODO; the standard
 library, or a copy-paste. One option is correct and the rest are noise, and the
 round trip costs the user a word nobody should have had to type.
 
+**The widget is denied per harness, and the adapter that denies it lives
+beside this file.** [`references/claude.md`](references/claude.md) names the
+Claude Code adapter, [`references/omp.md`](references/omp.md) the Oh My Pi
+one. Read the one for the harness in use before putting a question to the
+user: it says what the denial does when the widget is reached for.
+
 
 The gate
 ========
@@ -95,9 +101,8 @@ genuinely does not settle it:
   skill overrides none of them.
 
 **A question that survives is asked in prose, not in the widget.**
-The widget is closed on both harnesses, each by its own deny adapter:
-[`references/claude.md`](references/claude.md) and
-[`references/omp.md`](references/omp.md) name the adapter and what it does
+The widget is closed on both harnesses, each by its own deny adapter — the
+reference file for the harness in use names the adapter and what it does
 when the model reaches for the widget.
 [`0009`](../../docs/notes/0009-deny-the-question-widget.md) is why either
 harness closes the widget at all. So the question goes in the chat reply:

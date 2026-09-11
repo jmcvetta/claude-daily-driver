@@ -34,6 +34,11 @@ The body of a pull request, whether it is being opened or rewritten. In order:
 - **Unopinionated**: This is a short description of the branch, NOT a code
   review. Do NOT do opine on code quality or security.
 
+**The call that sets the body is per harness, and it lives beside this
+file.** [`references/claude.md`](references/claude.md) is the route for
+Claude Code, [`references/omp.md`](references/omp.md) for Oh My Pi. Read
+the one for the harness in use before the first call.
+
 Opening a pull request is the `pr` skill's job. When the body is being written
 as part of opening one, follow `pr` as well, for the branch guard, the
 existing-PR check and draft state.
@@ -57,11 +62,3 @@ Issues
 When revising a body that already carries such a section, carry it across. A
 rewrite that drops a `Closes #123` silently stops the merge from closing the
 issue.
-
-
-Setting it
-----------
-
-The call that sets the body, whether on a new pull request or an existing
-one, differs by harness: [`references/claude.md`](references/claude.md) and
-[`references/omp.md`](references/omp.md) name it.

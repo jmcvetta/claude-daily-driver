@@ -25,6 +25,17 @@ are checked here, each measured against the CLI rather than assumed:
   the plugin name or version, or missing or mispointing the Omp extension
   entry. Release-please bumps the three manifests together, so a tree where
   they disagree has already drifted.
+- A `SKILL.md` naming a harness's own tool routes in its body. The skills run
+  on Claude Code and on Omp, and the routes differ; `0011` puts the body's
+  operation in words and the call in `skills/<name>/references/claude.md` or
+  `references/omp.md`. A route written back into the body is not wrong on the
+  harness it was written for, which is exactly why nothing else catches it: it
+  reads correctly, and it is silently wrong on the other harness.
+- A reference file no `SKILL.md` links, or a reference link that resolves to
+  nothing. The move only works if the session opens the file when the skill
+  fires, and the link is the whole of that pointer. An unlinked file is a
+  route nobody is sent to; a broken link sends them nowhere. Neither fails
+  anything else — the skill still loads, and still looks complete.
 - A copy of the repository stanza — the template, this repository's own
   `.claude/settings.json`, a fenced block in the documentation — that has
   drifted from the marketplace and plugin names it enables. `validate` does not
@@ -59,6 +70,26 @@ JSON_BLOCK = re.compile(r"^```json\n(.*?)^```", re.DOTALL | re.MULTILINE)
 # the last thing before the fence, so it cannot be left behind by an edit that
 # moves the block it was written for.
 IGNORE = re.compile(r"<!--\s*stanza-check:\s*ignore\s*-->\s*\Z")
+
+# The harness routes a `SKILL.md` body may not name. One pattern per rule,
+# named, so a failure says which rule it broke rather than which alternation
+# branch matched. `${CLAUDE_PLUGIN_ROOT}` is matched braced or not: the
+# unbraced spelling is an equally valid shell expansion and is the likelier
+# way the rule gets broken.
+ROUTES = {
+    "mcp__": re.compile(r"mcp__"),
+    "AskUserQuestion": re.compile(r"AskUserQuestion"),
+    "/code-review": re.compile(r"/code-review"),
+    "$CLAUDE_PLUGIN_ROOT": re.compile(r"\$\{?CLAUDE_PLUGIN_ROOT\}?"),
+    "daily_driver_": re.compile(r"daily_driver_"),
+    "run_watch": re.compile(r"run_watch"),
+    "skill://": re.compile(r"skill://"),
+}
+
+# A markdown link into the skill's own `references/` directory. The link text
+# is not read: what matters is the target, which is what a reader follows and
+# what has to resolve.
+REFERENCE_LINK = re.compile(r"\]\(\s*(references/[^)\s]+)\s*\)")
 
 # Not a YAML parser, and not trying to be. Skill frontmatter here is flat
 # `key: value` with folded scalars, so this reads exactly that shape and
@@ -202,6 +233,66 @@ def stanza_errors() -> list[str]:
     return errors
 
 
+def body_of(path: Path) -> tuple[str, int]:
+    """A component's body and the line its body starts on.
+
+    The frontmatter is exempt from the route rules, and that exemption is the
+    point rather than a concession: the `description` is what triggers the
+    skill, so a skill that fires on a tool call has to name that call — both
+    harnesses' — to fire on either. A file with no frontmatter is all body,
+    which is the safe reading: it exempts nothing.
+    """
+    text = path.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return text, 1
+    for i, line in enumerate(lines[1:], start=1):
+        if line.strip() == "---":
+            return "\n".join(lines[i + 1 :]), i + 2
+    return text, 1
+
+
+def reference_errors(skills: list[Path]) -> list[str]:
+    """The three things `0011`'s reference-file split needs to stay true.
+
+    No route in a body, no reference file nothing links to, and no link that
+    resolves to nothing. See the docstring for why each one is invisible to
+    every other check.
+    """
+    errors: list[str] = []
+    for skill in skills:
+        where = skill.relative_to(ROOT)
+        body, offset = body_of(skill)
+
+        linked: set[str] = set()
+        for lineno, line in enumerate(body.splitlines(), start=offset):
+            for name, pattern in ROUTES.items():
+                if pattern.search(line):
+                    errors.append(
+                        f"{where}:{lineno}: names the {name} route in the body; "
+                        "put the call in references/claude.md or references/omp.md "
+                        "and name the operation in words here"
+                    )
+            for target in REFERENCE_LINK.findall(line):
+                linked.add(target)
+                if not (skill.parent / target).is_file():
+                    errors.append(
+                        f"{where}:{lineno}: links {target}, which does not exist"
+                    )
+
+        # The other direction. A reference file nothing links to is a route
+        # the session is never sent to read, and it fails nothing else: the
+        # skill loads, and reads as complete, with the call unreachable.
+        for reference in sorted((skill.parent / "references").glob("*.md")):
+            relative = f"references/{reference.name}"
+            if relative not in linked:
+                errors.append(
+                    f"{where}: nothing links {relative}; a reference file the "
+                    "body does not point at is never read"
+                )
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
 
@@ -320,6 +411,7 @@ def main() -> int:
             else:
                 claimed[name] = agent
 
+    errors.extend(reference_errors(skills))
     errors.extend(stanza_errors())
 
     for error in errors:
@@ -328,7 +420,9 @@ def main() -> int:
         return 1
     print(
         f"manifests agree; {len(skills)} skill(s) "
-        f"and {len(agents)} agent(s) checked; stanza copies agree"
+        f"and {len(agents)} agent(s) checked; "
+        "skill bodies are harness-neutral and their reference files are "
+        "linked; stanza copies agree"
     )
     return 0
 

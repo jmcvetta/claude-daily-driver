@@ -9,8 +9,8 @@ SHELL := /bin/bash
 
 .PHONY: git_sync check check-plugin check-skills check-agents check-scripts \
 	check-manifests check-constitution check-ask-in-chat check-omp-extension \
-	check-eval-fixtures check-step-names check-harness-neutral check-infra \
-	evals-install evals-plan evals-run mcp-usage
+	check-eval-fixtures check-step-names check-infra evals-install \
+	evals-plan evals-run mcp-usage
 
 # The `coder_eval` release the eval suites are written against. Pinned on
 # purpose: being able to hold a version back is the whole reason the suites are
@@ -43,7 +43,7 @@ git_sync:
 # is no second command line to fall behind this one.
 check: check-plugin check-skills check-agents check-scripts check-manifests \
 	check-constitution check-ask-in-chat check-omp-extension \
-	check-eval-fixtures check-step-names check-harness-neutral
+	check-eval-fixtures check-step-names
 
 # `claude plugin validate --strict` reads one manifest at a time and picks the
 # marketplace when handed a directory, so the plugin manifest is named
@@ -77,7 +77,13 @@ check-agents:
 # passes an agent with an empty description, one whose name disagrees with its
 # filename, and two agents claiming the same name — the last of which makes one
 # of them permanently unreachable. This is the leg that catches those, for
-# skills and agents alike. See the docstring in the script.
+# skills and agents alike.
+#
+# It is also the leg that holds `0011`'s split: no SKILL.md body names a
+# harness's own tool routes, every reference file is linked from the body, and
+# every reference link resolves. A route written back into a body reads
+# correctly on the harness it was written for, so nothing else catches it.
+# See the docstring in the script.
 check-manifests:
 	python3 scripts/check-manifests.py
 
@@ -147,16 +153,6 @@ check-eval-fixtures:
 # docstring and docs/notes/0005-steps-are-cited-by-name.md.
 check-step-names:
 	python3 scripts/check-step-names.py
-
-# check-harness-neutral: no shipped SKILL.md names a harness's routes in its
-# body. The skills run on Claude Code and on Omp, and the routes differ; the
-# body names the operation in words and the per-skill references/ files name
-# the call. A route written back into the body reads correctly on the harness
-# it was written for, which is why nothing else catches it and why it is
-# silently wrong on the other one. Part of `check` because it needs nothing but
-# Python. See the script's docstring and issue #146.
-check-harness-neutral:
-	python3 scripts/check-harness-neutral.py
 
 # check-infra: parse the OpenTofu stack without credentials. Not part of
 # `check`, which must not start requiring OpenTofu on a laptop that is only

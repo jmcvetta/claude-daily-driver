@@ -28,6 +28,12 @@ The upgrades themselves are the package manager's work, never a hand-edited
 manifest or lockfile. That rule is the constitution's, under `Dependencies`,
 and it is not restated here.
 
+**The routes are per harness, and they live beside this file.** Every
+operation below is named in words here and resolved to a call there:
+[`references/claude.md`](references/claude.md) for Claude Code,
+[`references/omp.md`](references/omp.md) for Oh My Pi. Read the one for the
+harness in use before the first search or write call.
+
 
 Green CI is the acceptance test
 ===============================
@@ -61,9 +67,8 @@ run:
   it ready once every check has reported green, and leaves it a draft with
   the failure named when one has not. No round runs in between — see `Green
   CI is the acceptance test` — so there is nothing else for the draft to
-  wait on. [`references/claude.md`](references/claude.md) and
-  [`references/omp.md`](references/omp.md) name the call that marks it
-  ready.
+  wait on. The reference file for the harness in use names the call that
+  marks it ready.
 
 
 The pass
@@ -73,10 +78,9 @@ The pass
 guessing at it from the manifest. A search for open pull requests authored
 by Dependabot is the list, and each title names the dependency and the
 version it wants — not a plain listing of pull requests, which cannot
-filter by author, and not the manifest.
-[`references/claude.md`](references/claude.md) and
-[`references/omp.md`](references/omp.md) name the exact search call on each
-harness, and the trap in reaching for the wrong one instead.
+filter by author, and not the manifest. The reference file for the harness
+in use names the exact search call, and the trap in reaching for the wrong
+one instead.
 
 **Upgrade every ecosystem the repository declares, on one branch.** One CI run
 over the whole upgrade is the point. `.github/dependabot.yml` says which
