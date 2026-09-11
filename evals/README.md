@@ -19,6 +19,7 @@ evals/
 │   ├── review-cycle/    … when a review is to be run and answered, and only then?
 │   ├── undertake/       … when work is undertaken, and only when handed over?
 │   ├── epic/            … when work is broken up, and never when it fits one PR?
+│   ├── embark/          … when an epic's wave is put to sea, and never one issue?
 │   ├── deps/            … when the deps are upgraded in bulk, and not for one?
 │   ├── issue-deps/      … when an issue relationship is read or written?
 │   ├── issue-labels/    … when an issue is labelled, and not when it is linked?
