@@ -34,6 +34,14 @@
 # below now requires both halves, which is what the sibling rows
 # `pr-title/07` and `pr-body/07` already required, and what their clean
 # spreads (+0.733 and +0.867 in the same run) come from.
+#
+# Measured after the rewrite, five replicates per arm: the finding went from
+# -0.600 to +0.200, and the row from -0.400 to +0.133. The sign is fixed and
+# the row is still weak, because the rule is only as good as what reaches it:
+# `pr` does not fire here at all, so four of five treated replicates proposed
+# `gh pr edit`, raw `curl`, or nothing specific, and never read the reference
+# file that names the MCP call. The rubric is no longer the thing holding
+# this row down. The trigger is.
 
 task_id: pr-07-one-call-sets-both
 description: >-
