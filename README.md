@@ -264,10 +264,11 @@ the installed route, `omp plugin list` reporting the plugin after `omp plugin
 link .`, and the extension loading rather than failing silently. It is
 credential-free and calls no model, against a throwaway `HOME` — but it needs
 Omp installed, which `make check` must not start requiring of a laptop that is
-only editing a skill. [`.github/workflows/omp.yml`](.github/workflows/omp.yml)
-runs it, filtered to the files that can actually break the integration:
-`package.json`, `.claude-plugin/`, `extensions/`, and the check itself — its
-header says why each is on that list, and why `skills/` is not.
+only editing a skill. CI's `omp` job runs it instead, gated on the files that
+can actually break the integration — `package.json`, `.claude-plugin/`,
+`extensions/`, and the check itself. That job reports into `CI Success`
+whether or not the gate opens, so a broken Omp integration blocks a merge; its
+comment says why each file is on the list, and why `skills/` is not.
 `make check-infra` parses the OpenTofu
 stack — see [infra/github/README.md](infra/github/README.md). `make evals-run`
 needs a live model, and CI here is credential-free — see

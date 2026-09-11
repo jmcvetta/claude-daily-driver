@@ -58,13 +58,111 @@ jobs:
 
       - run: make check
 
+  # The Omp half of the plugin, asked of a real Omp rather than of a fake.
+  #
+  # `check` proves the adapter's logic under Node with a faked ExtensionAPI
+  # (`check-omp-extension`). It never starts Omp, so it cannot see discovery: a
+  # plugin whose skills Omp does not find, or whose extension Omp never
+  # reaches, passes it green. `make check-omp-plugin` is that other half, and
+  # it needs a whole second harness installed to run.
+  #
+  # **A job here rather than a workflow of its own**, because a workflow is
+  # filtered with `paths:` and a filtered workflow reports *nothing* — so it
+  # could never feed `CI Success`, and breaking the Omp integration would not
+  # block a merge. This job always runs and always reports; the filter moves
+  # inside it, onto the steps, so the runner downloads Omp only when the diff
+  # could have broken it.
+  omp:
+    name: Omp integration
+    runs-on: ubuntu-latest
+    steps:
+      # Full history: the step below diffs against the merge base, which a
+      # shallow clone does not have.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # The files that decide whether Omp loads this plugin, measured rather
+      # than guessed:
+      #
+      #   - `package.json` — Omp's own manifest. `omp.extensions` names the
+      #     adapter's entry point and nothing else does; move the file, drop
+      #     `"type": "module"`, or rename the package, and the extension
+      #     silently does not load.
+      #   - `.claude-plugin/**` — the catalog `omp plugin install` reads. Omp
+      #     takes the Claude-compatible one as its documented fallback
+      #     (docs/notes/0011), so the name, source and version there are what
+      #     an install resolves against.
+      #   - `extensions/**` — the adapter itself. A module that throws on
+      #     import costs one stderr line and the session runs on without it.
+      #   - `scripts/check-omp-plugin.py` — the check.
+      #
+      # `skills/**` is deliberately absent: an added or renamed skill is
+      # discovered by Omp exactly as by Claude Code, and the layout rules Omp
+      # is stricter about are already asserted on every push by `claude plugin
+      # validate --strict skills` and check-manifests.py. So is the Makefile,
+      # which holds the command line and not the integration.
+      - name: Decide whether this diff can affect Omp
+        id: scope
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          # No base to diff against — a new branch's first push, or a force
+          # push GitHub reports as all-zeros. Run it rather than guess.
+          if [[ -z "$BASE" || "$BASE" =~ ^0+$ ]]; then
+            echo 'no usable base commit; running the check'
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          base=$(git merge-base "$BASE" "$GITHUB_SHA")
+          changed=$(git diff --name-only "$base" "$GITHUB_SHA" -- \
+            package.json .claude-plugin extensions scripts/check-omp-plugin.py)
+          if [[ -n "$changed" ]]; then
+            echo "files that can affect Omp changed:"
+            echo "$changed"
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'no file that can affect Omp changed; the check is not run'
+            echo 'run=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      # The official binary installer. The binary carries its own runtime, so
+      # there is no Bun to install — see
+      # docs/notes/0011-two-harnesses-one-skill-tree.md for why that route.
+      #
+      # Unpinned, for the reason the Claude CLI install above is unpinned.
+      #
+      # `--retry-all-errors` is what makes `--retry` cover a connection reset:
+      # without it curl retries only the errors it considers transient, and a
+      # reset on the TLS handshake is not one of them. Measured — this step
+      # installed Omp on one run and answered `curl: (35) Recv failure` from
+      # the same URL two minutes later.
+      - name: Install Omp
+        if: steps.scope.outputs.run == 'true'
+        run: |
+          curl -fsSL --retry 5 --retry-delay 2 --retry-all-errors https://omp.sh/install | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # `GITHUB_PATH` takes effect on the next step, so this is a step of its
+      # own. It fails loudly where an installer put the binary somewhere else,
+      # rather than leaving the check below to fail for a reason that reads
+      # like a plugin fault.
+      - name: Verify Omp is on PATH
+        if: steps.scope.outputs.run == 'true'
+        run: omp --version
+
+      - name: make check-omp-plugin
+        if: steps.scope.outputs.run == 'true'
+        run: make check-omp-plugin
+
   # The aggregating job branch protection names. `if: always()` is
   # load-bearing: without it a failure upstream *skips* this job, and GitHub
   # counts a skipped required check as satisfied — the pull request would go
   # green on a failed check.
   ci-success:
     name: CI Success
-    needs: [check]
+    needs: [check, omp]
     if: always()
     runs-on: ubuntu-latest
     steps:

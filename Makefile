@@ -124,8 +124,9 @@ check-omp-extension:
 #
 # Not part of `check`, for the reason check-infra is not: it needs a toolchain
 # -- here a whole second harness -- and `check` must not start requiring Omp on
-# a laptop that is only editing a skill. .github/workflows/omp.yml runs it, on
-# the files that can actually break the Omp integration.
+# a laptop that is only editing a skill. CI's `omp` job runs it, gated on the
+# files that can actually break the Omp integration, and reports into
+# `CI Success` either way so a break blocks a merge.
 #
 # No guard on `omp` either, and that is the same decision as check-infra's. A
 # target nobody runs by accident should fail loudly when its toolchain is
