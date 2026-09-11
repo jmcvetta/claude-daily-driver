@@ -57,7 +57,9 @@ Ask the question in this order. The first answer that holds is the label.
 
 1. **Does the issue describe work, or coordinate it?** An issue whose body is
    a list of other issues is an `epic`. It is never undertaken: an agent
-   handed one works a child, and the epic closes when the children do.
+   handed one works a child, and the epic closes when the children do. `epic`
+   is the skill that decides there is one and writes the children; this label
+   is what the finished epic then carries.
 2. **Is something broken?** A behaviour was promised and is not delivered —
    `bug`. The test is the same one `conventional-commits-type` uses for
    `fix`: the thing could already do this, and does it wrong. A capability
@@ -82,10 +84,14 @@ What the label decides
 **Readiness, and nothing else.** `undertake` reads it at `Read the issue and
 its edges`, and it is a stop in two cases:
 
-- An `epic` is a stop. Say which child to work instead, and wait.
+- An `epic` is a stop. Say which child to work instead, and wait; `epic`
+  owns the wording.
 - A `proposal` is a stop. It is the vague-request case `Open the issue`
   already refuses to write an issue for, arriving with an issue already
-  written. Decomposing it is a decision, so it goes to the user.
+  written. Deciding its shape is the user's and decomposing it is `epic`'s,
+  so it goes to the user.
+- **Two of the five on one issue is a stop**, whichever two. They answer the
+  readiness question twice and nothing here ranks them.
 
 `task`, `bug` and `research` all run through. They differ in what the pull
 request contains, not in whether one is opened.
@@ -95,9 +101,9 @@ differently.
 
 **No label at all is not a stop.** The issue is unlabelled rather than
 blocked, and the answer is to label it: `Picking one` returns the label and
-the issue client applies it, in passing, before the work goes on. `Open the
-issue` labels every issue it writes, so an unlabelled issue is one a person
-opened. Naming the label without writing it leaves the next session to name
+the issue client applies it, in passing, before the work goes on. `undertake`
+labels every issue it opens and so does `epic`, so an unlabelled issue is one
+a person opened. Naming the label without writing it leaves the next session to name
 it again.
 
 **Two of the five on one issue is a stop.** They are two answers to a single

@@ -58,7 +58,7 @@ The sequence
 | 0 | `Size the work` | this skill |
 | 1 | `Draft the plan` | this skill |
 | 2 | `Agree the plan` | this skill, `judgement-call`, `issue-deps` |
-| 3 | `Open the issues` | this skill, `undertake` |
+| 3 | `Open the issues` | this skill, `undertake`, `issue-labels` |
 | 4 | `Write the graph` | `issue-deps` |
 | 5 | `Fill in the epic` | this skill |
 | 6 | `Hand off` | `undertake` |
@@ -201,6 +201,14 @@ The epic first, then the tasks, because a task names the epic as its parent and
 the parent must exist to be named. The epic's body at this point is `Summary`
 and `Justification`, and stops there: `Sequencing` is made of issue numbers
 that do not exist yet, which is why `Fill in the epic` is a step of its own.
+
+**Every issue this step writes carries a label**, and `issue-labels` supplies
+them. The epic gets `epic`, which is the one word that stops `undertake`
+starting on it; each task gets `task`, `bug` or `research`, whichever it is.
+An issue converted into the epic is **relabelled** rather than labelled: it
+carried something before, and two of the five on one issue is a stop in its
+own right. On a harness whose label write adds rather than replaces, that swap
+is one call carrying both the add and the remove.
 
 No permission is asked here. It was asked once at `Agree the plan`, and asking
 again per issue is the same question eight times.

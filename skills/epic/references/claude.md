@@ -11,8 +11,8 @@ The issues
 | ---- | --------- | ---- |
 | `Size the work` | Read an issue already in hand | `mcp__github__issue_read` |
 | `Open the issues` | Search the open issues | `mcp__github__search_issues` |
-| `Open the issues` | Open the epic, and each task | `mcp__github__issue_write`, `method: create` |
-| `Open the issues` | Turn an existing issue into the epic | `mcp__github__issue_write`, `method: update` |
+| `Open the issues` | Open the epic, and each task | `mcp__github__issue_write`, `method: create`, with `labels` |
+| `Open the issues` | Turn an existing issue into the epic | `mcp__github__issue_write`, `method: update`, with `labels` |
 | `Fill in the epic` | Replace the epic's body | `mcp__github__issue_write`, `method: update` |
 
 `method: update` replaces `body` outright rather than appending to it, so
