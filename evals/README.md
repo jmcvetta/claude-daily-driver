@@ -662,7 +662,7 @@ and fails for a reason that has nothing to do with the skill.
 | `pr-body` | `07-mcp-not-gh-pr-edit` | `07-gh-pr-edit-not-mcp-omp` |
 | `review-cycle` | `07-wait-for-ci-is-not-a-sleep` | `07-wait-for-ci-is-not-a-sleep-omp` |
 | `review-cycle` | `08-subscribe-before-first-read` | `08-run-watch-then-statuses-omp` |
-| `session-title` | `01-get-session-before-set` | `01-one-call-sets-the-title-omp` |
+| `session-title` | `07-get-session-before-set` | `07-one-call-sets-the-title-omp` |
 | `judgement-call` | `01-ask-in-chat-hook` | `01-ask-in-chat-extension-omp` |
 | `undertake` | `08-wake-slot-is-refilled` | `08-cadence-stops-at-ready-omp` |
 | `undertake` | `09-session-fields-for-claim` | `09-claim-carries-the-branch-alone-omp` |

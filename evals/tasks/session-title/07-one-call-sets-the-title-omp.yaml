@@ -1,4 +1,4 @@
-# The Omp half of `01-get-session-before-set`, which is tagged `claude-only`
+# The Omp half of `07-get-session-before-set`, which is tagged `claude-only`
 # because the sequence it grades is Claude's. `SKILL.md`'s `Setting it` says
 # only that setting the title "is the harness's own call… how many calls that
 # takes differs between them" and points at the reference files. That sentence
@@ -29,11 +29,11 @@
 # takes a session id is the ordinary shape, and it is what the other harness
 # does.
 
-task_id: session-title-01-one-call-sets-the-title-omp
+task_id: session-title-07-one-call-sets-the-title-omp
 description: >-
   Titling the session for work on an issue is one call carrying the title
   alone, with no session id looked up first.
-tags: [session-title, references, fire, behaviour, omp-only, forks:session-title-01-get-session-before-set]
+tags: [session-title, references, fire, behaviour, omp-only, forks:session-title-07-get-session-before-set]
 
 initial_prompt: >-
   I'm starting on issue #40, "New skill: set the Claude session title." Title
