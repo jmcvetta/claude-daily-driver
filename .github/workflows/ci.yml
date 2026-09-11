@@ -63,9 +63,15 @@ jobs:
       # This is what keeps `check-omp-plugin` from skipping. That leg's guard
       # exists for a laptop; a CI job without Omp would take the skip and
       # report green having checked nothing.
+      # `--retry-all-errors` is what makes `--retry` cover a connection reset:
+      # without it curl retries only the errors it considers transient, and a
+      # reset on the TLS handshake is not one of them. Measured — this job's
+      # first run installed Omp and its second got `curl: (35) Recv failure`
+      # from the same URL two minutes later. A real outage still fails the
+      # step, and the version call below still fails the job.
       - name: Install Omp
         run: |
-          curl -fsSL https://omp.sh/install | sh
+          curl -fsSL --retry 5 --retry-delay 2 --retry-all-errors https://omp.sh/install | sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       # `GITHUB_PATH` takes effect on the next step, so the version call is its
