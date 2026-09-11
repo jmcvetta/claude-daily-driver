@@ -55,9 +55,9 @@ The sequence
 
 | # | Step | Owner |
 | - | ---- | ----- |
-| 0 | `Open the issue` | this skill, `issue-deps` |
+| 0 | `Open the issue` | this skill, `issue-deps`, `issue-labels` |
 | 1 | `Title the session` | `session-title` |
-| 2 | `Read the issue and its edges` | `mcp__github__issue_read`, `issue-deps` |
+| 2 | `Read the issue and its edges` | `mcp__github__issue_read`, `issue-deps`, `issue-labels` |
 | 3 | `Claim the issue` | this skill |
 | 4 | `Cut the branch` | this skill |
 | 5 | `Implement` | the constitution |
@@ -100,6 +100,14 @@ gate of `Read the issue and its edges` arriving early, and the constitution's
 rule against guessing at intent: an issue that guesses at what "done" means is
 worse than no issue, because the guess then reads as settled.
 
+**Every issue this step writes carries a label**, and `issue-labels` picks it.
+An unlabelled issue is one nothing can sort and nothing can decide readiness
+from, and the label is free to set at creation — `mcp__github__issue_write`
+takes `labels` on the same call. The issue this step writes is the work in
+hand, so it is a `task`, a `bug` or a `research` issue; it is never an `epic`,
+which coordinates issues that already exist, and never a `proposal`, which is
+the vague request this step has already refused to write.
+
 Edges are `issue-deps`' business, and its confirm-before-write rule *does*
 bite here — unlike the closing reference at `Open the draft`, a parent or a
 blocker for a new issue is inferred from evidence rather than given by the
@@ -125,6 +133,14 @@ The body, and then the graph: parent, sub-issues, blocked-by. **An issue
 blocked by an open one is a stop, not a start** — say which issue blocks it
 and wait. Reading the graph is free and needs no confirmation; `issue-deps`
 says so.
+
+The label too, because it states whether the issue is ready for an agent at
+all, and `issue-labels` says what each one means. **An `epic` and a `proposal`
+are both stops.** An epic coordinates issues rather than describing work, so
+say which child to work instead and wait; a proposal has its shape still open,
+so decomposing it into tasks is a decision and it goes to the user. `task`,
+`bug` and `research` run through, and an issue carrying no label runs through
+too — name the label `issue-labels` picks for it, and go on.
 
 The comments too, because `Claim the issue` needs to know whether it is claimed
 already — by this session, which means the sequence is being re-entered, or by
@@ -432,16 +448,21 @@ for the second round.
 Where it stops and waits
 ========================
 
-Autonomy is the point, so each pause has to earn itself. Seven stop the
-sequence. Five stop it to *ask* — the ambiguous issue, the request too vague
-to write one for, the failing approach, a designated branch the harness states
-ambiguously, and a base merge whose conflict is a real one. A blocked issue and
-a running check stop it to report, and wait on something other than an answer.
+Autonomy is the point, so each pause has to earn itself. Eight stop the
+sequence. Six stop it to *ask* — the ambiguous issue, the request too vague
+to write one for, an issue whose label says it is not ready, the failing
+approach, a designated branch the harness states ambiguously, and a base merge
+whose conflict is a real one. A blocked issue and a running check stop it to
+report, and wait on something other than an answer.
 
 - **A blocked issue, an issue whose intent is genuinely ambiguous, or a
   request too vague to write an issue for.** The constitution forbids guessing
   at intent; this is that rule, at `Open the issue` and at `Read the issue and
   its edges`.
+- **An issue labelled `epic` or `proposal`**, at `Read the issue and its
+  edges`. Neither is work an agent may start unattended: an epic's work is in
+  its children, and a proposal's shape is not yet decided. `issue-labels` is
+  what each label claims.
 - **More than one designated branch** for this repository, at `Cut the
   branch`'s first source. Guessing which one the harness will accept risks a
   claim already posted at `Claim the issue` that no push can honour.
