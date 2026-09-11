@@ -114,10 +114,10 @@ hand, so it is a `task`, a `bug` or a `research` issue; it is never an `epic`,
 which coordinates issues that already exist, and never a `proposal`, which is
 the vague request this step has already refused to write.
 
-Edges are `issue-deps`' business, and its confirm-before-write rule *does*
-bite here — unlike the closing reference at `Open the draft`, a parent or a
-blocker for a new issue is inferred from evidence rather than given by the
-assignment.
+Edges are `issue-deps`' business. Unlike the closing reference at `Open the
+draft`, a parent or a blocker for a new issue is *inferred*, so it is that
+skill's evidence test that decides whether one is written, and its report that
+says one was.
 
 1 — Title the session
 ---------------------
@@ -274,10 +274,10 @@ here.
 Push the branch, then invoke `pr`: it owns the branch guard, the existing-PR
 check, draft state, and the call on whether there is an issue to reference —
 there is, and it is this one. The `Issues` section of the body closes it, and
-`issue-deps` treats that line as the write into the graph — and its
-confirm-before-write rule does not bite here, because the edge is given by the
-assignment rather than inferred from evidence. The issue being implemented is
-the issue the pull request closes.
+`issue-deps` treats that line as the write into the graph. Its evidence test
+has nothing to weigh here, because the edge is given by the assignment rather
+than inferred: the issue being implemented is the issue the pull request
+closes.
 
 **The push is what runs the project's gates.** The constitution's *Before you
 call it done* sends them to CI rather than to this machine, so no local gate

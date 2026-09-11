@@ -669,10 +669,13 @@ these relationships are wanted constantly will start inventing them, for exactly
 the reason a role-framed security reviewer invents findings (Q5): an agent given
 a job feels obliged to produce output. The firing moment is real and specific —
 a dependency is discovered while planning work, or while writing a PR body and
-realising it cannot merge first — but the skill must **propose from evidence and
-let the user confirm**, never assert. A wrong dependency is worse than a missing
-one: it blocks work silently, and nobody thinks to look for a relationship they
-did not create.
+realising it cannot merge first — and an inferred edge must pass an evidence
+test before it is written: discovered in the work in hand, and evidenced by a
+statement about the code rather than a shared subject. A wrong dependency is
+worse than a missing one, because it blocks work silently and nobody thinks to
+look for a relationship they did not create. That silence is what the skill
+answers: it **writes the edge and reports the write**, both ends and the
+evidence, rather than holding it for the user to confirm (#161).
 
 ## Migration inventory
 
