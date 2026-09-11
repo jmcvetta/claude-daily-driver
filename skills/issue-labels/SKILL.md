@@ -41,7 +41,7 @@ harness in use before writing a label.
 | ----- | ----------- | ------------------ |
 | `epic` | Coordinates a sequence of other issues | Not `undertake`'s — `embark` takes one |
 | `task` | Discrete work, specified and ready to start | Yes |
-| `bug` | Meant to do this, and does it wrong | Yes |
+| `bug` | Bug report | Yes |
 | `proposal` | Wanted, but not yet planned into tasks | No — decompose it first |
 | `research` | A question to settle; the answer may be notes, new issues, or a no | Yes |
 
@@ -60,10 +60,7 @@ Ask the question in this order. The first answer that holds is the label.
    epic closes when its children do. `epic` is the skill that decides there is
    one and writes the children; this label is what the finished epic then
    carries.
-2. **Is something broken?** A behaviour was promised and is not delivered —
-   `bug`. The test is the same one `conventional-commits-type` uses for
-   `fix`: the thing could already do this, and does it wrong. A capability
-   that never once worked has not regressed, so it is not a bug.
+2. **Is it a bug report?** Then `bug`. Nothing here defines the word.
 3. **Does it close on an answer rather than on a change?** A question to
    settle, an option to compare, a spike to run — `research`. What the answer
    produces is not fixed: a note under `docs/`, a set of task issues and an
