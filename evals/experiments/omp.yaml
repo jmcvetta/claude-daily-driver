@@ -20,8 +20,8 @@
 # `agent: {type: omp}` resolves only when `coder-eval-omp` is installed beside
 # `coder-eval`. `coder-eval plan` does NOT fail when it cannot resolve a
 # variant — it prints the failure and still exits 0 — so `make evals-plan` runs
-# `scripts/evals-variants.py` after it, which is what actually catches a
-# misconfigured arm. See docs/notes/0013-the-omp-arm.md.
+# `scripts/evals-variants.py` first, as a prerequisite, which is what actually
+# catches a misconfigured arm. See docs/notes/0013-the-omp-arm.md.
 
 experiment_id: omp
 description: >-

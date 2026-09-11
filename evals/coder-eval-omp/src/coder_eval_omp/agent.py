@@ -41,7 +41,6 @@ import logging
 import os
 import shutil
 import signal
-import subprocess
 import tempfile
 import time
 from collections.abc import Callable, Mapping
@@ -252,11 +251,23 @@ class OmpAgent(Agent[OmpAgentConfig]):
         self._home = tempfile.TemporaryDirectory(prefix="coder-eval-omp-")
         home = Path(self._home.name)
         self._prepare_home(home)
-        self._link_plugins(binary, home)
-
-        await self._spawn(binary, home)
-        await self._record_what_loaded()
-        await self._apply_model()
+        try:
+            await self._link_plugins(binary, home)
+            await self._spawn(binary, home)
+            await self._record_what_loaded()
+            await self._apply_model()
+        except Exception:
+            # A half-built session must not survive the failure. `coder_eval`
+            # retries a start that raises, so an RPC process left running here
+            # is one orphan per attempt — each holding a session, a model
+            # connection and a throwaway home.
+            await self.kill()
+            if self._home is not None:
+                with contextlib.suppress(OSError):
+                    self._home.cleanup()
+                self._home = None
+            self._state = AgentState.ERROR
+            raise
         self._state = AgentState.WORKING
 
     async def stop(self) -> None:
@@ -415,12 +426,12 @@ class OmpAgent(Agent[OmpAgentConfig]):
             while not settled:
                 remaining = None if deadline is None else deadline - time.monotonic()
                 if remaining is not None and remaining <= 0:
-                    self._finalize_and_raise_timeout(finalize, timeout or 0.0)
+                    await self._timeout_turn(finalize, collector, timeout or 0.0)
 
                 try:
                     line = await asyncio.wait_for(proc.stdout.readline(), timeout=remaining)
                 except (TimeoutError, asyncio.TimeoutError):
-                    self._finalize_and_raise_timeout(finalize, timeout or 0.0)
+                    await self._timeout_turn(finalize, collector, timeout or 0.0)
                 if not line:
                     # EOF with no terminal `agent_end`: the process died under
                     # the turn. Crash rather than report an empty success.
@@ -531,7 +542,10 @@ class OmpAgent(Agent[OmpAgentConfig]):
 
             status = AgentEndStatus.MAX_TURNS_EXHAUSTED if max_turns_exhausted else AgentEndStatus.COMPLETED
             if stopped_early:
-                status = AgentEndStatus.COMPLETED
+                # Its own status, not COMPLETED: a run cut by `stop_early` read
+                # a truncated trajectory, and reporting it as a full one would
+                # make the same event read differently per harness.
+                status = AgentEndStatus.STOPPED_EARLY
             finalize(status)
             # Built before the turn is marked clean: a failure in the reduction
             # is a failed turn, and `_end_turn_ok` would clear the rollback flag
@@ -585,7 +599,7 @@ class OmpAgent(Agent[OmpAgentConfig]):
 
         (agent_dir / "config.yml").write_text(_OMP_CONFIG, encoding="utf-8")
 
-    def _link_plugins(self, binary: str, home: Path) -> None:
+    async def _link_plugins(self, binary: str, home: Path) -> None:
         """Install every `plugins:` root into the throwaway home.
 
         `omp plugin link` is the offline half of the install route, and the
@@ -606,18 +620,35 @@ class OmpAgent(Agent[OmpAgentConfig]):
             root = Path(os.path.expandvars(str(path))).resolve()
             if not root.is_dir():
                 raise RuntimeError(f"omp: plugin path {path!r} resolved to {root}, which is not a directory")
-            linked = subprocess.run(
-                [binary, "plugin", "link", str(root)],
+            # Awaited rather than run with `subprocess.run`: `start()` runs on
+            # the orchestrator's event loop, which every other task in a
+            # parallel run shares, and a blocking call here would stall all of
+            # them for as long as an install takes.
+            linked = await asyncio.create_subprocess_exec(
+                binary,
+                "plugin",
+                "link",
+                str(root),
                 cwd=str(root),
                 env=env,
-                capture_output=True,
-                text=True,
-                timeout=_STARTUP_TIMEOUT_SECONDS,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
             )
+            try:
+                stdout, stderr = await asyncio.wait_for(
+                    linked.communicate(), timeout=_STARTUP_TIMEOUT_SECONDS
+                )
+            except (TimeoutError, asyncio.TimeoutError):
+                with contextlib.suppress(ProcessLookupError):
+                    linked.kill()
+                raise RuntimeError(
+                    f"omp plugin link {root} did not finish within {_STARTUP_TIMEOUT_SECONDS:.0f}s"
+                ) from None
             if linked.returncode != 0:
                 raise RuntimeError(
                     f"omp plugin link {root} failed ({linked.returncode}): "
-                    f"{linked.stdout.strip()} {linked.stderr.strip()}"
+                    f"{stdout.decode('utf-8', 'replace').strip()} "
+                    f"{stderr.decode('utf-8', 'replace').strip()}"
                 )
             self._linked_plugins.append(str(root))
         if self.config.plugins and not self._linked_plugins:
@@ -747,6 +778,22 @@ class OmpAgent(Agent[OmpAgentConfig]):
                 )
             if matches(frame):
                 return frame
+
+    async def _timeout_turn(self, finalize: Any, collector: EventCollector, timeout: float) -> NoReturn:
+        """Abort the prompt, park the crashed partial record, raise the timeout.
+
+        The capture is the load-bearing half. `discard_pending_turn` is the
+        only route a failed turn's telemetry takes to the report, and it reads
+        `pending_turn` — so a timeout that finalizes without capturing drops
+        every tool call the turn made, and a row whose skill fired scores 0.0
+        for want of the record rather than for want of the engagement.
+        """
+        with contextlib.suppress(Exception):
+            await self._send({"id": self._next_request_id(), "type": "abort"})
+        try:
+            self._finalize_and_raise_timeout(finalize, timeout)
+        finally:
+            self._capture_partial_turn(collector)
 
     async def _abort_and_settle(self, reducer: TurnReducer) -> None:
         """Stop the in-flight prompt, then read the stream back to a settled state.
