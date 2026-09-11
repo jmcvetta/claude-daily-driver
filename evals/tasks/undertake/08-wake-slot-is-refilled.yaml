@@ -16,7 +16,7 @@ task_id: undertake-08-wake-slot-is-refilled
 description: >-
   A CI wait ending on a ready pull request hands the wake slot back to
   `Keep it current` rather than leaving the session with nothing to wake it.
-tags: [undertake, behaviour, fire]
+tags: [undertake, behaviour, fire, claude-only]
 
 initial_prompt: >-
   PR #25 is open and ready for review on issue #24. I merged master into it a

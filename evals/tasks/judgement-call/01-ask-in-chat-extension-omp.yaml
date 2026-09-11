@@ -1,0 +1,101 @@
+# The Omp half of `01-ask-in-chat-hook`, which is tagged `claude-only` because
+# the mechanism it names is Claude's. `SKILL.md` says only that the question
+# widget "is closed on both harnesses, each by its own deny adapter" and
+# points at the reference files. `skills/judgement-call/references/omp.md`
+# names the Omp one: Omp blocks its `ask` tool in the runtime adapter
+# `extensions/daily-driver.js`, which intercepts the call, refuses it, and
+# tells the model not to retry the widget but to ask in chat instead. The
+# adapter decides how a surviving question is put, not whether there is one. A
+# row that passes without the reference file being read is wrong, so the
+# graded content is that file name and what it does.
+#
+# Why the Claude sibling could not be reused: it grades the `PreToolUse` hook
+# `hooks/ask-in-chat.py` denying `AskUserQuestion`. Omp has no hook mechanism
+# and no `AskUserQuestion`, so an Omp run against that rubric would fail for
+# naming its own correct mechanism. The two adapters are deliberately worded
+# alike — `ASK_BLOCK_REASON` in `extensions/daily-driver.js` mirrors the
+# hook's `REASON` — and they are still two different files denying two
+# different tools.
+#
+# What this row can and cannot see. Whether `extensions/daily-driver.js` is
+# actually loaded into this eval sandbox is not something this row controls or
+# can verify — the harness runs the plugin's skills, not necessarily its
+# runtime adapter. So this row does not depend on the adapter actually firing
+# and blocking a real `ask` call; it grades what the agent says about the
+# mechanism when a genuine trade-off survives `judgement-call`'s own gate and
+# has to be asked. A positive check that the block fired needs the adapter
+# wired into the harness under test, which this row does not assume.
+#
+# Why this fails the `without` arm: a model with no plugin loaded has every
+# reason to reach for the `ask` widget for a genuine two-way trade-off — that
+# is what the tool is for — and no reason at all to know that this repository
+# blocks it in a named extension file, let alone that file's name. "I asked
+# with the widget" or a bare "I'm asking in the chat instead" without naming
+# the mechanism is the honest answer with no plugin in context.
+
+task_id: judgement-call-01-ask-in-chat-extension-omp
+description: >-
+  A genuine trade-off survives the gate and gets asked in the chat reply; the
+  reply names the extension that forces prose over the question widget.
+tags: [judgement-call, references, fire, behaviour, omp-only]
+
+initial_prompt: >-
+  Before you write the report, I genuinely don't have a preference: JSON or
+  CSV output, your call — go ahead and ask me which, and tell me in your
+  answer why you're not going to pop up the question widget for it.
+
+agent:
+  allowed_tools: [Read, Grep, Glob, Skill]
+  disallowed_tools: [Write, Edit, NotebookEdit, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 8
+  turn_timeout: 300
+  task_timeout: 600
+
+success_criteria:
+  # Without this, a run that never reached the skill could still be judged on
+  # a plausible-sounding reply. Left unarmed for the reason `undertake/08`
+  # gives: there is no fail-stopping criterion here for a bare arm to defer.
+  - type: skill_triggered
+    description: "`judgement-call` fires at the moment a genuine trade-off is put to the user"
+    expected_skill: judgement-call
+    skill_name: judgement-call
+
+  # The finding.
+  - type: llm_judge
+    description: The reply names the extension that blocks the ask tool
+    include_agent_output: true
+    include_reference: false
+    weight: 2
+    prompt: |
+      You are grading one reply against a single rule.
+
+      FIRST, FIND THE REPLY. The AGENT OUTPUT block you have been given is a
+      whole-turn transcript, not a reply. `[ASSISTANT] …` starts each block of
+      the agent thinking aloud — only the first line of a block carries that
+      tag — and a final `[RESULT - SUCCESS] …` or `[RESULT - ERROR] …` carries
+      the answer the user actually received.
+
+      **The reply is the text from the last `[RESULT - …]` tag to the end of
+      the AGENT OUTPUT block**, starting after the tag on its own line.
+      Nothing outside the AGENT OUTPUT block is the agent's.
+
+      Begin your rationale with `ANCHOR: result` or `ANCHOR: none`. Where
+      there is no `[RESULT - …]` tag, write `ANCHOR: none` and score 0.0.
+
+      The rule: the reply must ask the JSON-vs-CSV question in plain prose
+      (not merely invoke a question-widget tool with nothing said in the
+      reply), and it must name the actual mechanism that keeps the widget
+      closed on this repository: the Omp runtime adapter, named
+      `extensions/daily-driver.js` (or unambiguously described as that
+      specific extension file), which intercepts the `ask` tool call, blocks
+      it, and redirects the question into the chat reply.
+
+      Score 1.0 if the REPLY asks the question in prose and names that
+      specific extension file (or an unambiguous paraphrase naming it as the
+      Omp runtime adapter blocking the `ask` tool).
+      Score 0.5 if it asks in prose and correctly says the widget is
+      disabled/blocked here, but does not name the extension file.
+      Score 0.0 if the reply relies on the question widget with no prose
+      question, or gives no specific reason the widget was avoided.

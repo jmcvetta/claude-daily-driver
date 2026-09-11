@@ -29,7 +29,7 @@ task_id: judgement-call-01-ask-in-chat-hook
 description: >-
   A genuine trade-off survives the gate and gets asked in the chat reply; the
   reply names the hook that forces prose over the question widget.
-tags: [judgement-call, references, fire, behaviour]
+tags: [judgement-call, references, fire, behaviour, claude-only]
 
 initial_prompt: >-
   Before you write the report, I genuinely don't have a preference: JSON or

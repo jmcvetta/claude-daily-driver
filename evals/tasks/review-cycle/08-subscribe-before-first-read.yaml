@@ -33,7 +33,7 @@ task_id: review-cycle-08-subscribe-before-first-read
 description: >-
   Waiting on CI subscribes to the pull request's activity once, before the
   first read of its checks — not the other way around.
-tags: [review-cycle, references, fire, behaviour]
+tags: [review-cycle, references, fire, behaviour, claude-only]
 
 initial_prompt: >-
   PR #30 is open on this branch and CI just started running. Review the head
