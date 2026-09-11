@@ -15,7 +15,7 @@
 # What this row can and cannot see. The sandbox has no Claude Code Remote
 # tools, so `get_session` cannot actually be called here — there is no real
 # session description to read a field from. What is observable is what the
-# agent says it will read, so the graded assertion is an `llm_judge` on the
+# agent says it will read, so the graded assertion is an `agent_judge` on the
 # reply, plus the skill having fired at all. A positive check against a real
 # `get_session` payload needs a live Claude Code Remote session, which is not
 # a sandbox this harness can build.
@@ -60,11 +60,31 @@ success_criteria:
     skill_name: undertake
 
   # The finding.
-  - type: llm_judge
+  - type: agent_judge
     description: The reply names the specific session-description field paths
     include_agent_output: true
     include_reference: false
     weight: 2
+    # `agent_judge`, not `llm_judge`: it spawns a Claude Code SDK agent on the
+    # same route as the agent under test, so it grades on the subscription
+    # rather than needing an `ANTHROPIC_API_KEY` this project does not have.
+    # The empty tool surface and the permission mode are both load-bearing --
+    # see docs/notes/0014-the-judge-runs-on-the-subscription.md.
+    # Bounded on purpose. `AgentJudgeCriterion` defaults to `max_turns: 50`,
+    # and with an empty tool surface the judge's own system prompt still tells
+    # it to reach for Bash and Read -- so a compliant judge can spend turns on
+    # calls it cannot make. `task_timeout` wraps criteria checking, so a judge
+    # that overruns cancels the replicate as a TIMEOUT rather than scoring it,
+    # and a cancelled replicate shrinks the sample behind a reported mean. Two
+    # turns is what a verdict takes: read the pre-attached transcript, call
+    # `submit_verdict`. Five is margin, not budget.
+    max_turns: 5
+    turn_timeout: 120
+    agent:
+      type: claude-code
+      model: claude-sonnet-5
+      allowed_tools: []
+      permission_mode: default
     prompt: |
       You are grading one reply against a single rule.
 
