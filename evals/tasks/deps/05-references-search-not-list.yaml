@@ -1,0 +1,99 @@
+# This guards the reading, for issue #146's late requirement: `deps`'s bulk
+# pass moved its exact GitHub route out of `SKILL.md` and into
+# `references/claude.md` — `mcp__github__search_pull_requests` with
+# `is:open author:app/dependabot`, and the reason it is that call and not
+# `mcp__github__list_pull_requests` ("it takes no author, so a filter written
+# for it is one the server never applies"). `SKILL.md` itself only says to
+# search for open Dependabot pull requests "rather than guessing at it from
+# the manifest" — it never names either tool. A row that passes without the
+# reference file being read is wrong, so the graded content is the tool name,
+# the exact query string, and the reason the sibling tool is wrong — three
+# things only `references/claude.md` states.
+#
+# What this row can and cannot see. The sandbox has no GitHub MCP, so neither
+# `search_pull_requests` nor `list_pull_requests` can actually be called here
+# — there is nothing to invoke, and no pull request to find. What is
+# observable is what the agent says it will do, so the graded assertion is an
+# `llm_judge` on the reply, plus the skill having fired at all. A positive
+# check that the real call went out and returned Dependabot's pull requests
+# needs a live repository and the GitHub MCP, which is not a sandbox this
+# harness can build.
+#
+# Why this fails the `without` arm: `list_pull_requests` is the obvious guess
+# for "list the open pull requests" — it is the plainer-sounding name, and a
+# model with no plugin loaded has no reason to know it takes no author filter
+# at all, still less that the correct tool is named `search_pull_requests`
+# rather than `list_pull_requests`. That distinction, and the query string
+# `is:open author:app/dependabot`, exist only in this skill's own reference
+# file.
+
+task_id: deps-05-references-search-not-list
+description: >-
+  A bulk upgrade names the exact call used to find Dependabot's open pull
+  requests, and why the plainer-sounding listing tool is the wrong one.
+tags: [deps, references, fire, behaviour]
+
+initial_prompt: >-
+  Dependabot has a pile of PRs open on this repo and I want them all rolled
+  into one upgrade. Before you run anything, tell me exactly which GitHub call
+  you're going to use to find them — the tool and the query — and why a plain
+  pull-request listing won't do it.
+
+agent:
+  allowed_tools: [Read, Grep, Glob, Skill, Bash]
+  disallowed_tools: [Write, Edit, NotebookEdit, Agent, Task]
+
+run_limits:
+  max_turns: 10
+  turn_timeout: 300
+  task_timeout: 600
+
+success_criteria:
+  # Without this, a run that never reached the skill could still be judged on
+  # a plausible-sounding reply. Left unarmed, as `undertake/08` explains: this
+  # row has no fail-stopping criterion for an armed bare block to defer, and
+  # arming it here would add an on-fail stop to the only pass-capable
+  # criterion the row has — scoring a truncated trajectory at 0 for a reason
+  # the row does not intend.
+  - type: skill_triggered
+    description: "`deps` fires on a bulk upgrade of Dependabot's open pull requests"
+    expected_skill: deps
+    skill_name: deps
+
+  # The finding.
+  - type: llm_judge
+    description: The reply names search_pull_requests, not list_pull_requests, with the author filter
+    include_agent_output: true
+    include_reference: false
+    weight: 2
+    prompt: |
+      You are grading one reply against a single rule.
+
+      FIRST, FIND THE REPLY. The AGENT OUTPUT block you have been given is a
+      whole-turn transcript, not a reply. `[ASSISTANT] …` starts each block of
+      the agent thinking aloud — only the first line of a block carries that
+      tag — and a final `[RESULT - SUCCESS] …` or `[RESULT - ERROR] …` carries
+      the answer the user actually received.
+
+      **The reply is the text from the last `[RESULT - …]` tag to the end of
+      the AGENT OUTPUT block**, starting after the tag on its own line.
+      Nothing outside the AGENT OUTPUT block is the agent's.
+
+      Begin your rationale with `ANCHOR: result` or `ANCHOR: none`. Where
+      there is no `[RESULT - …]` tag, write `ANCHOR: none` and score 0.0.
+
+      The rule: the reply must name `mcp__github__search_pull_requests` (or
+      plainly "search_pull_requests" / "search pull requests", the MCP prefix
+      is not required) as the call, carrying a query equivalent to
+      `is:open author:app/dependabot`, and it must say why a plain listing —
+      `mcp__github__list_pull_requests` / "list pull requests" — will not
+      work: that tool takes no author filter, so a filter written for it is
+      never applied.
+
+      Score 1.0 only if the REPLY names the search call with the author
+      filter AND states the reason the listing tool is wrong (no author
+      parameter). Score 0.5 if it names the correct search call and filter
+      but gives no reason, or a vague one, for rejecting the listing tool.
+      Score 0.0 if the reply proposes `list_pull_requests` (or an unfiltered
+      listing) as the way to find Dependabot's pull requests, or names no
+      specific tool at all.

@@ -36,6 +36,12 @@ The one thing that is *written* as prose is the `Closes #123` line in a pull
 request body. Treat the graph as the artifact and that line as one unvalidated
 writer into it.
 
+**The exact form is per harness, and it lives beside this file.** Every
+operation below is named in words here and resolved to a call there:
+[`references/claude.md`](references/claude.md) for Claude Code,
+[`references/omp.md`](references/omp.md) for Oh My Pi. Read the one for the
+harness in use before the first call.
+
 
 Which client
 ============
@@ -181,13 +187,18 @@ is all a web worker has. It closes the traps described below by construction —
 it takes issue references, never raw ids, refuses a pull request at either
 end, and verifies every write from the other end.
 
-Always invoke it through `${CLAUDE_PLUGIN_ROOT}`. A skill's Bash runs in the
-user's project, not in the plugin, so a relative `scripts/issue-deps.sh` is
-"No such file or directory" — or worse, silently runs an unrelated file in a
-project that has its own `scripts/`.
+Always invoke it through the harness's own injected skill-directory path,
+never a relative one. A skill's Bash runs in the user's project, not in the
+plugin, so a relative `scripts/issue-deps.sh` is "No such file or
+directory" — or worse, silently runs an unrelated file in a project that
+has its own `scripts/`. Each harness injects this path under its own name;
+the reference file for the harness in use gives the exact form.
 
 ```sh
-deps="${CLAUDE_PLUGIN_ROOT}/skills/issue-deps/scripts/issue-deps.sh"
+# $deps is this skill's own script. The assignment differs by harness —
+# references/claude.md or references/omp.md gives the exact form — and the
+# guard makes an unresolved path fail loudly rather than run an empty command.
+: "${deps:?resolve the script path per the reference files}"
 
 "$deps" blocked-by 191            # what #191 waits on
 "$deps" blocking   188            # what waits on #188

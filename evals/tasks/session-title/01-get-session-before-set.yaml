@@ -1,0 +1,91 @@
+# This guards the reading, for issue #146's late requirement. `SKILL.md`'s
+# `Setting it` says only that setting the title "is the harness's own call…
+# how many calls that takes differs between them" and points at the
+# reference files. `references/claude.md` is where the actual sequence lives:
+# "Two calls, in order: `mcp__Claude_Code_Remote__get_session` with
+# `session_id` omitted — describes the caller, and answers this session's own
+# id. `mcp__Claude_Code_Remote__set_session_title` with that `session_id` and
+# the title." A row that passes without the reference file being read is
+# wrong, so the graded content is both call names, and specifically that
+# `get_session` runs first to obtain the id `set_session_title` then needs.
+#
+# What this row can and cannot see. The sandbox has no Claude Code Remote
+# tools, so neither call can actually be made here — there is no real session
+# id to fetch or title to set. What is observable is what the agent says it
+# will do, so the graded assertion is an `llm_judge` on the reply, plus the
+# skill having fired at all. A positive check that the title was actually set
+# needs a live Claude Code Remote session, which is not a sandbox this
+# harness can build.
+#
+# Why this fails the `without` arm: a model with no plugin loaded, asked to
+# title the current session, has no reason to know this harness exposes a
+# `set_session_title` call at all, still less that it requires a session id
+# obtained from a separate `get_session` call made first. A plausible
+# guess with no plugin in context is a single, self-contained
+# "set the title" call, or no specific call named at all — not this two-call
+# sequence in this order.
+
+task_id: session-title-01-get-session-before-set
+description: >-
+  Titling the session for work on an issue reads the session's own id first,
+  then sets the title with it — two calls, in that order.
+tags: [session-title, references, fire, behaviour]
+
+initial_prompt: >-
+  I'm starting on issue #40, "New skill: set the Claude session title." Title
+  this session for it — and tell me, in order, exactly which calls you're
+  making to do that.
+
+agent:
+  allowed_tools: [Read, Grep, Glob, Skill, Bash]
+  disallowed_tools: [Write, Edit, NotebookEdit, Agent, Task]
+
+run_limits:
+  max_turns: 10
+  turn_timeout: 300
+  task_timeout: 600
+
+success_criteria:
+  # Without this, a run that never reached the skill could still be judged on
+  # a plausible-sounding reply. Left unarmed for the reason `undertake/08`
+  # gives: there is no fail-stopping criterion here for a bare arm to defer.
+  - type: skill_triggered
+    description: "`session-title` fires on Claude's own initiative when issue work begins"
+    expected_skill: session-title
+    skill_name: session-title
+
+  # The finding.
+  - type: llm_judge
+    description: The reply calls get_session before set_session_title
+    include_agent_output: true
+    include_reference: false
+    weight: 2
+    prompt: |
+      You are grading one reply against a single rule.
+
+      FIRST, FIND THE REPLY. The AGENT OUTPUT block you have been given is a
+      whole-turn transcript, not a reply. `[ASSISTANT] …` starts each block of
+      the agent thinking aloud — only the first line of a block carries that
+      tag — and a final `[RESULT - SUCCESS] …` or `[RESULT - ERROR] …` carries
+      the answer the user actually received.
+
+      **The reply is the text from the last `[RESULT - …]` tag to the end of
+      the AGENT OUTPUT block**, starting after the tag on its own line.
+      Nothing outside the AGENT OUTPUT block is the agent's.
+
+      Begin your rationale with `ANCHOR: result` or `ANCHOR: none`. Where
+      there is no `[RESULT - …]` tag, write `ANCHOR: none` and score 0.0.
+
+      The rule: the reply must name TWO calls, in this order: first
+      `get_session` (with no session id given, to learn the caller's own id),
+      then `set_session_title` (using the id the first call returned, and the
+      new title). A plausible name variant for either
+      (e.g. "the get-session tool", "set the session title with that id") is
+      acceptable as long as the two-call, this-order structure is explicit.
+
+      Score 1.0 if the REPLY names both calls in that order, with the second
+      explicitly using the id the first one returns.
+      Score 0.5 if it names both calls but not clearly in that order, or
+      without saying the second depends on the first's id.
+      Score 0.0 if the reply names only one call, invents a single
+      self-contained "set title" call, or names no specific call at all.

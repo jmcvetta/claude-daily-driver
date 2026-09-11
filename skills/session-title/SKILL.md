@@ -6,7 +6,9 @@ description: >-
   "set the session title", "rename this session", "name this session", or
   "that session title is wrong", and on Claude's own initiative when work on a
   GitHub issue begins, when the session's subject changes materially, or on
-  any call to `mcp__Claude_Code_Remote__set_session_title`. Supplies the
+  any call to the harness's session-title tool —
+  `mcp__Claude_Code_Remote__set_session_title` or Omp's
+  `daily_driver_set_session_title`. Supplies the
   character budget a title is written to for the Claude mobile list, and
   the two forms that title may take. Not the title of a pull request —
   that is `pr-title`.
@@ -18,14 +20,21 @@ The name this session carries in the Claude session lists, web and mobile
 alike. It is read in a column of a dozen siblings, on a phone, at a glance.
 That is the whole design constraint.
 
+**The call that sets the title is per harness, and it lives beside this
+file.** [`references/claude.md`](references/claude.md) is the route for
+Claude Code, [`references/omp.md`](references/omp.md) for Oh My Pi. Read
+the one for the harness in use before the first call.
+
 
 Budget: 40 characters
 =====================
 
-`set_session_title` accepts 500. Forty is this skill's own cap, chosen rather
-than measured — short enough to survive the mobile list at the width it is
-read on, long enough to say which session this is. A measurement, when someone
-takes one, is what may move it.
+Every harness's title tool accepts far more than forty. Forty is this skill's
+own cap, chosen rather than measured — short enough to survive the mobile list
+at the width it is read on, long enough to say which session this is. A
+measurement, when someone takes one, is what may move it. The cap is this
+skill's and not the tool's, so it holds on every harness, whatever that
+harness's own limit turns out to be.
 
 - **Hard cap, 40 characters**, counting the whole string, `#123 ` prefix
   included. Past that the title is cut where the renderer reaches rather than
@@ -90,14 +99,13 @@ A short noun phrase naming what the session is actually doing.
 Setting it
 ==========
 
-`mcp__Claude_Code_Remote__set_session_title` requires a `session_id`, and the
-one that matters is this session's. Get it from
-`mcp__Claude_Code_Remote__get_session` with `session_id` omitted, which
-describes the caller.
+Setting the title is the harness's own call — each harness names its own
+surface, and how many calls that takes differs between them. The reference
+file for the harness in use gives the exact path.
 
-Both tools exist only on the Claude Code Remote surface. Where they are
-absent — a laptop session — there is no way to set the title from here: say
-so and stop, rather than reaching for a substitute.
+Where no such surface exists — a session on neither harness — there is no
+way to set the title from here: say so and stop, rather than reaching for a
+substitute.
 
 
 When to set it
