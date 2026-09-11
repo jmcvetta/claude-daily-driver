@@ -12,19 +12,27 @@
 # What this row can and cannot see. The sandbox has no GitHub MCP, so
 # `mcp__github__update_pull_request` cannot actually be called here — there is
 # no real pull request #14 to update. What is observable is what the agent
-# says it will do, so the graded assertion is an `llm_judge` on the reply,
+# says it will do, so the graded assertion is an `agent_judge` on the reply,
 # plus the skill having fired at all. A positive check that one real API call
 # went out rather than two needs a live pull request and the GitHub MCP,
 # which is not a sandbox this harness can build.
 #
 # Why this fails the `without` arm: a model with no plugin loaded, asked to
 # fix a stale title and a thin body on an existing GitHub pull request, has
-# every reason to reach for two separate, ordinary-sounding calls — one
-# scoped to the title, one to the body, the way `gh pr edit --title` and
-# `gh pr edit --body` are typically run as two invocations — and no reason at
-# all to know this repository's convention collapses both into one
-# `update_pull_request` call. That collapsing is stated nowhere but this
-# skill's own reference file.
+# every reason to reach for `gh pr edit`, and no reason at all to know this
+# repository routes the update through `mcp__github__update_pull_request`
+# instead. That routing is stated nowhere but this skill's own reference
+# file, and it is the half of the rule the bare arm cannot guess.
+#
+# The rubric graded the wrong half until #158 ran it. It asked only whether
+# the reply committed to ONE call rather than two, and a single
+# `gh pr edit` invocation carrying both `--title` and `--body` is a perfectly
+# ordinary unaided answer — so the bare arm scored 1.000 on the finding while
+# the treated arm scored 0.400, a spread of -0.600. "One call, not two" is
+# content a model produces unaided; "the MCP call, not `gh`" is not. The rule
+# below now requires both halves, which is what the sibling rows
+# `pr-title/07` and `pr-body/07` already required, and what their clean
+# spreads (+0.733 and +0.867 in the same run) come from.
 
 task_id: pr-07-one-call-sets-both
 description: >-
@@ -87,13 +95,20 @@ success_criteria:
       Begin your rationale with `ANCHOR: result` or `ANCHOR: none`. Where
       there is no `[RESULT - …]` tag, write `ANCHOR: none` and score 0.0.
 
-      The rule: the reply must say it will make ONE
-      `mcp__github__update_pull_request` call (or plainly "update the pull
-      request once" / "a single update call") carrying both the new title and
-      the new body together, once both are decided.
+      The rule has two halves, and BOTH must hold. The reply must name
+      `mcp__github__update_pull_request` — the GitHub MCP call — and it must
+      make exactly ONE of them, carrying both the new title and the new body
+      together.
 
-      Score 1.0 if the REPLY commits to a single update call setting both
-      fields together.
-      Score 0.0 if the reply proposes two separate calls (one for the title,
-      one for the body), proposes `gh pr edit --title` / `gh pr edit --body`
-      as two invocations, or does not commit to a specific call at all.
+      A plausible naming variant of the MCP call is acceptable ("the GitHub
+      MCP update-pull-request tool", "update_pull_request"). `gh pr edit` is
+      NOT a variant of it: it is the other tool, and naming it fails the
+      first half however few invocations the reply proposes.
+
+      Score 1.0 if the REPLY names the MCP call and commits to a single one
+      of it setting both fields together.
+      Score 0.5 if it names the MCP call but proposes two of them, one per
+      field.
+      Score 0.0 if the reply proposes `gh pr edit` in any form — including a
+      single invocation carrying both `--title` and `--body` — or names no
+      specific call at all.

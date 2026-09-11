@@ -14,7 +14,7 @@
 # `search_pull_requests` nor `list_pull_requests` can actually be called here
 # — there is nothing to invoke, and no pull request to find. What is
 # observable is what the agent says it will do, so the graded assertion is an
-# `llm_judge` on the reply, plus the skill having fired at all. A positive
+# `agent_judge` on the reply, plus the skill having fired at all. A positive
 # check that the real call went out and returned Dependabot's pull requests
 # needs a live repository and the GitHub MCP, which is not a sandbox this
 # harness can build.

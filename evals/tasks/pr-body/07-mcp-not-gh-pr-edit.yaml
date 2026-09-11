@@ -14,7 +14,7 @@
 # `gh` — the binary is not on the PATH here), so
 # `mcp__github__update_pull_request` cannot actually be invoked. What is
 # observable is what the agent says it would call, so the graded assertion is
-# an `llm_judge` on the reply, plus the skill having fired at all. A positive
+# an `agent_judge` on the reply, plus the skill having fired at all. A positive
 # check that the real MCP call went out needs a live pull request and the
 # GitHub MCP, which is not a sandbox this harness can build.
 #

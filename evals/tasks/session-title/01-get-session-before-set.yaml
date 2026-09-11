@@ -12,7 +12,7 @@
 # What this row can and cannot see. The sandbox has no Claude Code Remote
 # tools, so neither call can actually be made here — there is no real session
 # id to fetch or title to set. What is observable is what the agent says it
-# will do, so the graded assertion is an `llm_judge` on the reply, plus the
+# will do, so the graded assertion is an `agent_judge` on the reply, plus the
 # skill having fired at all. A positive check that the title was actually set
 # needs a live Claude Code Remote session, which is not a sandbox this
 # harness can build.

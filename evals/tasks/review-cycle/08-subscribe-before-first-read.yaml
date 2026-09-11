@@ -14,7 +14,7 @@
 # `subscribe_pr_activity` nor `pull_request_read` can actually be called here
 # — there is no live pull request and no webhook to receive. What is
 # observable is what the agent says it will do, so the graded assertion is an
-# `llm_judge` on the reply, plus the skill having fired at all. A positive
+# `agent_judge` on the reply, plus the skill having fired at all. A positive
 # check that the subscription was taken before a real read went out needs a
 # live pull request and the GitHub MCP, which is not a sandbox this harness
 # can build — this is the same limit `review-cycle/07`'s comment states for

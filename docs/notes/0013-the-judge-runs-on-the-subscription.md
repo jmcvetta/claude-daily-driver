@@ -6,8 +6,10 @@
 `references` rows, on the second attempt at that run.
 **Supersedes:** the premise of
 [`0012`](0012-the-judge-needs-its-own-transport.md), not its decision. The
-pre-run guard `0012` added is still right and still runs. What changed is that
-no row in this repository trips it any more, because no row uses `llm_judge`.
+pre-run guard `0012` added is still right and still runs. What changed is why
+a row would trip it: not a key an operator forgot, but a criterion this
+project cannot run at all. See "What is left" for the four rows that still
+trip it.
 
 `0012` treated a missing `ANTHROPIC_API_KEY` as a configuration gap — something
 an operator sets before a run. It is not. This project's only Claude access is
@@ -24,7 +26,8 @@ not a run waiting on credentials; it is a criterion chosen wrongly.
 
 ## Decided
 
-**Every judge in this suite is `agent_judge`, never `llm_judge`.**
+**Every judge in the nine `references` rows is `agent_judge`, and no new
+judge anywhere in this suite is `llm_judge`.**
 
 `coder_eval`'s `agent_judge` spawns a Claude Code SDK agent as the judge
 instead of calling the API. It builds that agent through the same
@@ -77,10 +80,26 @@ does.
 ## What is kept
 
 `scripts/evals-preflight.py` stays, and `make evals-run` still depends on it.
-It reports `no enabled llm_judge criteria` on this suite today, which is the
-answer it should give. It is a guard against the criterion coming back — by a
-row copied from upstream's examples, or written from memory — not a guard
-against a missing key.
+It reports `no enabled llm_judge criteria` on the nine `references` rows,
+which is the answer it should give there. It is a guard against the criterion
+coming back — by a row copied from upstream's examples, or written from
+memory — not a guard against a missing key.
+
+## What is left
+
+Four rows outside the nine still carry an enabled `llm_judge`, so
+`make evals-run` over the whole suite still stops at the guard:
+
+- `tasks/constitution/reply-is-concise.yaml`
+- `tasks/embark/06-launches-without-asking.yaml`
+- `tasks/issue-deps/02-write-the-edge-without-asking.yaml`
+- `tasks/undertake/08-wake-slot-is-refilled.yaml`
+
+They have the same defect and the same fix. They are untouched here only
+because #158's scope is the nine `references` rows, and porting them means
+re-running them to confirm the ported rubrics still grade what they were
+written to grade. Until that happens, the suite is runnable a `TASKS=` subset
+at a time and not as a whole.
 
 ## What this does not claim
 

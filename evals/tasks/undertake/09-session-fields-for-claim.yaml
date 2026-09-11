@@ -15,7 +15,7 @@
 # What this row can and cannot see. The sandbox has no Claude Code Remote
 # tools, so `get_session` cannot actually be called here — there is no real
 # session description to read a field from. What is observable is what the
-# agent says it will read, so the graded assertion is an `llm_judge` on the
+# agent says it will read, so the graded assertion is an `agent_judge` on the
 # reply, plus the skill having fired at all. A positive check against a real
 # `get_session` payload needs a live Claude Code Remote session, which is not
 # a sandbox this harness can build.
