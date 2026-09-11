@@ -55,11 +55,21 @@ success_criteria:
     skill_name: judgement-call
 
   # The finding.
-  - type: llm_judge
+  - type: agent_judge
     description: The reply names the hook that denies the question widget
     include_agent_output: true
     include_reference: false
     weight: 2
+    # `agent_judge`, not `llm_judge`: it spawns a Claude Code SDK agent on the
+    # same route as the agent under test, so it grades on the subscription
+    # rather than needing an `ANTHROPIC_API_KEY` this project does not have.
+    # The empty tool surface and the permission mode are both load-bearing --
+    # see docs/notes/0013-the-judge-runs-on-the-subscription.md.
+    agent:
+      type: claude-code
+      model: claude-sonnet-5
+      allowed_tools: []
+      permission_mode: default
     prompt: |
       You are grading one reply against a single rule.
 
