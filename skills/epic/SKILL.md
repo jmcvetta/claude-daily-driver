@@ -103,17 +103,29 @@ pull request is then measured against. A plan padded to look thorough is this
 skill's manufacturing failure, and it is the same instinct `issue-deps` names
 for edges.
 
+**Cut for parallelism, before there is a graph to read it off.** How much of
+the work can run abreast is decided here, when the tasks are defined — not
+afterwards, by whatever shape the edges happen to take. Choose the cut lines
+that put as much of the work as possible in parallel: separate the parts that
+touch different files, and do not order two tasks that have no reason to be
+ordered.
+
+Two tasks touching one file are not blocked on each other. That is a merge
+conflict, and a merge conflict is cheap — but a cut line that avoids the shared
+file is better than one that does not, because the conflict still costs
+somebody a resolution. Splitting first and deriving the waves from the graph
+that falls out leaves the parallelism to chance, and it is the failure this
+rule names.
+
 **The order is edges, and the default is no edge.** Write a blocked-by edge
 only where one task's code cannot be written until the other has landed — a
-function that does not exist yet, a schema the second task reads. Two tasks
-touching the same file is not a blocker. That is a merge conflict, and a merge
-conflict is cheap. `issue-deps` owns what an edge means and what it must not
-be used to record.
+function that does not exist yet, a schema the second task reads. Never as
+prose in the epic body: the edge is the record, and `issue-deps` owns what an
+edge means and what it must not be used to record.
 
-**Parallel is the absence of an edge.** Tasks with no open blocker run at the
-same time, in their own sessions, and nothing has to be written for that to be
-true. What the epic body carries is the *reading* of it, under `The epic body`
-below.
+**Parallel is then the absence of an edge**, and nothing has to be written for
+it to be true. What the epic body carries is the *reading* of it, under
+`The epic body` below.
 
 2 — Agree the plan
 ------------------
@@ -142,9 +154,9 @@ epic**. Rewrite its body to the shape below and give it the tasks as children.
 Do not open a second one beside it.
 
 The epic first, then the tasks, because a task names the epic as its parent and
-the parent must exist to be named. The epic's body at this point is `End state`
-and `Decisions` only — the waves are made of issue numbers that do not exist
-yet, which is why `Fill in the epic` is a step of its own.
+the parent must exist to be named. The epic's body at this point is `Summary`
+and `Justification` only — `Sequencing` is made of issue numbers that do not
+exist yet, which is why `Fill in the epic` is a step of its own.
 
 No permission is asked here. It was asked once at `Agree the plan`, and asking
 again per issue is the same question eight times.
@@ -187,36 +199,51 @@ those instead.
 
 **No pull request closes the epic.** A pull request implements one task, and
 that task is the issue its body closes. Closing a sub-issue does not close its
-parent — GitHub has no such rule — so the epic is closed by hand, once its
-`Completion criteria` are met and not merely once its children have all
-closed.
+parent — GitHub has no such rule — so the epic is closed by hand, and the test
+is its own `Summary`: the epic closes when what that section describes is true
+of the repository, which is usually but not always the moment the last task
+merges.
 
 
 The epic body
 =============
 
-Five parts. The first two are written at `Open the issues` and the rest at
-`Fill in the epic`.
+Three sections, and no fourth. `Summary` and `Justification` are written at
+`Open the issues`; `Sequencing` waits for `Fill in the epic`, because it is
+made of issue numbers that do not exist until the tasks are open.
 
-**End state.** One paragraph: what is true of the repository when every task
-has merged. Not a list of the tasks — the waves below are that.
+Summary
+-------
 
-**Decisions.** The calls made while planning, one line each, with the task that
-carries each one. This is the part no graph can hold: an edge is binary and
-says nothing about why, and `issue-deps` names exactly this as where prose
-stays. It is also what stops the same question being re-litigated in each
-task's own thread.
+What is to be changed: how the software behaves differently once the epic is
+finished. Concise, and about the end state rather than the route to it — the
+tasks are listed under `Sequencing`, and repeating them here is a second list
+to keep current.
 
-**Delivery waves.** One heading per wave, naming what the wave waits on, and
-under it the tasks with a line each:
+It is also the test `Hand off` closes the epic against.
+
+Justification
+-------------
+
+Why this is being done. **Very** concise — a sentence or two. An epic that
+needs a page of justification is either not agreed yet, in which case
+`Agree the plan` has not finished, or it is carrying a design discussion that
+belongs in a note under `docs/`.
+
+Sequencing
+----------
+
+What order the tasks can run in, and which of them run in parallel. One
+heading per wave, naming what the wave waits on, and under it the tasks with a
+line each:
 
 ```markdown
 ### Wave 1 — done
 - #143 — Parse the manifest. Merged in PR #160.
+- #146 — Document the format. Touches no file #143 does.
 
 ### Wave 2 — in progress
 - #144 — Validate against the schema. Needs #143's parsed manifest.
-- #146 — Document the format. Independent of all of it; runs in parallel.
 
 ### Wave 3 — after #144
 - #145 — Report a validation failure.
@@ -225,30 +252,30 @@ under it the tasks with a line each:
 A wave is a batch that runs together: **nothing inside one heading waits on
 anything else inside it**, so everything in a wave runs at the same time, in
 its own session. That is what answers "which of these can be worked in
-parallel".
+parallel", and `Draft the plan` is where it was actually decided — this section
+records the answer rather than producing it.
 
 A task with no blocker at all may still sit in a later wave, as a scheduling
-choice rather than a dependency — and then **its line has to say so**, the way
-the line on #146 above does. Left unsaid, its position reads as a wait, and
-the body has made a *must close first* claim the graph does not carry.
-
-**Optional.** Work that came out of the planning and is not a completion
-criterion. It sits outside the waves so that it never blocks one, and so that
-nobody reads it as owed.
-
-**Completion criteria.** What has to be true for the epic to close. The tasks
-closing is one of them and rarely all of them: an epic that changes how
-something is installed is not done until somebody has installed it.
-
-Two things the body does not carry. **No implementation detail** — that belongs
-to each task's own issue, where the person doing the work is reading. And **no
-checklist of the tasks**: the sub-issue panel renders progress from the graph,
-for free and always correctly, and a hand-kept copy beside it rots.
+choice rather than a dependency — and then **its line has to say so**. Left
+unsaid, its position reads as a wait, and the body has made a *must close
+first* claim the graph does not carry.
 
 **The waves are a rendering of the graph, and the graph wins.** Where the two
 disagree the body is wrong and is fixed in the same turn. That is `issue-deps`'
 own verification step — does the structured graph match what the prose says —
 and an epic body is the largest prose claim about a graph this toolkit writes.
+
+What the body leaves out
+------------------------
+
+- **No implementation detail.** It belongs in each task's own issue, where the
+  person doing the work is reading.
+- **No checklist of the tasks.** The sub-issue panel renders progress from the
+  graph, for free and always correctly, and a hand-kept copy beside it rots.
+- **No blocker stated only in prose.** A `blocked-by` edge is the record; a
+  line saying "waits on #143" beside it is duplicate state, and `issue-deps`
+  says to delete that line rather than maintain it. The wave headings above are
+  the reading of the graph, not a second copy of it.
 
 
 Where it stops and waits
@@ -281,7 +308,7 @@ Non-goals
   carries its own state, because a wave is not something the sub-issue panel
   knows about. A checkbox beside each task is, and it rots.
 - **Does not close a task.** Merging its pull request does that. The epic is
-  closed by hand instead, against its `Completion criteria` — see `Hand off`.
+  closed by hand instead, against its `Summary` — see `Hand off`.
 - **Does not sweep the issue list.** An epic is drafted for the work in hand.
   Reading through open issues looking for a set that could be grouped under one
   is `issue-deps`' manufacturing failure, one level up.
