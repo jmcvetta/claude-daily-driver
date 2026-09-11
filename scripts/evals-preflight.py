@@ -92,7 +92,7 @@ WHAT IT DOES NOT CATCH
     - Any transport failure that is not "unconfigured" — an expired key, a
       network error, a Bedrock credential that is present but wrong. Those
       fail at call time, mid-run, the way any other API error does; this
-      guard only catches the case upstream depoliticizes into a silent 0.0.
+      guard only catches the case upstream degrades into a silent 0.0.
     - Malformed task YAML that parses but has the wrong shape for
       `coder_eval`'s own schema. `evals-plan` is what validates that.
 
