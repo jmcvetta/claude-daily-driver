@@ -29,7 +29,7 @@ task_id: pr-title-07-mcp-not-gh-pr-edit
 description: >-
   Fixing the title of an existing pull request on this harness is a named MCP
   call, not the generic `gh pr edit --title`.
-tags: [pr-title, references, fire, behaviour]
+tags: [pr-title, references, fire, behaviour, claude-only]
 
 initial_prompt: >-
   The title on PR #14 doesn't follow our convention — fix it. Before you do,
