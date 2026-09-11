@@ -23,72 +23,52 @@ but neither reaches the report a reader actually looks at. Eight of the nine
 `references`-tagged rows in this suite carry their finding in a weight-2
 `llm_judge`, so this one missing key silently voids most of that suite.
 See docs/notes/0012-the-judge-needs-its-own-transport.md for why the fix is a
-pre-run guard rather than reading the report more carefully after the fact.
+pre-run guard rather than reading the report more carefully after the fact,
+and for why the guard asks `coder_eval` directly instead of mirroring its
+resolution rule (an earlier version of this script did mirror it, and a
+review found three ways the mirror was wrong).
 
-This script mirrors the upstream resolution rule (`API_BACKEND`, default
-`direct`, case-insensitive; non-direct backends always pass; `direct` needs
-`ANTHROPIC_API_KEY`) and refuses to let `evals-run` start a model when it
-would not.
+HOW IT DECIDES
 
-`.env` HANDLING
+    This script does not know, and does not try to know, how `coder_eval`
+    resolves `API_BACKEND` or `ANTHROPIC_API_KEY` — which environment
+    variables, which `.env` file, which precedence between them. Asking that
+    question here is what went wrong the first time: `coder_eval`'s
+    `Settings` also reads a cwd-relative `.env` (`config.py`'s
+    `SettingsConfigDict(env_file=".env", ...)`), and a copy of that rule in
+    this repository can drift from it, or simply be built on an interpreter
+    that cannot import the `python-dotenv` the real resolution depends on.
 
-    `coder_eval.config` calls `load_dotenv(override=True)` at import, so a
-    `.env` file can supply `ANTHROPIC_API_KEY` even when the shell environment
-    does not. Which `.env` that is was established empirically (not assumed),
-    by instrumenting `dotenv.main._walk_to_root` and running the real
-    `coder-eval` entry point with `cwd=evals/`, the same cwd `evals-run` uses:
+    So instead this script finds the actual `coder_eval` installation —
+    `coder-eval` on `PATH`, whose shebang names its own venv's Python — and
+    runs a short probe under THAT interpreter, in the current working
+    directory. The probe imports `coder_eval.config.Settings` and
+    `coder_eval.models.routing.resolve_route`, builds the route exactly as a
+    real run would, and reports whether `criteria/llm_judge.py` would find a
+    transport on it — using the same condition that module checks:
+    `route is None or (isinstance(route, DirectRoute) and
+    route.judge_transport is None)`. Running from the current working
+    directory matters: `evals-run` always runs `coder-eval` with `cwd=evals/`
+    (the Makefile `cd`s there first), and this script is wired the same way
+    (see the Makefile's `evals-preflight` target), so the probe's `.env`
+    search lands on the same file the real run's would.
 
-    - `load_dotenv(override=True)` takes no explicit path, so it falls to
-      `find_dotenv()`, which walks upward from the directory holding the
-      *installed* `coder_eval` package (e.g.
-      `.../site-packages/coder_eval`) — not from the process cwd. In this
-      container that chain carries no `.env` at all, so this call is a
-      no-op here. Where the tool is installed varies by machine, so this
-      script cannot search that chain in general — see WHAT IT DOES NOT
-      CATCH.
-    - Immediately after, `config.py` separately does
-      `dotenv_values(".env")` — a literal, cwd-relative path — and, for
-      `ANTHROPIC_API_KEY` specifically, force-sets it into `os.environ`
-      when present, overriding both the shell and whatever the first call
-      loaded. `Settings.model_config` also declares `env_file=".env"`,
-      read the same cwd-relative way. Both of the mechanisms that can
-      actually decide `ANTHROPIC_API_KEY` therefore agree: a `.env` in the
-      process's cwd.
-    - `evals-run` always runs `coder-eval` with `cwd=evals/` (the Makefile
-      `cd`s there first), and this script is wired to run the same way — see
-      the `Makefile`'s `evals-preflight` target — so "cwd-relative" means
-      `evals/.env` in practice.
-
-    So this script reads `ANTHROPIC_API_KEY` from a `.env` in its own cwd,
-    the same way `dotenv_values(".env")` would, using `python-dotenv` itself
-    rather than a hand-rolled parser. If `python-dotenv` is not importable
-    (it is not a dependency of this repository's own tooling — only of the
-    separately-installed `coder-eval` tool), `.env` parsing is skipped
-    entirely and only the shell environment is checked; that is a
-    conservative (fail-closed) gap, documented below.
+    This script parses the probe's result. It does not re-derive anything
+    about `API_BACKEND` or `ANTHROPIC_API_KEY` itself.
 
 WHAT IT FLAGS
 
     A task YAML with at least one `success_criteria` entry whose `type` is
-    `llm_judge` and whose `enabled` is not `false`, when the judge transport
-    that criterion would need is not configured: `API_BACKEND` (default
-    `direct`, case-insensitive) is `direct` and `ANTHROPIC_API_KEY` is empty
-    in both the shell environment and (when readable) `./.env`.
+    `llm_judge` and whose `enabled` is not `false`, when the probe above
+    reports that `coder_eval` would resolve no judge transport for it.
 
 WHAT IT DOES NOT CATCH
 
-    - A `.env` reachable only through `load_dotenv(override=True)`'s
-      upward search from the *installed* `coder_eval` package directory,
-      rather than from cwd. That search's start point depends on where
-      `coder-eval` happens to be installed (a `uv tool install` prefix, a
-      user site-packages, a venv), which this script has no reliable way
-      to locate. If such a `.env` supplies `ANTHROPIC_API_KEY` and neither
-      the shell environment nor `evals/.env` does, this script reports a
-      failure the real run would not hit.
-    - `python-dotenv` not installed for the interpreter running this
-      script: `.env` is not read at all, and only the shell environment is
-      checked. Same direction of error as above — a false failure, never a
-      false pass.
+    - `coder-eval` missing from `PATH` entirely. `evals-plan`, which
+      `evals-run` also depends on and which runs before this guard, already
+      fails the same way in that case — see the Makefile's `evals-run`
+      target. This script's own handling of a missing `coder-eval` is
+      belt-and-braces, not the path anyone is expected to hit first.
     - Any transport failure that is not "unconfigured" — an expired key, a
       network error, a Bedrock credential that is present but wrong. Those
       fail at call time, mid-run, the way any other API error does; this
@@ -96,15 +76,17 @@ WHAT IT DOES NOT CATCH
     - Malformed task YAML that parses but has the wrong shape for
       `coder_eval`'s own schema. `evals-plan` is what validates that.
 
-Both directions of error are asymmetric by design: this script is
-conservative (may refuse a run that would have worked, in the two gaps
-above) and never permissive (never lets through a run whose `llm_judge`
-criteria are guaranteed not to execute).
+When the probe itself cannot be run or its result cannot be parsed — no
+`coder-eval` on `PATH`, an unreadable shebang, a probe that exits non-zero or
+prints something this script does not recognise — this script says so
+plainly and exits non-zero. It never guesses a judge transport into
+existence: unable to ask is treated the same as asked and told no.
 """
 
 from __future__ import annotations
 
-import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -114,22 +96,53 @@ except ImportError as exc:  # pragma: no cover - PyYAML is a house-wide given
     print(f"error: PyYAML is required to read task YAML ({exc})", file=sys.stderr)
     sys.exit(1)
 
-try:
-    from dotenv import dotenv_values
-
-    _HAVE_DOTENV = True
-except ImportError:
-    _HAVE_DOTENV = False
-
-# Verbatim from coder_eval.criteria.llm_judge's dispatch-time error, so the
-# remedy a reader sees here is the same one they would see if this guard did
-# not exist and the criterion failed mid-run instead.
-_UPSTREAM_REMEDY = (
-    "llm_judge needs the run to use a backend that can reach a judge model:\n"
-    "  - Bedrock (--backend bedrock), or\n"
-    "  - Anthropic direct with ANTHROPIC_API_KEY set.\n"
-    "Set one of the above, or remove/disable the llm_judge criterion."
+# What the reader should actually DO. Upstream's own dispatch-time message
+# (criteria/llm_judge.py) names `--backend bedrock`, which only becomes
+# `API_BACKEND` inside coder_eval's own `cli/run_command.py` -- after this
+# guard has already run -- and `make evals-run` has no flag passthrough at
+# all. `API_BACKEND=bedrock make evals-run` is the form that actually clears
+# this guard, so that is the form named here.
+_REMEDY = (
+    "llm_judge needs a working judge transport for this run:\n"
+    "  - ANTHROPIC_API_KEY set, in the shell environment or in evals/.env, or\n"
+    "  - API_BACKEND=bedrock make evals-run (Bedrock always has a transport).\n"
+    "Set one of the above, or remove/disable the llm_judge criterion.\n"
+    "(coder_eval's own dispatch-time message, for reference, names `--backend\n"
+    "bedrock` -- that flag is only mirrored into API_BACKEND inside coder_eval's\n"
+    "own CLI, and `make evals-run` has no flag passthrough, so it has no effect\n"
+    "here. API_BACKEND=bedrock is the form above that actually works.)"
 )
+
+# Run under the interpreter `_find_coder_eval_interpreter` locates. Imports
+# `coder_eval` fresh and asks it, rather than assuming anything about how it
+# resolves its own settings. Kept to two possible outcome lines plus an
+# error line, so the parent process has an unambiguous result to parse.
+_PROBE_SOURCE = """
+import sys
+try:
+    from coder_eval.config import Settings
+    from coder_eval.models import DirectRoute, resolve_route
+except Exception as exc:
+    print(f"IMPORT_ERROR: {exc}")
+    raise SystemExit(1)
+try:
+    route = resolve_route(Settings())
+except Exception as exc:
+    print(f"RESOLVE_ERROR: {exc}")
+    raise SystemExit(1)
+if route is None or (isinstance(route, DirectRoute) and route.judge_transport is None):
+    print("NO_TRANSPORT")
+else:
+    print("TRANSPORT_OK")
+"""
+
+
+class ProbeUnavailable(Exception):
+    """The probe could not be run, or its result could not be parsed.
+
+    Raised instead of guessing. Every raise site names what went wrong, so
+    `main` can report it plainly rather than falling back to a guess.
+    """
 
 
 def has_enabled_llm_judge(task: object) -> bool:
@@ -152,33 +165,65 @@ def has_enabled_llm_judge(task: object) -> bool:
     return False
 
 
-def anthropic_api_key_present() -> bool:
-    """True if `ANTHROPIC_API_KEY` would be non-empty by the time `coder_eval`
-    resolves the DIRECT route — shell environment first, then a cwd-relative
-    `.env`, matching `coder_eval.config`'s own precedence for this one key.
+def find_coder_eval_interpreter() -> Path:
+    """Return the Python interpreter `coder-eval` itself runs under.
+
+    `coder-eval` is a `uv tool install` console script: its shebang line
+    names the interpreter of its own dedicated venv — the one `coder_eval`,
+    and the settings resolution this script needs to ask about, actually
+    live in. Probing under that interpreter, rather than the one running
+    this script, means the probe sees exactly what `coder-eval run` would.
+
+    Raises `ProbeUnavailable` when `coder-eval` is not on `PATH`, or its
+    shebang cannot be read.
     """
-    if os.environ.get("ANTHROPIC_API_KEY"):
-        return True
-    if _HAVE_DOTENV:
-        dotenv_path = Path(".env")
-        if dotenv_path.is_file():
-            value = dotenv_values(dotenv_path).get("ANTHROPIC_API_KEY")
-            if value:
-                return True
-    return False
+    which = shutil.which("coder-eval")
+    if which is None:
+        raise ProbeUnavailable(
+            "no `coder-eval` on PATH; run `make evals-install` first "
+            "(evals-plan, run before this guard, already fails the same "
+            "way, so this case is belt-and-braces, not the common one)"
+        )
+    try:
+        with open(which, encoding="utf-8", errors="strict") as handle:
+            first_line = handle.readline()
+    except (OSError, UnicodeDecodeError) as exc:
+        raise ProbeUnavailable(f"could not read {which}'s shebang line: {exc}") from exc
+    rest = first_line[2:].strip() if first_line.startswith("#!") else ""
+    if not rest:
+        raise ProbeUnavailable(f"{which} has no readable shebang line; cannot find its interpreter")
+    return Path(rest.split()[0])
 
 
-def judge_transport_available() -> bool:
-    """True if `coder_eval` will resolve a usable `llm_judge` transport.
+def probe_judge_transport(interpreter: Path) -> bool:
+    """Ask `coder_eval`, under `interpreter`, whether `llm_judge` has a
+    transport in the current working directory.
 
-    Mirrors `models/routing.py::_resolve_direct_judge_transport` and its
-    caller: non-DIRECT backends (`bedrock`, `litellm`) always carry a
-    transport; DIRECT (the default) needs `ANTHROPIC_API_KEY`.
+    Runs `_PROBE_SOURCE`, inheriting this process's cwd so a cwd-relative
+    `.env` resolves exactly the way it would for `coder-eval run` — see the
+    module docstring's HOW IT DECIDES section.
+
+    Returns True iff the probe reports `coder_eval` would resolve a usable
+    judge transport. Raises `ProbeUnavailable` if the probe could not be run
+    or its output was not one of the two results it is written to print.
     """
-    backend = os.environ.get("API_BACKEND", "direct").strip().lower()
-    if backend != "direct":
-        return True
-    return anthropic_api_key_present()
+    try:
+        result = subprocess.run(
+            [str(interpreter), "-c", _PROBE_SOURCE],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except OSError as exc:
+        raise ProbeUnavailable(f"could not run {interpreter}: {exc}") from exc
+    except subprocess.TimeoutExpired as exc:
+        raise ProbeUnavailable(f"{interpreter} did not finish resolving settings within 30s") from exc
+
+    output = result.stdout.strip()
+    if result.returncode != 0 or output not in ("TRANSPORT_OK", "NO_TRANSPORT"):
+        detail = output or result.stderr.strip() or f"exit {result.returncode}, no output"
+        raise ProbeUnavailable(f"probe under {interpreter} did not run cleanly: {detail}")
+    return output == "TRANSPORT_OK"
 
 
 def main(argv: list[str]) -> int:
@@ -218,7 +263,26 @@ def main(argv: list[str]) -> int:
         print(f"evals-preflight: no enabled llm_judge criteria in {len(argv)} task file(s)")
         return 0
 
-    if judge_transport_available():
+    try:
+        interpreter = find_coder_eval_interpreter()
+        available = probe_judge_transport(interpreter)
+    except ProbeUnavailable as exc:
+        print(
+            f"error: could not ask coder_eval whether a judge transport is "
+            f"configured: {exc}",
+            file=sys.stderr,
+        )
+        print(
+            f"\n{len(offending)} row(s) carry an enabled llm_judge criterion "
+            f"and could not be checked:",
+            file=sys.stderr,
+        )
+        for arg, task_id in offending:
+            print(f"  - {task_id} ({arg})", file=sys.stderr)
+        print(f"\n{_REMEDY}", file=sys.stderr)
+        return 1
+
+    if available:
         print(
             f"evals-preflight: judge transport available; {len(offending)} "
             f"llm_judge row(s) among {len(argv)} task file(s) can run"
@@ -232,7 +296,7 @@ def main(argv: list[str]) -> int:
     )
     for arg, task_id in offending:
         print(f"  - {task_id} ({arg})", file=sys.stderr)
-    print(f"\n{_UPSTREAM_REMEDY}", file=sys.stderr)
+    print(f"\n{_REMEDY}", file=sys.stderr)
     print(
         "\nThe run was NOT started. Proceeding would produce a report whose "
         "llm_judge finding criteria never execute — coder_eval scores each as "
