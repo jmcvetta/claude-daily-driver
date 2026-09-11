@@ -39,10 +39,10 @@ harness in use before writing a label.
 
 | Label | Description | Ready for an agent |
 | ----- | ----------- | ------------------ |
-| `epic` | Coordinates a sequence of other issues; never worked directly | No — work its children |
+| `epic` | Coordinates a sequence of other issues | Not `undertake`'s — `embark` takes one |
 | `task` | Discrete work, specified well enough to hand to an agent | Yes |
 | `bug` | Meant to do this, and does it wrong | Yes |
-| `proposal` | A capability wanted, not yet decomposed into tasks | No — decompose it first |
+| `proposal` | Wanted, but not yet planned into tasks | No — decompose it first |
 | `research` | A question to answer; the deliverable is prose, not a change | Yes |
 
 The descriptions are the ones GitHub shows, verbatim. They live twice — here
@@ -56,10 +56,10 @@ Picking one
 Ask the question in this order. The first answer that holds is the label.
 
 1. **Does the issue describe work, or coordinate it?** An issue whose body is
-   a list of other issues is an `epic`. It is never undertaken: an agent
-   handed one works a child, and the epic closes when the children do. `epic`
-   is the skill that decides there is one and writes the children; this label
-   is what the finished epic then carries.
+   a list of other issues is an `epic`. It carries no code of its own, and the
+   epic closes when its children do. `epic` is the skill that decides there is
+   one and writes the children; this label is what the finished epic then
+   carries.
 2. **Is something broken?** A behaviour was promised and is not delivered —
    `bug`. The test is the same one `conventional-commits-type` uses for
    `fix`: the thing could already do this, and does it wrong. A capability
@@ -84,8 +84,11 @@ What the label decides
 **Readiness, and nothing else.** `undertake` reads it at `Read the issue and
 its edges`, and one label out of the five is a stop in two cases:
 
-- An `epic` is a stop. Say which child to work instead, and wait; `epic`
-  owns the wording.
+- An `epic` is a stop **for `undertake`**, which needs code to put on a
+  branch and an epic has none. It is not a stop for every reader of the
+  label: `embark` takes an epic directly and opens a session per child. So
+  the answer is `embark`, or the name of the child to work instead — not a
+  refusal.
 - A `proposal` is a stop. It is the vague-request case `Open the issue`
   already refuses to write an issue for, arriving with an issue already
   written. Deciding its shape is the user's and decomposing it is `epic`'s,

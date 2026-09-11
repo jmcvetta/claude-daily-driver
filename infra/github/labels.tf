@@ -26,7 +26,7 @@ resource "github_issue_label" "epic" {
   repository  = github_repository.this.name
   name        = "epic"
   color       = "5319e7"
-  description = "Coordinates a sequence of other issues; never worked directly"
+  description = "Coordinates a sequence of other issues"
 }
 
 resource "github_issue_label" "task" {
@@ -49,7 +49,7 @@ resource "github_issue_label" "proposal" {
   repository  = github_repository.this.name
   name        = "proposal"
   color       = "1d76db"
-  description = "A capability wanted, not yet decomposed into tasks"
+  description = "Wanted, but not yet planned into tasks"
 }
 
 resource "github_issue_label" "research" {
