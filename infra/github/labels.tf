@@ -33,7 +33,7 @@ resource "github_issue_label" "task" {
   repository  = github_repository.this.name
   name        = "task"
   color       = "0e8a16"
-  description = "Discrete work, specified well enough to hand to an agent"
+  description = "Discrete work, specified and ready to start"
 }
 
 # Red is GitHub's own colour for this label, kept so an imported `bug` reports

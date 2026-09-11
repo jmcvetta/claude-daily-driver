@@ -40,7 +40,7 @@ harness in use before writing a label.
 | Label | Description | Ready for an agent |
 | ----- | ----------- | ------------------ |
 | `epic` | Coordinates a sequence of other issues | Not `undertake`'s — `embark` takes one |
-| `task` | Discrete work, specified well enough to hand to an agent | Yes |
+| `task` | Discrete work, specified and ready to start | Yes |
 | `bug` | Meant to do this, and does it wrong | Yes |
 | `proposal` | Wanted, but not yet planned into tasks | No — decompose it first |
 | `research` | A question to settle; the answer may be notes, new issues, or a no | Yes |
