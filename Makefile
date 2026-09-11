@@ -9,8 +9,8 @@ SHELL := /bin/bash
 
 .PHONY: git_sync check check-plugin check-skills check-agents check-scripts \
 	check-manifests check-constitution check-ask-in-chat check-omp-extension \
-	check-eval-fixtures check-step-names check-labels check-infra evals-install \
-	evals-plan evals-run mcp-usage
+	check-eval-fixtures check-step-names check-evals-preflight check-labels \
+	check-infra evals-install evals-plan evals-preflight evals-run mcp-usage
 
 # The `coder_eval` release the eval suites are written against. Pinned on
 # purpose: being able to hold a version back is the whole reason the suites are
@@ -43,7 +43,7 @@ git_sync:
 # is no second command line to fall behind this one.
 check: check-plugin check-skills check-agents check-scripts check-manifests \
 	check-constitution check-ask-in-chat check-omp-extension \
-	check-eval-fixtures check-step-names check-labels
+	check-eval-fixtures check-step-names check-evals-preflight check-labels
 
 # `claude plugin validate --strict` reads one manifest at a time and picks the
 # marketplace when handed a directory, so the plugin manifest is named
@@ -154,6 +154,16 @@ check-eval-fixtures:
 check-step-names:
 	python3 scripts/check-step-names.py
 
+# check-evals-preflight: the acceptance test for `scripts/evals-preflight.py`
+# -- synthetic task YAML in a temp dir, no credentials, no model. Part of
+# `check` for the same reason as the other script legs: the guard it tests is
+# itself credential-free, so nothing stops it running on a laptop and in CI.
+# See the script's docstring for what it does and does not catch, and
+# docs/notes/0012-the-judge-needs-its-own-transport.md for why the guard
+# exists.
+check-evals-preflight:
+	python3 scripts/check-evals-preflight.py
+
 # check-labels: the issue-label standard is written twice -- the table in
 # `issue-labels` and the resources in infra/github/labels.tf -- and this leg
 # asserts the two say the same thing. Part of `check` because it needs nothing
@@ -195,7 +205,22 @@ evals-plan:
 # for what and why. Narrow it with TASKS=, e.g.
 #   make evals-run TASKS='tasks/pr/*.yaml'
 TASKS ?= tasks/*/*.yaml
-evals-run: evals-plan
+
+# evals-preflight: refuse to start evals-run when an enabled `llm_judge`
+# criterion in $(TASKS) has no judge transport to run on -- `coder_eval`
+# does not fail that case, it scores the criterion 0.0 and the run
+# continues, which reads exactly like a real result and is not one. Not a
+# `check` leg, for the same reason `evals-plan` is not one: it needs task
+# YAML in hand to mean anything, and `make check` runs with none. See
+# docs/notes/0012-the-judge-needs-its-own-transport.md for the defect this
+# closes and what it costs to keep this mirroring `coder_eval`'s own rule.
+#
+# Runs from `evals/`, same as the model call below, so `$(TASKS)`'s default
+# glob and any override resolve identically in both places.
+evals-preflight:
+	cd evals && python3 ../scripts/evals-preflight.py $(TASKS)
+
+evals-run: evals-plan evals-preflight
 	cd evals && $(CODER_EVAL) run -e experiments/with-without.yaml $(TASKS)
 
 # mcp-usage: which GitHub MCP tools were actually called, rolled up to the
