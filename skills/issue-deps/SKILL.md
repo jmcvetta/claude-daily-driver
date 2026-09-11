@@ -100,9 +100,9 @@ a job feels obliged to produce output, and this job's output is edges.
 A wrong edge is still worse than a missing one, and the reason is **silence**:
 it blocks work nobody knows is blocked, and nobody thinks to look for a
 relationship they did not create. Silence is cured by announcing the write,
-not by asking before it. An edge is also undone with one `remove`, so it is
-not the hard-to-reverse or outward-facing action the constitution holds for
-confirmation.
+not by asking before it. An edge is outward-facing — it lands in a tracker
+other people read — and that is what the report answers; what it is not is
+expensive to take back, because one `remove` undoes it.
 
 So: state the evidence, name the edge it implies, **write it**, and report the
 write.
@@ -116,7 +116,7 @@ write.
   user has said, name both and ask. Nothing else here waits.
 
 **The evidence test is now the whole guard**, so it is stated exactly. Both of
-these must hold before an edge is written:
+these must hold before a blocked-by edge is **inferred** and written:
 
 - **The dependency was discovered in the work in hand** — while planning a
   change, or while writing a PR body and realising it cannot merge first. Not
@@ -124,6 +124,12 @@ these must hold before an edge is written:
 - **The evidence is a statement about the code.** One issue reads a function
   the other adds; one issue's fix is in a file the other deletes. A shared
   subject is not evidence, and neither is a shared label, milestone or author.
+
+**An edge that is given rather than inferred does not go to the test**, and
+there is nothing there for it to weigh. `epic` writes the parent edges and the
+blocked-by edges of a decomposition the user has already agreed, and
+`undertake` writes a `Closes #123` line the assignment states. The test is for
+an edge nobody asked for, which is the only kind that can be invented.
 
 A sweep of the issue list looking for edges to add is the manufacturing
 failure, not the skill working. In the session that found the `gh` path, the

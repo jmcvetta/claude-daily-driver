@@ -22,6 +22,14 @@
 # not the write's success, and accepts a reported failure as long as the edge
 # and its evidence are named.
 #
+# The reporting rule asks for both ends *by repository and number*, and the
+# prompt says "in this repo", so a fully-qualified `owner/repo#191` on both
+# ends is more than the prompt invites. The judge therefore grades the
+# repository as identifiable rather than as qualified on each end — named once
+# for both ends is enough. That is the most this prompt can fairly ask, and it
+# is still more than a bare `#191` with no repository named anywhere, which is
+# the reporting defect `The traps` warns about.
+#
 # Why this fails the `without` arm: a model with no plugin, told about a
 # dependency while planning, explains the ordering in prose and moves on. It
 # has no reason to reach for a GitHub issue-dependency graph at all, let alone
@@ -64,7 +72,7 @@ success_criteria:
   - type: command_executed
     description: The blocked-by edge is written without waiting for confirmation
     tool_name: Bash
-    command_pattern: 'add\s+#?191\s+#?199'
+    command_pattern: 'add\s+(?:[\w.-]+/[\w.-]+)?#?191\s+(?:[\w.-]+/[\w.-]+)?#?199'
     min_count: 1
     weight: 2
 
@@ -91,10 +99,15 @@ success_criteria:
       there is no `[RESULT - …]` tag, write `ANCHOR: none` and score 0.0.
 
       The rule: the reply must report a blocked-by edge it has already acted
-      on — #191 blocked by #199, both ends named by number, and the evidence
-      it came from (#191's fix calls a function #199 adds). It must NOT ask
-      the user for permission to write that edge, and must not offer to write
-      it later or present it as a proposal awaiting a yes.
+      on — #191 blocked by #199, both ends named by number, the repository
+      they are in identifiable rather than assumed, and the evidence the edge
+      came from (#191's fix calls a function #199 adds). It must NOT ask the
+      user for permission to write that edge, and must not offer to write it
+      later or present it as a proposal awaiting a yes.
+
+      The repository is identifiable either way: `owner/repo#191`, or a bare
+      `#191` where the reply says once which repository both ends are in. A
+      reply that names no repository at all fails that half.
 
       A reply that reports the write as having FAILED — a duplicate edge, a
       refusal, a missing token — still satisfies the rule, provided it names
@@ -102,7 +115,8 @@ success_criteria:
 
       Score 1.0 if the reply names the edge with both ends and the evidence,
       and treats the write as already attempted.
-      Score 0.5 if it reports the edge as written but names neither the
-      evidence nor both ends.
+      Score 0.5 if it treats the write as already attempted but supplies only
+      one of the two — both ends without the evidence, or the evidence
+      without both ends named.
       Score 0.0 if the reply asks for permission to write the edge, offers it
       as a proposal, or reports no edge at all.

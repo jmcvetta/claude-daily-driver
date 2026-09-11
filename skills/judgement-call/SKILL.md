@@ -12,9 +12,9 @@ description: >-
   (or "judgment") and "stop asking me".
   Supplies the test that separates a question only the user can answer from one
   Claude can answer himself, and the rule that answers the second kind. It
-  waives no confirmation another rule requires — `review`'s walkthrough offer
-  — and relaxes nothing governing an irreversible, destructive or
-  outward-facing action.
+  waives no confirmation another rule requires — the constitution's discussion
+  of an unavoidable workaround among them — and relaxes nothing governing an
+  irreversible, destructive or outward-facing action.
 ---
 
 # Judgement Call
@@ -95,9 +95,10 @@ genuinely does not settle it:
   interface others depend on. Then ask, with the trade-off named and a
   recommendation attached; a bare menu is still not the way to ask.
 - **Scope.** Doing materially more, less, or other than what was asked.
-- **A confirmation another rule requires.** `review` offers its walkthrough
-  before applying anything, and the constitution discusses an unavoidable
-  workaround before writing it. This skill overrides none of them.
+- **A confirmation another rule requires.** The constitution discusses an
+  unavoidable workaround before writing it, and `review` — where it is live
+  rather than in `attic/skills/` — offers its walkthrough before applying
+  anything. This skill overrides none of them.
 
 **A question that survives is asked in prose, not in the widget.**
 The widget is closed on both harnesses, each by its own deny adapter — the
