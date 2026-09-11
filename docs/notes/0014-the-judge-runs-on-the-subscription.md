@@ -87,19 +87,32 @@ memory — not a guard against a missing key.
 
 ## What is left
 
-Four rows outside the nine still carry an enabled `llm_judge`, so
-`make evals-run` over the whole suite still stops at the guard:
+Thirteen rows elsewhere in the suite still carry an enabled `llm_judge`, so
+`make evals-run` over the whole suite still stops at the guard. Four are
+Claude-arm rows outside the nine:
 
 - `tasks/constitution/reply-is-concise.yaml`
 - `tasks/embark/06-launches-without-asking.yaml`
 - `tasks/issue-deps/02-write-the-edge-without-asking.yaml`
 - `tasks/undertake/08-wake-slot-is-refilled.yaml`
 
-They have the same defect and the same fix. They are untouched here only
-because #158's scope is the nine `references` rows, and porting them means
-re-running them to confirm the ported rubrics still grade what they were
-written to grade. Until that happens, the suite is runnable a `TASKS=` subset
-at a time and not as a whole.
+The other nine are the `omp-only` forks `0013` added, including the forks of
+eight of the nine rows this note is about. They have the same defect, and the
+same fix would work on them: `agent_judge` spawns a Claude Code SDK judge
+whatever harness produced the transcript it grades, exactly as `llm_judge`
+called the API whatever produced it.
+
+They are not ported here for one reason: they cannot be run. The Omp arm needs
+`omp` on `PATH` and a provider configured, which `0013` records as still
+outstanding, so a port of those nine would ship rubrics nobody has executed.
+Porting them belongs with the first paid run of that arm.
+
+One of them is worth flagging while it is in view. `pr-07-one-call-sets-both-omp`
+grades the same "one call, not two" rule its Claude sibling has just been
+corrected away from — and on Omp `gh pr edit` is the *right* answer, so the
+bare arm reaches for the same tool the treated arm should. Whatever separates
+those two arms, the single-call fact on its own probably does not. That is a
+prediction from reading it, not a measurement.
 
 ## What this does not claim
 
