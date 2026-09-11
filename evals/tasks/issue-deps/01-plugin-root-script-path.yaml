@@ -1,0 +1,71 @@
+# This guards the reading, for issue #146's late requirement: the script
+# invocation path for `scripts/issue-deps.sh` moved out of `SKILL.md` — which
+# only says to invoke it "through the harness's own injected skill-directory
+# path, never a relative one" — and into `references/claude.md`, which names
+# the exact form: `deps="${CLAUDE_PLUGIN_ROOT}/skills/issue-deps/scripts/issue-deps.sh"`.
+# A row that passes without the reference file being read is wrong, so the
+# graded content is that literal path, typed into a real Bash command.
+#
+# What this row can and cannot see. This sandbox is exactly the environment
+# `SKILL.md`'s `Which client` branch 2 describes: no `gh` on the PATH, and
+# `GITHUB_TOKEN` / `GH_TOKEN` present — so the probe should fall through to
+# the script rather than stall on branch 1 or drop to the MCP-only branch 3.
+# What actually happens when the script runs — a real write against issue
+# #191 on this repository — is not something this row can see or wants to
+# risk: there is no live GitHub relationship to verify against, so the graded
+# assertion is the command typed, not its result. A positive check that the
+# edge landed needs a live issue graph, which is not a sandbox this harness
+# can build.
+#
+# `Bash` is open on purpose, and is what the graded criterion needs: the
+# skill-directory path can only be observed in a real Bash tool call, never in
+# prose.
+#
+# Why this fails the `without` arm: `${CLAUDE_PLUGIN_ROOT}` is a Claude Code
+# convention a model might plausibly know in the abstract, but it resolves to
+# nothing at all where no plugin is loaded — there is no skill directory to
+# name, and no reason to guess this specific relative path
+# `skills/issue-deps/scripts/issue-deps.sh` under it. A model with no plugin
+# either invents a different script location, falls back to `gh` (which is
+# absent here) or a raw `curl` against the REST endpoints `SKILL.md` warns
+# have a silent id trap, or gives up — none of which produces this string.
+
+task_id: issue-deps-01-plugin-root-script-path
+description: >-
+  Recording a blocked-by edge with no `gh` on the PATH resolves the fallback
+  script through the injected plugin-root path, not a relative one.
+tags: [issue-deps, references, fire, behaviour]
+
+initial_prompt: >-
+  Issue #191 in this repo can't start until #199 lands — it's genuinely
+  blocked. `gh` isn't installed in this environment. Please record the block
+  on the issue graph.
+
+agent:
+  allowed_tools: [Read, Grep, Glob, Skill, Bash]
+  disallowed_tools: [Write, Edit, NotebookEdit, Agent, Task]
+
+run_limits:
+  max_turns: 10
+  turn_timeout: 300
+  task_timeout: 600
+
+success_criteria:
+  # Without this, a run that never reached the skill could still score on a
+  # command typed for an unrelated reason. Left unarmed for the reason
+  # `undertake/08` gives: there is no fail-stopping criterion here for a bare
+  # arm to defer, and arming it would cost the row a trajectory that reached
+  # the script late.
+  - type: skill_triggered
+    description: "`issue-deps` fires on a blocked-by relationship to record"
+    expected_skill: issue-deps
+    skill_name: issue-deps
+
+  # The finding: the script is invoked through the injected plugin-root path
+  # this skill's own reference file names, never a bare relative one.
+  - type: command_executed
+    description: The script is invoked via ${CLAUDE_PLUGIN_ROOT}, not a relative path
+    tool_name: Bash
+    command_pattern: '\$\{CLAUDE_PLUGIN_ROOT\}/skills/issue-deps/scripts/issue-deps\.sh'
+    min_count: 1
+    weight: 2

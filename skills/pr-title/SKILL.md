@@ -6,8 +6,10 @@ description: >-
   "rename the PR", "that title is wrong", or asks what a PR should be called,
   and including any call Claude makes on its own initiative to
   `mcp__github__create_pull_request`, to
-  `mcp__github__update_pull_request` that sets a `title`, or to
-  `gh pr edit --title` on a harness that still reaches for it. Supplies the
+  `mcp__github__update_pull_request` that sets a `title`, to
+  `gh pr edit --title` on a harness that still reaches for it, or to Omp's
+  `github` tool's `pr_create` op (`title`) and `gh pr edit --title` for
+  revisions. Supplies the
   Conventional Commits convention the title must conform to; the type itself
   comes from `conventional-commits-type`. Not for commit messages, not for
   the PR body — that is `pr-body` — and not for the session's own name —
@@ -25,6 +27,11 @@ The title of a pull request, whether it is being opened or corrected.
   upload on a stale token`.
 - **Conventional Commits**: the title MUST conform, and MUST carry the type
   the contents warrant.
+
+**The call that sets the title is per harness, and it lives beside this
+file.** [`references/claude.md`](references/claude.md) is the route for
+Claude Code, [`references/omp.md`](references/omp.md) for Oh My Pi. Read
+the one for the harness in use before the first call.
 
 
 The type

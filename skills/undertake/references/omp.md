@@ -1,0 +1,73 @@
+# Omp routes — undertake
+
+`SKILL.md` names each operation in words. This file names the call, for a
+session running in Oh My Pi. Claude Code's routes are in
+[`claude.md`](claude.md).
+
+Two clients share the work. The built-in `github` tool reads and writes what it
+covers; `gh` covers the rest, and every read is also available as an `issue://`
+or `pr://` internal URL, which resolves from the same cache the `github` tool
+writes to.
+
+
+The issue
+=========
+
+| Step | Operation | Call |
+| ---- | --------- | ---- |
+| `Open the issue` | Search the open issues | `github.search_issues`, or `gh search issues` |
+| `Open the issue` | Open one | `gh issue create` |
+| `Read the issue and its edges` | Read the body and the graph | `issue://<number>` |
+| `Claim the issue` | Comment on the issue | `gh issue comment <number> -b "…"` |
+
+`issue-deps` owns the edge writes, and has its own routes.
+
+
+The pull request
+================
+
+| Step | Operation | Call |
+| ---- | --------- | ---- |
+| `Open the draft` | Open it | `pr`, which owns the call |
+| `Ready for review` | Take it out of draft | `gh pr ready <number>` |
+| `Keep it current` | Merge the base branch in | `gh pr update-branch <number>` |
+| `A round after ready goes back to draft` | Return it to draft | `gh pr ready <number> --undo` |
+
+Reading a pull request is `pr://<number>`. `Review the head` and `Fix, answer,
+resolve, push` are `review-cycle`'s, and its own `references/omp.md` has the
+review surface, the wait and the thread clients.
+
+
+The session
+===========
+
+**There is no session call**, so two of the three things `Claim the issue`
+carries are unavailable: the claim says the surface supplied no model and no
+session, which is the truth of an Omp session, and carries the branch alone.
+
+The branch comes from the harness's own git state, which is the designation
+here. `git branch --show-current` names the branch this session works on, and a
+worktree Omp created for the work carries it. `OWNER/REPO` for the branch link
+comes from the `origin` remote.
+
+
+There is no durable wake
+========================
+
+**`daily_driver_schedule` is an in-process managed timer.** Omp's own
+documentation says managed timers are unref'd and cleared on
+`session_shutdown`, so a reminder dies with the session. It is not a
+`send_later`, which survives the session that armed it.
+
+So **`Keep it current`'s cadence does not run on this harness.** After
+`Ready for review`, say once that the branch is kept current by the next Omp
+session that picks the pull request up, and stop. `daily_driver_schedule` is
+for a follow-up inside the current session, never for a watch meant to outlive
+it.
+
+The never-empty wake slot —
+[`0010`](../../../docs/notes/0010-the-wake-slot-is-never-empty.md) — is
+therefore the Claude rule this harness does not carry. It is recorded here so
+that a reader who finds it cited in `SKILL.md` knows why it does not bind, and
+so that a durable wake arriving in Omp later has a decision to be measured
+against.
