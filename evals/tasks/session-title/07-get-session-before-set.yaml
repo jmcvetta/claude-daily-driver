@@ -25,7 +25,7 @@
 # "set the title" call, or no specific call named at all — not this two-call
 # sequence in this order.
 
-task_id: session-title-01-get-session-before-set
+task_id: session-title-07-get-session-before-set
 description: >-
   Titling the session for work on an issue reads the session's own id first,
   then sets the title with it — two calls, in that order.
