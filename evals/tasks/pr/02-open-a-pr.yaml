@@ -31,5 +31,24 @@ success_criteria:
     description: "`pr` fires when a pull request is being opened"
     expected_skill: pr
     skill_name: pr
-    stop_early:
-      on_pass: stop
+    # Armed bare rather than `on_pass: stop`, unlike the other fire rows in
+    # this suite, and both halves of that matter. The pass-stop had to go: the
+    # distractor below establishes an absence, which needs the whole run, and a
+    # stop the moment `pr` fires would leave it passing vacuously on every
+    # replicate. The bare arm had to stay: it keeps this criterion in the
+    # watcher's pass-capable set, so the distractor's fail-stop is deferred
+    # while it is undecided. Dropping the key entirely is the false negative
+    # "Both arms, every criterion" in `evals/README.md` describes.
+    stop_early: {}
+
+  - type: skill_triggered
+    description: "`undertake` does not fire on a branch that is already written"
+    # This row's ground truth is `pr`, so naming `undertake` here asserts its
+    # absence. It is the one collision `undertake` creates: "get it to a pull
+    # request" is in its register too, and what separates them is that this
+    # prompt has no issue to undertake. The reverse assertion is deliberately
+    # absent — `undertake` invokes `pr` at `Open the draft`, so `pr` firing on
+    # "take #7" is correct behaviour rather than a collision.
+    expected_skill: pr
+    skill_name: undertake
+    stop_early: {}
