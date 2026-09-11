@@ -9,8 +9,8 @@ SHELL := /bin/bash
 
 .PHONY: git_sync check check-plugin check-skills check-agents check-scripts \
 	check-manifests check-constitution check-ask-in-chat check-omp-extension \
-	check-eval-fixtures check-step-names check-evals-preflight check-infra \
-	evals-install evals-plan evals-preflight evals-run mcp-usage
+	check-eval-fixtures check-step-names check-evals-preflight check-labels \
+	check-infra evals-install evals-plan evals-preflight evals-run mcp-usage
 
 # The `coder_eval` release the eval suites are written against. Pinned on
 # purpose: being able to hold a version back is the whole reason the suites are
@@ -43,7 +43,7 @@ git_sync:
 # is no second command line to fall behind this one.
 check: check-plugin check-skills check-agents check-scripts check-manifests \
 	check-constitution check-ask-in-chat check-omp-extension \
-	check-eval-fixtures check-step-names check-evals-preflight
+	check-eval-fixtures check-step-names check-evals-preflight check-labels
 
 # `claude plugin validate --strict` reads one manifest at a time and picks the
 # marketplace when handed a directory, so the plugin manifest is named
@@ -163,6 +163,16 @@ check-step-names:
 # exists.
 check-evals-preflight:
 	python3 scripts/check-evals-preflight.py
+
+# check-labels: the issue-label standard is written twice -- the table in
+# `issue-labels` and the resources in infra/github/labels.tf -- and this leg
+# asserts the two say the same thing. Part of `check` because it needs nothing
+# but Python, and because neither half's own tooling reads the other: `claude
+# plugin validate` never opens a .tf file and `tofu validate` never opens a
+# skill, so a row that has fallen behind reads exactly like one that has not.
+# See the script's docstring.
+check-labels:
+	python3 scripts/check-labels.py
 
 # check-infra: parse the OpenTofu stack without credentials. Not part of
 # `check`, which must not start requiring OpenTofu on a laptop that is only

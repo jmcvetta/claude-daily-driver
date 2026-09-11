@@ -1,0 +1,35 @@
+task_id: embark-04-neg-one-issue-undertaken
+description: >-
+  One task issue, handed over to be worked. `undertake` is the right answer,
+  and `embark` must not read a single issue as a fleet — a wave of one costs an
+  epic, a muster roll and a watch to save nothing.
+
+  The prompt says how big #12 is for the reason the `epic` suite gives: the row
+  denies every read tool, so without it the model cannot tell a task issue from
+  an epic.
+tags: [trigger-accuracy, embark, no-fire]
+
+initial_prompt: "Undertake #12 — it is the one-line fix to the retry loop."
+
+agent:
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+success_criteria:
+  # Armed so the watcher counts it as pass-capable and defers the distractor's
+  # fail-stop until recall is decided; `on_pass` stays at its default
+  # `continue`, so this never truncates a run itself.
+  - type: skill_triggered
+    description: "`undertake` fires"
+    expected_skill: undertake
+    skill_name: undertake
+    stop_early: {}
+  - type: skill_triggered
+    description: "`embark` does not fire on one issue being undertaken"
+    expected_skill: undertake
+    skill_name: embark
+    stop_early: {}

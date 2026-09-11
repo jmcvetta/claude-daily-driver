@@ -16,8 +16,8 @@ The issues
 | ---- | --------- | ---- |
 | `Size the work` | Read an issue already in hand | `issue://<number>` |
 | `Open the issues` | Search the open issues | `github.search_issues`, or `gh search issues` |
-| `Open the issues` | Open the epic, and each task | `gh issue create` |
-| `Open the issues` | Turn an existing issue into the epic | `gh issue edit <number> --body-file <path>` |
+| `Open the issues` | Open the epic, and each task | `gh issue create --label epic` / `--label task` |
+| `Open the issues` | Turn an existing issue into the epic | `gh issue edit <number> --body-file <path> --add-label epic --remove-label <the old one>` |
 | `Fill in the epic` | Replace the epic's body | `gh issue edit <number> --body-file <path>` |
 
 `--body-file` rather than `--body`: an epic body carries a fenced block and a

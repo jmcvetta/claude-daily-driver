@@ -1,0 +1,30 @@
+task_id: embark-05-neg-break-it-down
+description: >-
+  Work that is not decomposed yet. `epic` is the right answer, and `embark` has
+  nothing to take in: there is no epic, no task issue and no graph. Firing here
+  would put a fleet to sea before anybody had written down what it is for.
+tags: [trigger-accuracy, embark, no-fire]
+
+initial_prompt: >-
+  Rewriting the config loader is too big for one PR. Break it down into issues,
+  with an epic to coordinate them.
+
+agent:
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`epic` fires"
+    expected_skill: epic
+    skill_name: epic
+    stop_early: {}
+  - type: skill_triggered
+    description: "`embark` does not fire on work that has not been decomposed"
+    expected_skill: epic
+    skill_name: embark
+    stop_early: {}

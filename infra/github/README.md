@@ -1,7 +1,8 @@
 # GitHub Repository Configuration
 
 Manages the configuration of the `jmcvetta/claude-daily-driver` repository
-itself: merge strategy, branch protection, and Dependabot alerts.
+itself: merge strategy, branch protection, Dependabot alerts, and the issue
+labels.
 
 Modelled on `Green-Pagoda/pagoda`'s `infra/bootstrap/bootstrap-github`, minus
 the parts that are specific to that monorepo.
@@ -30,6 +31,8 @@ exclusion below.
   default-token fallback needs the latter)
 - **`github_branch_protection`** on `master` — required `CI Success` check,
   linear history, conversation resolution, no force pushes or deletions
+- **`github_issue_label`** ×5 — the issue labels the `issue-labels` skill
+  defines: `epic`, `task`, `bug`, `proposal`, `research`
 
 ## The `CI Success` Check
 
@@ -123,6 +126,30 @@ version manager (`tenv`, `asdf`, `mise`) on a laptop and by
 `opentofu/setup-opentofu` in CI, so both install the same OpenTofu from the
 same file.
 
+## The Issue Labels
+
+`labels.tf` declares the five labels `skills/issue-labels/SKILL.md` defines,
+so the names, colours and descriptions come from a file under review rather
+than from whoever clicked last. The skill is the standard; this is where it is
+declared.
+
+Two properties are worth knowing before an apply:
+
+- **Nothing is deleted.** Tofu owns only what it declares, so GitHub's stock
+  labels (`enhancement`, `documentation`, and the rest) and the bot-owned ones
+  (`dependencies`, `autorelease: pending`) survive untouched. That is
+  deliberate: the standard governs what a skill applies to an issue, and
+  claims no more of the namespace than that.
+- **`bug` must be imported.** Every repository GitHub creates ships with it,
+  and creating a label that already exists fails the apply rather than
+  adopting it. `import.sh` carries that import, so re-running the script
+  before the first apply is what makes the plan clean.
+
+The description strings are duplicated in the skill's table, and
+`scripts/check-labels.py` fails `make check` when they drift. That check is a
+leg of `check` rather than of `check-infra`: it needs only Python, so a laptop
+editing a skill runs it without OpenTofu installed.
+
 ## Deliberate Exclusions
 
 **Actions secrets.** The provider writes secret values into state, and this
@@ -136,10 +163,6 @@ the release job fail on its first step, which is worse than the fallback it
 replaces. Both go in together, by hand, alongside installing the App — which
 is how the `daily-driver-release-bot` App now serving this repository was set
 up.
-
-**Labels.** Tofu owns only what it declares, so declaring none neither adopts
-nor deletes GitHub's defaults. The repository has no labels of its own yet;
-add a `labels.tf` when it does.
 
 **Environments.** Nothing deploys from this repository.
 
@@ -197,5 +220,7 @@ than the "No changes." a fully-imported stack would:
 - `github_repository_vulnerability_alerts.this` created
 - `github_workflow_repository_permissions.this` created
 - `github_branch_protection.master` created
+- `github_issue_label.bug` updated in place — the description replaced with the
+  standard's — and the other four created
 
 After applying, commit `terraform.tfstate` to Git.
