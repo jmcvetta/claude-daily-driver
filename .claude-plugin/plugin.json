@@ -1,7 +1,7 @@
 {
   "name": "daily-driver",
   "version": "0.18.2",
-  "description": "Daily-driver skills for Claude Code: the PR workflow, and whatever else earns its place.",
+  "description": "Daily-driver skills for Claude Code and Omp: the PR workflow, and whatever else earns its place.",
   "author": {
     "name": "Jason McVetta",
     "email": "jason.mcvetta@gmail.com"

@@ -9,8 +9,9 @@ SHELL := /bin/bash
 
 .PHONY: git_sync check check-plugin check-skills check-agents check-scripts \
 	check-manifests check-constitution check-ask-in-chat check-omp-extension \
-	check-eval-fixtures check-step-names check-evals-preflight check-labels \
-	check-infra evals-install evals-plan evals-preflight evals-run mcp-usage
+	check-omp-plugin check-eval-fixtures check-step-names check-evals-preflight \
+	check-labels check-infra evals-install evals-plan evals-preflight evals-run \
+	mcp-usage
 
 # The `coder_eval` release the eval suites are written against. Pinned on
 # purpose: being able to hold a version back is the whole reason the suites are
@@ -115,6 +116,25 @@ check-ask-in-chat:
 # alike. Node ships with the harness; no package install is involved.
 check-omp-extension:
 	node scripts/check-omp-extension.mjs
+
+# check-omp-plugin: the discovery half of the Omp story, which
+# check-omp-extension cannot reach. It starts a real `omp --mode rpc` and asks
+# the running agent what it got -- the skills on both the `--plugin-dir` and
+# the installed-plugin routes, and the extension on the one route that loads
+# it. Credential-free, against a throwaway HOME. See the script's docstring.
+#
+# Not part of `check`, for the reason check-infra is not: it needs a toolchain
+# -- here a whole second harness -- and `check` must not start requiring Omp on
+# a laptop that is only editing a skill. CI's `omp` job runs it, gated on the
+# files that can actually break the Omp integration, and reports into
+# `CI Success` either way so a break blocks a merge.
+#
+# No guard on `omp` either, and that is the same decision as check-infra's. A
+# target nobody runs by accident should fail loudly when its toolchain is
+# absent; a target inside `check` would have needed the guard, and the guard is
+# what would have let it silently check nothing.
+check-omp-plugin:
+	python3 scripts/check-omp-plugin.py
 
 # check-scripts: lint the shell a skill ships. `claude plugin validate` reads
 # manifests and never opens a `scripts/` file, so without this leg the plugin's
