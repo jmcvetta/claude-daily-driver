@@ -38,7 +38,9 @@ with its own `scripts/` it runs an unrelated file rather than failing.
 **The URL must be its own token.** Omp skips a bare `skill://` URL that sits
 inside a larger shell quote, so it stays literal in `bash -c "… skill://… …"`
 and in any string built around it. Write the assignment above as its own
-statement, and use `"$deps"` everywhere after it.
+statement, and use `"$deps"` everywhere after it — in the same Bash command,
+since each call is a fresh shell and the variable does not survive between
+them.
 
 An unreachable script leaves `SKILL.md`'s probe with its third branch, the
 GitHub MCP alone — the probe reached the script branch precisely because `gh`
