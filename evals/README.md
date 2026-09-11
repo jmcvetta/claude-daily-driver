@@ -174,9 +174,12 @@ the one `undertake` asks on every issue it is handed.
 `session-title/` is the pair that sits closest together: two skills about a
 *title*, one noun apart, and two of `session-title`'s natural phrasings live
 inside `pr-title`'s vocabulary. So the boundary is asserted in both
-directions rather than one. `02` renames the session and asserts `pr-title`
-stays out; `05` fixes a pull request title with the session name ruled out,
-and asserts `session-title` stays out. A suite that only proved
+directions rather than one. `02` renames the session, and `pr-title/08-neg-session-title` asserts
+`pr-title` stays out of that same prompt; `05` fixes a pull request title
+with the session name ruled out, and asserts `session-title` stays out. The
+two directions sit in different suites because a `-neg-` row belongs to the
+skill it keeps silent, which is what
+`make evals-run TASKS='tasks/*/*-neg-*.yaml'` selects on. A suite that only proved
 `session-title` fires would stay green with both descriptions collapsed into
 one.
 
@@ -629,7 +632,7 @@ criteria are checked, so equal values mean a turn that uses its budget is killed
 as a TIMEOUT before it can be graded. The headroom is the difference.
 
 `run_limits` caps turns and wall clock per task, but nothing caps the bill. The
-35 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
+64 trigger-accuracy cases are cheap: five turns each, `Skill` the only tool,
 and the fire half stops the moment the skill fires. `review-depth` is not: its six fire
 cases each dispatch a real reviewer panel over a real diff, five times, in the
 `with-plugin` arm. The `bare` arm is cheaper but not free: it has no `review`

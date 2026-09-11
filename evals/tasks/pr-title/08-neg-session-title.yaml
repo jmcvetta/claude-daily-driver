@@ -1,8 +1,8 @@
-task_id: session-title-02-rename-this-session
+task_id: pr-title-08-neg-session-title
 description: >-
-  "Rename" and no noun but "session". One noun away from `pr-title`'s own
-  rename phrasing, which is the whole reason this row exists.
-tags: [trigger-accuracy, session-title, fire]
+  A session rename. The closest prompt in the plugin to `pr-title`'s own
+  `02-rename-the-pr`, one noun apart, and `session-title` is the right answer.
+tags: [trigger-accuracy, pr-title, no-fire]
 
 initial_prompt: 'Rename this session — it is still called "New session".'
 
@@ -13,7 +13,7 @@ agent:
   # generated, before any result, and `skill_triggered` counts a `skills/<name>/`
   # path in ANY tool parameter as engaging that skill — so a *denied* read of
   # `skills/pr-title/SKILL.md`, which is exactly what a model weighing two
-  # sibling skills about a title reaches for, would fail a no-fire row.
+  # sibling skills about a title reaches for, would fail this row.
   # `disallowed_tools` is the one that actually removes a tool, so the path can
   # never be typed.
   disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
@@ -28,16 +28,23 @@ run_limits:
   # headroom on top.
   turn_timeout: 120
 
-# The other half of this boundary — that `pr-title` stays out of a session
-# rename — is asserted in the `pr-title` suite, as
-# `08-neg-session-title.yaml`. A distractor here would make this a no-fire row
-# wearing a fire row's name: it would sit outside
-# `TASKS='tasks/*/*-neg-*.yaml'`, and it would score 0.5 in the `bare` arm,
-# where `with-without.yaml` expects a fire row's control to be 0.
+# The mirror of `session-title/05-neg-pr-title`, and the reason it lives here
+# rather than beside it: a `-neg-` row belongs to the suite of the skill it
+# keeps silent, which is what `TASKS='tasks/*/*-neg-*.yaml'` selects on.
+# `session-title/02` carries the same prompt as a fire row, so the boundary is
+# asserted from both sides without either row scoring a distractor's 0.5 in
+# the `bare` arm.
 success_criteria:
   - type: skill_triggered
-    description: "`session-title` fires on a rename request naming the session"
+    description: "`session-title` fires"
     expected_skill: session-title
     skill_name: session-title
-    stop_early:
-      on_pass: stop
+    # Armed so the watcher counts it as pass-capable and defers the
+    # distractor's fail-stop until recall is decided; `on_pass` stays at its
+    # default `continue`, so this never truncates a run itself.
+    stop_early: {}
+  - type: skill_triggered
+    description: "`pr-title` does not fire on a session rename"
+    expected_skill: session-title
+    skill_name: pr-title
+    stop_early: {}
