@@ -32,5 +32,10 @@ import() {
 
 import 'github_repository.this' "$REPO"
 
+# `bug` ships with every repository GitHub creates, so it is adopted rather
+# than created; every other label in labels.tf is new and needs no import.
+# The id is `<repository>:<label name>`.
+import 'github_issue_label.bug' "$REPO:bug"
+
 echo
 echo "Import complete. Verify with: tofu plan"

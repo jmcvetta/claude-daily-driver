@@ -11,7 +11,7 @@ read it, do not go further.
 ## What's in it
 
 The **constitution** — `rules/constitution.md`, delivered to every session
-by hook — plus **two hooks that enforce rather than instruct**, and twelve
+by hook — plus **two hooks that enforce rather than instruct**, and thirteen
 skills:
 
 | Skill | What it does |
@@ -21,6 +21,7 @@ skills:
 | `conventional-commits-type` | Picks the type — `fix`, `feat`, `refactor` and the rest — from what the change *does*, never from what the diff looks like. |
 | `pr-body` | The body: a one-line summary, a salutation in verse, an executive summary, engineering detail, and the `Issues` section that closes it. |
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which pull request closes what. |
+| `issue-labels` | The five labels an issue may carry — `epic`, `task`, `bug`, `proposal`, `research` — and the readiness each one states, which is what decides whether an agent may start unattended. |
 | `session-title` | Names the session for the Claude web and mobile lists: forty characters, `#123 shortened issue title` while an issue is in hand. |
 | `readme` | Writes a README that answers what this is and how to use it, and nothing else: the shape, the reading of length as a symptom, and the list of what belongs in a commit message, a changelog or `docs/` instead. |
 | `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. A question that survives the gate is asked in the chat reply — the `AskUserQuestion` widget is denied by hook. |
@@ -199,7 +200,9 @@ over `agents/`, on the runs where the plugin ships any; `shellcheck` over every
 shell script; `scripts/check-manifests.py` for what `validate` lets through,
 such as a skill whose frontmatter `name` disagrees with its directory; `scripts/check-constitution.py`, which drives
 both hooks against synthetic event JSON and asserts the constitution comes back
-from each; and `scripts/check-eval-fixtures.sh`.
+from each; `scripts/check-labels.py`, which asserts the issue-label standard
+says the same thing in `issue-labels` and in the OpenTofu that declares it; and
+`scripts/check-eval-fixtures.sh`.
 
 Two more checks are deliberately outside it. `make check-infra` parses the OpenTofu
 stack — see [infra/github/README.md](infra/github/README.md). `make evals-run`

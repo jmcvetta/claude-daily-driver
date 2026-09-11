@@ -16,11 +16,14 @@ The issue
 | Step | Operation | Call |
 | ---- | --------- | ---- |
 | `Open the issue` | Search the open issues | `github.search_issues`, or `gh search issues` |
-| `Open the issue` | Open one | `gh issue create` |
+| `Open the issue` | Open one, labelled | `gh issue create --label task` |
 | `Read the issue and its edges` | Read the body and the graph | `issue://<number>` |
+| `Read the issue and its edges` | Label an issue that carries none | `gh issue edit <number> --add-label task` |
 | `Claim the issue` | Comment on the issue | `gh issue comment <number> -b "…"` |
 
-`issue-deps` owns the edge writes, and has its own routes.
+`issue-deps` owns the edge writes, and has its own routes. So does
+`issue-labels`, whose `references/omp.md` says why `--add-label` needs no
+read-first and the Claude route does.
 
 
 The pull request

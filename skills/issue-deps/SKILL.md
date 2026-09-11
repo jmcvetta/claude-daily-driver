@@ -266,6 +266,12 @@ different claim from *this must close first*. An epic's children are not
 automatically its blockers, and saying so in edges would be inventing
 relationships.
 
+**The `epic` label and the parent edge are not the same statement**, and both
+are wanted. The label says an issue coordinates others, which is what a reader
+scanning a list needs and what stops an agent starting on it; the edges say
+*which* others, which a label can never say. `issue-labels` owns the first, and
+an epic with no children is a label with nothing behind it.
+
 
 Which PR closes an issue
 ========================
