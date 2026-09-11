@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.19.0](https://github.com/jmcvetta/daily-driver/compare/v0.18.2...v0.19.0) (2026-09-11)
+
+
+### Features
+
+* **constitution:** share the constitution between Claude Code and Omp ([#149](https://github.com/jmcvetta/daily-driver/issues/149)) ([48c5b04](https://github.com/jmcvetta/daily-driver/commit/48c5b04d00cab0060b3c318025e58524d4802bdf))
+* **evals:** guard evals-run against an unconfigured judge transport ([#166](https://github.com/jmcvetta/daily-driver/issues/166)) ([a581476](https://github.com/jmcvetta/daily-driver/commit/a58147684f8ef57756bdff90aa75076593b09332))
+* **issue-deps:** write the edge and report it, rather than asking first ([#163](https://github.com/jmcvetta/daily-driver/issues/163)) ([980113b](https://github.com/jmcvetta/daily-driver/commit/980113babae60a739bde4350509ba95963755195))
+* **issue-labels:** standardize the labels an issue may carry ([#157](https://github.com/jmcvetta/daily-driver/issues/157)) ([e06adfd](https://github.com/jmcvetta/daily-driver/commit/e06adfdbc7cdc6463d8c609281cea7ad5fda6026))
+* **omp:** add the thin Oh My Pi runtime adapter ([#145](https://github.com/jmcvetta/daily-driver/issues/145)) ([#150](https://github.com/jmcvetta/daily-driver/issues/150)) ([fbc601c](https://github.com/jmcvetta/daily-driver/commit/fbc601c44638a6dc1ec96b341cd72cfab7bea930))
+* **pr-body:** lead the body with the issue it closes ([#165](https://github.com/jmcvetta/daily-driver/issues/165)) ([af8096d](https://github.com/jmcvetta/daily-driver/commit/af8096da56d72346dac67aad3096a104cd667863))
+* **skills:** add embark, which works an epic wave by wave ([#162](https://github.com/jmcvetta/daily-driver/issues/162)) ([6c939a7](https://github.com/jmcvetta/daily-driver/commit/6c939a76fb6da46e78ebdcda0f35dc11deb9c818))
+* **skills:** add the epic planning skill ([#156](https://github.com/jmcvetta/daily-driver/issues/156)) ([127fbc9](https://github.com/jmcvetta/daily-driver/commit/127fbc90841dabed35a83bad9bc768ef274f10fe))
+* **skills:** make the shipped skills portable between Claude Code and Omp ([#155](https://github.com/jmcvetta/daily-driver/issues/155)) ([3bb3e5e](https://github.com/jmcvetta/daily-driver/commit/3bb3e5e24e65b2af7a612213a56fa13de01a7554))
+
+
+### Bug Fixes
+
+* bump the minor, not the major, before 1.0.0 ([#141](https://github.com/jmcvetta/daily-driver/issues/141)) ([f1a292d](https://github.com/jmcvetta/daily-driver/commit/f1a292deadea7ec229c8e4d6727118491e11e2a8))
+* **issue-deps:** name the verified skill:// form for Omp ([#172](https://github.com/jmcvetta/daily-driver/issues/172)) ([a01402b](https://github.com/jmcvetta/daily-driver/commit/a01402b3bce6603d90e528cf5f0169ddb6992ca6))
+
 ## [0.18.2](https://github.com/jmcvetta/daily-driver/compare/v0.18.1...v0.18.2) (2026-09-09)
 
 

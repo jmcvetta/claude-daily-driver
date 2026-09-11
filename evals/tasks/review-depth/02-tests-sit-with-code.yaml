@@ -1,7 +1,7 @@
 task_id: review-depth-tests-sit-with-code
 description: >-
   A hundred-line test-only diff gets the judgment tier, not the docs skim.
-tags: [review-depth, routing, fire]
+tags: [review-depth, routing, fire, claude-only]
 
 sandbox:
   # Two sources, both mounted at `.fixture`, so the sandbox gets the shared

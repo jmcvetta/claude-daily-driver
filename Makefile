@@ -9,8 +9,10 @@ SHELL := /bin/bash
 
 .PHONY: git_sync check check-plugin check-skills check-agents check-scripts \
 	check-manifests check-constitution check-ask-in-chat check-omp-extension \
-	check-eval-fixtures check-step-names check-evals-preflight check-labels \
-	check-infra evals-install evals-plan evals-preflight evals-run mcp-usage
+	check-omp-plugin check-omp-agent check-eval-fixtures check-eval-arms \
+	check-step-names check-evals-preflight check-labels check-infra \
+	evals-install evals-plan evals-variants evals-preflight evals-run \
+	evals-run-omp mcp-usage
 
 # The `coder_eval` release the eval suites are written against. Pinned on
 # purpose: being able to hold a version back is the whole reason the suites are
@@ -42,8 +44,9 @@ git_sync:
 # than restating its legs, so a leg added here is a leg CI gains — and there
 # is no second command line to fall behind this one.
 check: check-plugin check-skills check-agents check-scripts check-manifests \
-	check-constitution check-ask-in-chat check-omp-extension \
-	check-eval-fixtures check-step-names check-evals-preflight check-labels
+	check-constitution check-ask-in-chat check-omp-extension check-omp-agent \
+	check-eval-fixtures check-eval-arms check-step-names check-evals-preflight \
+	check-labels
 
 # `claude plugin validate --strict` reads one manifest at a time and picks the
 # marketplace when handed a directory, so the plugin manifest is named
@@ -116,6 +119,25 @@ check-ask-in-chat:
 check-omp-extension:
 	node scripts/check-omp-extension.mjs
 
+# check-omp-plugin: the discovery half of the Omp story, which
+# check-omp-extension cannot reach. It starts a real `omp --mode rpc` and asks
+# the running agent what it got -- the skills on both the `--plugin-dir` and
+# the installed-plugin routes, and the extension on the one route that loads
+# it. Credential-free, against a throwaway HOME. See the script's docstring.
+#
+# Not part of `check`, for the reason check-infra is not: it needs a toolchain
+# -- here a whole second harness -- and `check` must not start requiring Omp on
+# a laptop that is only editing a skill. CI's `omp` job runs it, gated on the
+# files that can actually break the Omp integration, and reports into
+# `CI Success` either way so a break blocks a merge.
+#
+# No guard on `omp` either, and that is the same decision as check-infra's. A
+# target nobody runs by accident should fail loudly when its toolchain is
+# absent; a target inside `check` would have needed the guard, and the guard is
+# what would have let it silently check nothing.
+check-omp-plugin:
+	python3 scripts/check-omp-plugin.py
+
 # check-scripts: lint the shell a skill ships. `claude plugin validate` reads
 # manifests and never opens a `scripts/` file, so without this leg the plugin's
 # executable half is the only part of the repository nothing checks.
@@ -132,6 +154,23 @@ check-scripts:
 	shellcheck -x --source-path=SCRIPTDIR \
 		skills/*/scripts/*.sh scripts/*.sh \
 		evals/fixtures/*/shared/*.sh evals/fixtures/*/cases/*/*.sh
+
+# check-omp-agent: the acceptance test for the Omp eval arm's frame reduction
+# -- the skill-URL normalisation, the tool and argument renames, and the
+# transcript shape every llm_judge rubric here anchors on. Part of `check`
+# because `evals/coder-eval-omp/src/coder_eval_omp/rpc.py` imports nothing:
+# neither coder-eval nor omp is needed to run it, and every one of the things
+# it asserts fails as a silent zero rather than as an error. See the script's
+# docstring, and evals/coder-eval-omp/README.md for the arm.
+check-omp-agent:
+	python3 scripts/check-omp-agent.py
+
+# check-eval-arms: the two arms are routed by tag, and nothing else holds the
+# tags in step. A fork that loses its tag runs in both arms and grades one
+# harness's route under the other's. Credential-free like the other script
+# legs. See the script's docstring.
+check-eval-arms:
+	python3 scripts/check-eval-arms.py
 
 # check-eval-fixtures: build every review-depth fixture repository and assert
 # it has the shape the `review` skill needs. Part of `check` because it needs
@@ -182,8 +221,13 @@ check-infra:
 
 # evals-install: the pinned harness, from PyPI. `uv` fetches Python 3.13 itself,
 # so this is the whole setup.
+# `--with` puts the Omp agent kind in the same environment as the pinned
+# `coder-eval`, which is where `coder_eval` looks for its plugin entry points.
+# Without it `agent: {type: omp}` does not resolve, and `plan` says so and
+# exits 0 anyway -- which is what `evals-variants` is for.
 evals-install:
-	uv tool install --python 3.13 coder-eval==$(CODER_EVAL_VERSION)
+	uv tool install --python 3.13 coder-eval==$(CODER_EVAL_VERSION) \
+		--with ./evals/coder-eval-omp
 
 # evals-plan: validate every eval case without calling a model. Free, and it
 # catches the config errors that otherwise cost a paid run to discover -- so
@@ -198,8 +242,19 @@ evals-install:
 #
 # Laptop-only, like git_sync: the cases need a live model, and this
 # repository's CI is deliberately credential-free.
-evals-plan:
+evals-plan: evals-variants
 	cd evals && $(CODER_EVAL) plan -e experiments/with-without.yaml tasks/*/*.yaml
+	cd evals && $(CODER_EVAL) plan -e experiments/omp.yaml tasks/*/*.yaml
+
+# evals-variants: refuse to start when an arm's agent kind is not registered.
+# `coder-eval plan` PRINTS "Variant 'omp': resolution failed" and then exits 0,
+# so plan alone cannot catch an arm that will measure nothing -- measured, and
+# the reason this target exists (issue #173). Free: no model, no task file.
+# Wired in front of `evals-plan` rather than beside it, so the cheapest command
+# anyone runs is the one that catches it. See the script's docstring and
+# docs/notes/0013-the-omp-arm.md.
+evals-variants:
+	python3 scripts/evals-variants.py evals/experiments/*.yaml
 
 # evals-run: the whole suite, both arms. Costs real money -- see evals/README.md
 # for what and why. Narrow it with TASKS=, e.g.
@@ -220,8 +275,20 @@ TASKS ?= tasks/*/*.yaml
 evals-preflight:
 	cd evals && python3 ../scripts/evals-preflight.py $(TASKS)
 
+# The Claude arms exclude the Omp forks, and the Omp arm excludes the rows
+# whose rule is Claude Code only. The tag is what routes a row to its arm, and
+# `make check-eval-arms` is what keeps the two sets in step.
 evals-run: evals-plan evals-preflight
-	cd evals && $(CODER_EVAL) run -e experiments/with-without.yaml $(TASKS)
+	cd evals && $(CODER_EVAL) run -e experiments/with-without.yaml \
+		--exclude-tags omp-only $(TASKS)
+
+# evals-run-omp: the same suites on Oh My Pi. Needs `omp` on PATH and a model
+# configured in the caller's own `~/.omp/agent/`, which the agent borrows
+# rather than copies -- see evals/coder-eval-omp/README.md. Costs real money,
+# like its sibling, and narrows the same way with TASKS=.
+evals-run-omp: evals-plan evals-preflight
+	cd evals && $(CODER_EVAL) run -e experiments/omp.yaml \
+		--exclude-tags claude-only $(TASKS)
 
 # mcp-usage: which GitHub MCP tools were actually called, rolled up to the
 # toolsets that supply them. Laptop-only like git_sync — it reads Claude

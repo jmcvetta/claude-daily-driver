@@ -1,7 +1,7 @@
 task_id: review-depth-sensitive-touch-on-a-tiny-diff
 description: >-
   Eleven lines of release workflow still get a security reviewer.
-tags: [review-depth, routing, fire]
+tags: [review-depth, routing, fire, claude-only]
 
 sandbox:
   # Two sources, both mounted at `.fixture`, so the sandbox gets the shared

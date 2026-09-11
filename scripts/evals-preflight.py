@@ -11,7 +11,7 @@ line, and the run **continues**. The BEDROCK and LITELLM backends always have
 a usable judge transport; only DIRECT can be unconfigured this way.
 
 That "continues" is the defect this guards against. Running
-`tasks/session-title/01-get-session-before-set.yaml` in a container with no
+`tasks/session-title/07-get-session-before-set.yaml` in a container with no
 `ANTHROPIC_API_KEY` produced an `experiment.md` reading `Score 0.000 (bare) /
 0.333 (with-plugin)`, `Best: with-plugin`, `Win Rates — with-plugin: 1/1 tasks
 (100%)`. That reads as a clean ablation. The entire 0.333 was the weight-1
