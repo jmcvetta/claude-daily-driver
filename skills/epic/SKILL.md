@@ -207,8 +207,10 @@ them. The epic gets `epic`, which is the one word that stops `undertake`
 starting on it; each task gets `task`, `bug` or `research`, whichever it is.
 An issue converted into the epic is **relabelled** rather than labelled: it
 carried something before, and two of the five on one issue is a stop in its
-own right. On a harness whose label write adds rather than replaces, that swap
-is one call carrying both the add and the remove.
+own right. Both harnesses make that swap awkward, in opposite ways, and the
+reference file for the one in use says how: a write that *adds* needs the
+remove in the same call, and a write that *replaces* needs the issue's
+current labels read first, or the stock and bot-owned ones go with the swap.
 
 No permission is asked here. It was asked once at `Agree the plan`, and asking
 again per issue is the same question eight times.

@@ -11,7 +11,7 @@ read it, do not go further.
 ## What's in it
 
 The **constitution** — `rules/constitution.md`, delivered to every session
-by hook — plus **two hooks that enforce rather than instruct**, and twelve
+by hook — plus **two hooks that enforce rather than instruct**, and thirteen
 skills:
 
 | Skill | What it does |

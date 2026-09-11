@@ -82,7 +82,7 @@ What the label decides
 ======================
 
 **Readiness, and nothing else.** `undertake` reads it at `Read the issue and
-its edges`, and it is a stop in two cases:
+its edges`, and one label out of the five is a stop in two cases:
 
 - An `epic` is a stop. Say which child to work instead, and wait; `epic`
   owns the wording.
@@ -90,9 +90,8 @@ its edges`, and it is a stop in two cases:
   already refuses to write an issue for, arriving with an issue already
   written. Deciding its shape is the user's and decomposing it is `epic`'s,
   so it goes to the user.
-- **Two of the five on one issue is a stop**, whichever two. They answer the
-  readiness question twice and nothing here ranks them.
 
+Two labels out of the five is a third stop, and it is below with its remedy.
 `task`, `bug` and `research` all run through. They differ in what the pull
 request contains, not in whether one is opened.
 
@@ -112,7 +111,9 @@ says the shape is both open and settled, and picking either reading is
 guessing at intent. Say which two are on it, say which one `Picking one`
 returns, and wait. Adding rather than replacing is how it happens by
 accident, so the reference file for a harness whose label write *adds* says
-that a swap takes two operations rather than one.
+that a swap is one call carrying both the add and the remove. On a harness
+whose write *replaces*, the swap is free and the read-first rule is what
+bites instead: see `Where the standard is declared`.
 
 
 What a label is not

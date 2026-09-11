@@ -19,12 +19,9 @@ evals/
 │   ├── review-cycle/    … when a review is to be run and answered, and only then?
 │   ├── undertake/       … when work is undertaken, and only when handed over?
 │   ├── epic/            … when work is broken up, and never when it fits one PR?
-│   ├── session-title/   … when the session is named, and by the call that reads it first?
-│   ├── issue-deps/      … when an issue relationship is read or written?
-│   ├── issue-labels/    … when an issue is labelled, and not when it is linked?
-│   ├── judgement-call/  … when a choice is about to be put to the user?
 │   ├── deps/            … when the deps are upgraded in bulk, and not for one?
 │   ├── issue-deps/      … when an issue relationship is read or written?
+│   ├── issue-labels/    … when an issue is labelled, and not when it is linked?
 │   ├── judgement-call/  … when a choice is about to be put to the user?
 │   ├── session-title/   … when the session is named, and not the PR?
 │   ├── constitution/    does the constitution reach a subagent, and land?
