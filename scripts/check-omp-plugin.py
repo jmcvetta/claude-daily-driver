@@ -52,10 +52,14 @@ WHAT IT DOES NOT ASSERT
 WHY IT NEEDS NO CREDENTIALS
 
     `get_available_commands` is answered from the session's own command
-    registry. No provider is configured, no model is called, and the run costs
-    nothing. `HOME` is a throwaway directory for the length of the run, so the
-    laptop's own skills, providers and installed plugins cannot make this pass
-    -- or fail -- on their own, and `omp plugin link` writes inside it.
+    registry. No model is called and the run costs nothing. Omp does insist on
+    a model being *available* before it starts a session, so the throwaway
+    `HOME` carries a placeholder one pointing at a closed port -- see
+    `isolated_environment`, which also says why the child's environment is
+    built rather than inherited. `HOME` is throwaway for the length of the run,
+    so the laptop's own skills, providers and installed plugins cannot make
+    this pass -- or fail -- on their own, and `omp plugin link` writes inside
+    it.
 
 Omp on `PATH` is the one thing it does need, and the `check-omp-plugin` leg of
 `make check` is what decides whether the machine has it. See the Makefile.
@@ -120,19 +124,50 @@ def expected_skill_commands() -> list[str]:
 
 
 def isolated_environment(home: Path) -> dict[str, str]:
-    """A throwaway `HOME`, with Omp's skill commands turned on.
+    """A throwaway `HOME` and a built environment, not an inherited one.
 
-    Skill commands are off by default, and without them
-    `get_available_commands` returns the builtins and nothing else -- a pass
-    that would mean nothing. `PI_CODING_AGENT_DIR` is dropped rather than set,
-    because it relocates the agent directory out of the `HOME` this just built.
+    Two files go in it. `config.yml` turns skill commands on, which are off by
+    default -- without them `get_available_commands` returns the builtins and
+    nothing else, a pass that would mean nothing. `models.yml` declares one
+    placeholder model, because Omp refuses to start a session with no model
+    available at all: it points at a closed port and carries `auth: none`, so
+    it satisfies the startup check while being unusable, and nothing in this
+    run ever calls a model anyway.
+
+    The environment is built from a short allow-list rather than copied from
+    the caller's. A copied environment carries the machine's provider
+    credentials -- `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, and the rest --
+    and those are exactly what decides whether Omp finds a model. Inherit them
+    and this check passes on a laptop for a reason CI does not have, which is
+    the failure that wrote this paragraph.
     """
-    config = home / ".omp" / "agent" / "config.yml"
-    config.parent.mkdir(parents=True, exist_ok=True)
-    config.write_text("skills:\n  enableSkillCommands: true\n", encoding="utf-8")
+    agent = home / ".omp" / "agent"
+    agent.mkdir(parents=True, exist_ok=True)
+    (agent / "config.yml").write_text("skills:\n  enableSkillCommands: true\n", encoding="utf-8")
+    (agent / "models.yml").write_text(
+        "providers:\n"
+        "  check-omp-plugin:\n"
+        "    baseUrl: http://127.0.0.1:1/v1\n"
+        "    api: openai-completions\n"
+        "    auth: none\n"
+        "    models:\n"
+        "      - id: check-omp-plugin-placeholder\n"
+        "        name: Placeholder\n"
+        "        api: openai-completions\n"
+        "        contextWindow: 8192\n"
+        "        maxTokens: 1024\n"
+        "        cost:\n"
+        "          input: 0\n"
+        "          output: 0\n"
+        "          cacheRead: 0\n"
+        "          cacheWrite: 0\n",
+        encoding="utf-8",
+    )
 
-    env = dict(os.environ)
-    env.pop("PI_CODING_AGENT_DIR", None)
+    # PATH finds the binary and whatever runtime its shebang names; the rest
+    # are the ordinary process furniture a child is entitled to. Nothing here
+    # names a provider, a token, or a directory outside `home`.
+    env = {name: os.environ[name] for name in ("PATH", "TMPDIR", "LANG", "LC_ALL", "TERM") if name in os.environ}
     env["HOME"] = str(home)
     # The XDG roots are the other way Omp reaches the machine's own state.
     for name in ("XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME"):
