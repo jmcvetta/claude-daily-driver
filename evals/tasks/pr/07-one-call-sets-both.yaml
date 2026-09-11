@@ -4,8 +4,9 @@
 # `references/claude.md` says it is one: "Updating an existing pull request as
 # a whole — title and body together. `mcp__github__update_pull_request`,
 # called once both are decided." A row that passes without the reference file
-# being read is wrong, so the graded content is that single-call fact, which
-# is easy to get wrong precisely because `pr-title`'s own reference file
+# being read is wrong, so the graded content is that sentence entire — the
+# MCP call, and one of it. The count alone is both easy to get right unaided
+# and easy to get wrong for the wrong reason: `pr-title`'s own reference file
 # mentions only `title` and `pr-body`'s mentions only `body` — reading either
 # sibling alone suggests two separate calls.
 #
@@ -74,6 +75,16 @@ success_criteria:
     # rather than needing an `ANTHROPIC_API_KEY` this project does not have.
     # The empty tool surface and the permission mode are both load-bearing --
     # see docs/notes/0014-the-judge-runs-on-the-subscription.md.
+    # Bounded on purpose. `AgentJudgeCriterion` defaults to `max_turns: 50`,
+    # and with an empty tool surface the judge's own system prompt still tells
+    # it to reach for Bash and Read -- so a compliant judge can spend turns on
+    # calls it cannot make. `task_timeout` wraps criteria checking, so a judge
+    # that overruns cancels the replicate as a TIMEOUT rather than scoring it,
+    # and a cancelled replicate shrinks the sample behind a reported mean. Two
+    # turns is what a verdict takes: read the pre-attached transcript, call
+    # `submit_verdict`. Five is margin, not budget.
+    max_turns: 5
+    turn_timeout: 120
     agent:
       type: claude-code
       model: claude-sonnet-5
@@ -102,13 +113,17 @@ success_criteria:
 
       A plausible naming variant of the MCP call is acceptable ("the GitHub
       MCP update-pull-request tool", "update_pull_request"). `gh pr edit` is
-      NOT a variant of it: it is the other tool, and naming it fails the
-      first half however few invocations the reply proposes.
+      NOT a variant of it: it is the other tool.
 
-      Score 1.0 if the REPLY names the MCP call and commits to a single one
-      of it setting both fields together.
-      Score 0.5 if it names the MCP call but proposes two of them, one per
-      field.
-      Score 0.0 if the reply proposes `gh pr edit` in any form — including a
-      single invocation carrying both `--title` and `--body` — or names no
-      specific call at all.
+      What matters is the call the reply proposes to ACTUALLY RUN. A reply
+      naming `gh pr edit` only to rule it out — "not `gh pr edit`; one
+      `update_pull_request` call carrying both fields" — proposes the MCP
+      call, and scores on that rather than on the mention.
+
+      Score 1.0 if the REPLY names the MCP call as the mechanism and commits
+      to a single one of it setting both fields together.
+      Score 0.5 if it names the MCP call as the mechanism but proposes two of
+      them, one per field.
+      Score 0.0 if the reply proposes `gh pr edit` as the actual mechanism —
+      including a single invocation carrying both `--title` and `--body` —
+      or names no specific call at all.

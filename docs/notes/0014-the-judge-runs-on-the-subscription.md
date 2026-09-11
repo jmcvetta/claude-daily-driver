@@ -67,15 +67,30 @@ A container runs as root, so the default makes the judge unusable in half the
 places this suite runs. Nothing here needs it, because the tool surface is
 empty.
 
-## Why this is better than the criterion it replaces
+## What the port costs
 
-`agent_judge` fails **loudly**. The crash above scored 0.0 with
-`AgentCrashError: CLI process failed …` in the report. That is the whole
-defect `0012` was written about, inverted: `llm_judge` with no transport
-returns 0.0 with `details="(judge transport unconfigured)"` and lets the run
-continue, and nothing in `experiment.md` says the criterion never executed.
-A judge that cannot run should say so where the reader looks, and this one
-does.
+It is tempting to say `agent_judge` fails more loudly than `llm_judge`. It
+does not. Checked in `coder_eval` 0.11.6: `llm_judge`'s unconfigured-transport
+path (`criteria/llm_judge.py:123`) returns score 0.0 with `details` **and** a
+populated `error`, exactly as `agent_judge`'s crash path
+(`criteria/agent_judge.py:230`) does, and `reports.py` keys on `cr.error`
+without reference to the criterion type. Both surface the same way.
+
+What the port does change is coverage, and it changes it for the worse.
+`scripts/evals-preflight.py` matches `type: llm_judge` and nothing else, so
+these eight rows have left the one guard standing in front of them. The
+failure they can now have is also harder to read than the one they had: a
+judge that cannot start fails per replicate, so it shows as some replicates
+missing from a mean rather than as a row uniformly zero.
+
+That is a real cost, accepted because the alternative is eight findings that
+never execute at all. Two things hold it down, and neither is the guard:
+`permission_mode` and `allowed_tools` are set explicitly on every one of
+these rows, which is what the crash above was; and `max_turns` and
+`turn_timeout` are bounded, so an overrunning judge cannot silently cancel
+its replicate against `task_timeout`. A `make check` leg asserting those four
+fields on every `agent_judge` in the tree is the guard this note does not
+add.
 
 ## What is kept
 
