@@ -10,11 +10,19 @@ The issue
 | Step | Operation | Call |
 | ---- | --------- | ---- |
 | `Open the issue` | Search the open issues | `mcp__github__search_issues` |
-| `Open the issue` | Open one | `mcp__github__issue_write` |
+| `Open the issue` | Open one, labelled | `mcp__github__issue_write`, method `create`, with `labels` |
 | `Read the issue and its edges` | Read the body and the graph | `mcp__github__issue_read` |
+| `Read the issue and its edges` | Label an issue that carries none | read `labels` with `mcp__github__issue_read`, then `mcp__github__issue_write`, method `update`, sending that set plus the new label |
 | `Claim the issue` | Comment on the issue | `mcp__github__add_issue_comment` |
 
-`issue-deps` owns the edge writes, and has its own routes.
+**The read in that row is not optional.** `labels` replaces the whole set, so
+an update sending one label deletes every other label the issue had — the
+stock and bot-owned ones `issue-labels` says to leave alone included. An
+issue carrying none of the standard's five is not an issue carrying none.
+
+`issue-deps` owns the edge writes, and has its own routes. So does
+`issue-labels`, whose `references/claude.md` states that trap where the label
+write lives.
 
 
 The pull request

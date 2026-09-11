@@ -11,7 +11,7 @@ read it, do not go further.
 ## What's in it
 
 The **constitution** — `rules/constitution.md`, delivered to every session
-by hook — plus **two hooks that enforce rather than instruct**, and twelve
+by hook — plus **two hooks that enforce rather than instruct**, and thirteen
 skills:
 
 | Skill | What it does |
@@ -19,14 +19,16 @@ skills:
 | `pr` | Opens the pull request for the current branch, or brings an open one up to date: branch guard, existing-PR check, draft state. Delegates the title and the body. |
 | `pr-title` | The title: concise, and Conventional Commits, which is what release-please reads to decide the next version. |
 | `conventional-commits-type` | Picks the type — `fix`, `feat`, `refactor` and the rest — from what the change *does*, never from what the diff looks like. |
-| `pr-body` | The body: a one-line summary, a salutation in verse, an executive summary, engineering detail, and the `Issues` section that closes it. |
+| `pr-body` | The body: a one-line summary, a salutation in verse, the `Issues` section that follows it, an executive summary, and engineering detail. |
 | `issue-deps` | Records and reads GitHub issue relationships — blocked-by, sub-issue, and which pull request closes what. |
+| `issue-labels` | The five labels an issue may carry — `epic`, `task`, `bug`, `proposal`, `research` — and the readiness each one states, which is what decides whether an agent may start unattended. |
 | `session-title` | Names the session for the Claude web and mobile lists: forty characters, `#123 shortened issue title` while an issue is in hand. |
 | `readme` | Writes a README that answers what this is and how to use it, and nothing else: the shape, the reading of length as a symptom, and the list of what belongs in a commit message, a changelog or `docs/` instead. |
 | `judgement-call` | The gate before a choice is put to you: where the correct, standard way already answers it, Claude answers it and says which way it went. A question that survives the gate is asked in the chat reply — the `AskUserQuestion` widget is denied by hook. |
 | `review-cycle` | One round on a pull request: the built-in `/code-review`, a verdict on every finding, and the test for whether a later push has earned a second round. |
 | `undertake` | Takes a piece of work from its description to a pull request ready for review, opening the issue first where there is none, and keeping the branch current with its base after. |
 | `epic` | Breaks work too big for one pull request into task issues under an epic: the two gates that decide there is one, the plan agreed before anything is written, and the waves the sub-issue panel cannot render. |
+| `embark` | Works an epic: one Claude session per task issue in the current wave, the muster roll posted to the epic in place of a confirmation, and the watch kept through the pull requests rather than the session client. |
 | `deps` | The bulk dependency upgrade: every ecosystem on one branch through the package managers' own bulk commands, green CI as the whole acceptance test, majors reported rather than taken. |
 
 A skill fires on its slash command where it has one, on natural phrasings of
@@ -199,7 +201,9 @@ over `agents/`, on the runs where the plugin ships any; `shellcheck` over every
 shell script; `scripts/check-manifests.py` for what `validate` lets through,
 such as a skill whose frontmatter `name` disagrees with its directory; `scripts/check-constitution.py`, which drives
 both hooks against synthetic event JSON and asserts the constitution comes back
-from each; and `scripts/check-eval-fixtures.sh`.
+from each; `scripts/check-labels.py`, which asserts the issue-label standard
+says the same thing in `issue-labels` and in the OpenTofu that declares it; and
+`scripts/check-eval-fixtures.sh`.
 
 Two more checks are deliberately outside it. `make check-infra` parses the OpenTofu
 stack — see [infra/github/README.md](infra/github/README.md). `make evals-run`
@@ -229,8 +233,8 @@ decision someone makes rather than one the next `!` confers.
 **That trailer goes in the squash-commit message, edited at the merge box,
 and nothing may follow it.** release-please reads the note out of the commit
 subject and body, and voids it where non-trailer text sits below — which a
-pull request body always has here, since `pr-body` ends one with an `Issues`
-section and the attribution lines land under that. A voided note is silent:
+pull request body always has here, since `pr-body` ends one with engineering
+detail and the attribution lines land under that. A voided note is silent:
 the version comes out as the arithmetic says and nothing logs a reason.
 
 [pra]: https://github.com/jmcvetta/projected-releases-action

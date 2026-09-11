@@ -13,8 +13,8 @@ description: >-
   `get_sub_issues` or `get_parent`, `mcp__github__issue_write` with
   `parent_issue_number`, or of a `Closes #123` line in a pull request body.
   Supplies the three clients these relationships need and the probe that picks
-  one, the script for a token without `gh`, and the rule that a relationship
-  is proposed from evidence and confirmed by the user, never asserted.
+  one, the script for a token without `gh`, and the rule that an edge the
+  evidence supports is written and reported, never asked about first.
 ---
 
 # Issue relationships
@@ -91,26 +91,65 @@ is the client:
    that, rather than a session discovering it by failing.
 
 
-Propose from evidence; never assert
-===================================
+Write from evidence; report every write
+=======================================
 
 The failure mode of this skill is **inventing relationships**. An agent handed
 a job feels obliged to produce output, and this job's output is edges.
 
-- A wrong edge is worse than a missing one. It blocks work silently, and nobody
-  thinks to look for a relationship they did not create.
-- So: state the evidence, name the edge it implies, and **ask**. Write only on
-  confirmation.
-- Reading is free and needs no confirmation. Writing never is.
+A wrong edge is still worse than a missing one, and the reason is **silence**:
+it blocks work nobody knows is blocked, and nobody thinks to look for a
+relationship they did not create. Silence is cured by announcing the write,
+not by asking before it. An edge is outward-facing — it lands in a tracker
+other people read — and that is what the report answers; what it is not is
+expensive to take back, because one `remove` undoes it.
 
-The firing moment is real and specific — a dependency is *discovered* while
-planning work, or while writing a PR body and realising it cannot merge first.
-That is when to speak. A sweep of the issue list looking for edges to add is
-the manufacturing failure, not the skill working.
+So: state the evidence, name the edge it implies, **write it**, and report the
+write.
 
-None of this moved when the transport did. In the session that found the `gh`
-path, this rule is what stopped an edge being written between two issues that
-merely shared a subject.
+- **Report every write, prominently.** The edge, both ends by repository and
+  number, and the evidence it came from. The write is verified from the
+  blocking side anyway — `The traps` says why — so the fact is in hand before
+  the report is written.
+- **Reading is free**, and needs neither a confirmation nor a report.
+- **Two things stop a write, and only two.** A **contradiction** — the edge
+  disagrees with something the user has said — and a **plan not yet agreed**:
+  inside `epic`, every edge waits for `Agree the plan`, the one stop that step
+  is, whether it was drafted there or noticed while drafting. Name what is
+  wrong, or what the edge is waiting on, and ask. Nothing else here waits.
+
+**The evidence test is now the whole guard**, so it is stated exactly. It
+covers **every inferred edge** — blocked-by, sub-issue and parent alike, which
+is the reach the confirmation had. Both of these must hold before one is
+written:
+
+- **The relationship was discovered in the work in hand** — while planning a
+  change, or while writing a PR body and realising it cannot merge first. Not
+  while reading the issue list for edges to add.
+- **The evidence is a statement about the issues, of the kind the edge
+  claims.** The two kinds are different claims, so the evidence is different
+  too, and evidence for one is never evidence for the other:
+  - **Blocked-by** says *this must close first*, so the evidence is about the
+    code. One issue reads a function the other adds; one issue's fix is in a
+    file the other deletes.
+  - **Sub-issue or parent** says *this is part of that*, so the evidence is
+    about scope. The parent states scope the child is one piece of, and the
+    child closes without the parent closing.
+
+  A shared subject is evidence of neither, and neither is a shared label,
+  milestone or author.
+
+**An edge that is given rather than inferred does not go to the test**, and
+there is nothing there for it to weigh. `epic` writes the parent edges and the
+blocked-by edges of a decomposition the user has already agreed, and
+`undertake` writes a `Closes #123` line the assignment states. The test is for
+an edge nobody asked for, which is the only kind that can be invented.
+
+A sweep of the issue list looking for edges to add is the manufacturing
+failure, not the skill working. In the session that found the `gh` path, the
+second test is what stopped an edge being written between two issues that
+merely shared a subject. The confirmation would have caught that edge as well;
+with the confirmation gone, the test is the only thing that catches it.
 
 
 What is a blocker
@@ -240,6 +279,12 @@ Parent/child is *decomposition* — this issue is part of that one — and is a
 different claim from *this must close first*. An epic's children are not
 automatically its blockers, and saying so in edges would be inventing
 relationships.
+
+**The `epic` label and the parent edge are not the same statement**, and both
+are wanted. The label says an issue coordinates others, which is what a reader
+scanning a list needs and what stops an agent starting on it; the edges say
+*which* others, which a label can never say. `issue-labels` owns the first, and
+an epic with no children is a label with nothing behind it.
 
 
 Which PR closes an issue

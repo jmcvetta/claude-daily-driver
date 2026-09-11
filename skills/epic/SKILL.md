@@ -57,8 +57,8 @@ The sequence
 | - | ---- | ----- |
 | 0 | `Size the work` | this skill |
 | 1 | `Draft the plan` | this skill |
-| 2 | `Agree the plan` | this skill, `judgement-call`, `issue-deps` |
-| 3 | `Open the issues` | this skill, `undertake` |
+| 2 | `Agree the plan` | this skill, `judgement-call` |
+| 3 | `Open the issues` | this skill, `undertake`, `issue-labels` |
 | 4 | `Write the graph` | `issue-deps` |
 | 5 | `Fill in the epic` | this skill |
 | 6 | `Hand off` | `undertake` |
@@ -164,13 +164,17 @@ model it suggests, each edge as what it waits on, the gates' answer from
 issue that is and that its body is replaced — and write nothing until the user
 agrees.
 
-It clears `judgement-call`'s gate twice over. A decomposition is a statement of
+It clears `judgement-call`'s gate on scope. A decomposition is a statement of
 scope: it says what the pieces are and what done means for each, and craft does
-not pick one split over another. And `issue-deps` writes an edge only on
-confirmation, which `judgement-call` explicitly does not waive.
+not pick one split over another.
 
-**One agreement covers the whole plan**, edges included. They are not confirmed
-again, one at a time, at `Write the graph`.
+The edges are agreed here too, and not because `issue-deps` asks for them — it
+writes an edge from evidence and reports the write. They are agreed because
+they **are** the plan: an edge says which task waits on which, so the order of
+the work is as much a statement of scope as the split is.
+
+**One agreement covers the whole plan**, edges included. `Write the graph`
+writes them and reports each one, and asks nothing a second time.
 
 3 — Open the issues
 -------------------
@@ -201,6 +205,16 @@ The epic first, then the tasks, because a task names the epic as its parent and
 the parent must exist to be named. The epic's body at this point is `Summary`
 and `Justification`, and stops there: `Sequencing` is made of issue numbers
 that do not exist yet, which is why `Fill in the epic` is a step of its own.
+
+**Every issue this step writes carries a label**, and `issue-labels` supplies
+them. The epic gets `epic`, which is the one word that stops `undertake`
+starting on it; each task gets `task`, `bug` or `research`, whichever it is.
+An issue converted into the epic is **relabelled** rather than labelled: it
+carried something before, and two of the five on one issue is a stop in its
+own right. Both harnesses make that swap awkward, in opposite ways, and the
+reference file for the one in use says how: a write that *adds* needs the
+remove in the same call, and a write that *replaces* needs the issue's
+current labels read first, or the stock and bot-owned ones go with the swap.
 
 No permission is asked here. It was asked once at `Agree the plan`, and asking
 again per issue is the same question eight times.
@@ -235,6 +249,11 @@ has a number to put in it.
 Every task whose blockers are closed can start now, each in its own session,
 each through `undertake`. Name them, rather than leaving the reader to derive
 the list the first time.
+
+**Putting that wave to sea is `embark`'s**, where the harness can open sessions
+at all: one session per task, watched to merge, and the next wave after it. The
+list named here is what it takes in, and it is also the whole hand-off on a
+harness that cannot.
 
 **The epic is never undertaken**, which is the stop of that name under
 `Where it stops and waits`. It carries no code; the tasks named above are what
