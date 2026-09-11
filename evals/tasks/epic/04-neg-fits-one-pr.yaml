@@ -1,0 +1,24 @@
+task_id: epic-04-neg-fits-one-pr
+description: >-
+  Ordinary work, one pull request's worth. Gate one closes, and firing here
+  would cost a two-file change an epic, several issues and a graph.
+tags: [trigger-accuracy, epic, no-fire]
+
+initial_prompt: "Add a --dry-run flag to the release script."
+
+agent:
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+# `expected_skill: none` names no skill in this plugin, so the criterion below
+# is a distractor and the row passes only in silence.
+success_criteria:
+  - type: skill_triggered
+    description: "`epic` does not fire on work that fits one pull request"
+    expected_skill: none
+    skill_name: epic
+    stop_early: {}

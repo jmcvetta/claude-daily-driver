@@ -1,0 +1,31 @@
+task_id: epic-05-neg-undertake-one-issue
+description: >-
+  One issue, handed over to be worked. `undertake` is the right answer, and
+  `epic` must not read every issue as a candidate for decomposition — that is
+  the sweep its non-goals forbid.
+tags: [trigger-accuracy, epic, no-fire]
+
+initial_prompt: "Undertake #12."
+
+agent:
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`undertake` fires"
+    expected_skill: undertake
+    skill_name: undertake
+    # Armed so the watcher counts it as pass-capable and defers the
+    # distractor's fail-stop until recall is decided; `on_pass` stays at its
+    # default `continue`, so this never truncates a run itself.
+    stop_early: {}
+  - type: skill_triggered
+    description: "`epic` does not fire on one issue being undertaken"
+    expected_skill: undertake
+    skill_name: epic
+    stop_early: {}
