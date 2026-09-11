@@ -10,8 +10,8 @@ description: >-
   `gh pr edit --body` on a harness that still reaches for it, or to Omp's
   `github` tool's `pr_create` op (`body`) and `gh pr edit --body` for
   revisions. Supplies the
-  required structure: one-line summary, salutation in verse, executive
-  summary, engineering detail, and the issue-reference section that closes it.
+  required structure: one-line summary, salutation in verse, the
+  issue-reference section, executive summary, and engineering detail.
   Not for the PR title — that is `pr-title`.
 ---
 
@@ -25,7 +25,10 @@ The body of a pull request, whether it is being opened or rewritten. In order:
 - **Salutation**: A poetic summary. Immediately after the one-line summary,
   separated by a blank line. A brief poem, in classical style, conveying the
   gist of the PR. Formatted in italics.
-- **Executive Summary**: After the salutation, under heading "Summary", give a
+- **Issues**: The issue this pull request closes, under heading "Issues".
+  Immediately after the salutation, where a reader meets it before the prose.
+  The section below has the format and the rule that governs it.
+- **Executive Summary**: After the issues, under heading "Summary", give a
   concise high level executive summary of the PR.  If you understand the
   importance of the PR for the larger software development or business
   perspectives, include that positioning.
@@ -47,9 +50,11 @@ existing-PR check and draft state.
 Issues
 ------
 
-If the pull request fixes or implements a Github Issue, the body ends with an
-`Issues` section, last, after the engineering detail. Use the format shown
-below:
+If the pull request fixes or implements a Github Issue, the body carries an
+`Issues` section, immediately after the salutation and above the `Summary`.
+It leads because it is the one thing a reader may need before reading any
+prose: which issue this closes, answered without scrolling. Use the format
+shown below:
 
 ```
 Issues
