@@ -1,12 +1,17 @@
 task_id: session-title-03-mcp-set-session-title
 description: >-
-  The MCP route. `mcp__Claude_Code_Remote__set_session_title` does one thing,
-  so naming it settles the subject; what it does not settle is the form, which
-  is what the skill is for.
+  The MCP route, which is a trigger in its own right. The prompt still asks in
+  ordinary words, so the call is covered rather than isolated — `04` is where
+  triggering is tested with no vocabulary to lean on.
 tags: [trigger-accuracy, session-title, fire]
 
+# The opening phrasing was `Give this session a name`, which is the literal
+# trigger phrase `name this session` from the skill's own description: the row
+# would have passed on that alone, with the call name doing no work. It cannot
+# be made keyword-free — the call is named `set_session_title` — so the
+# description above says what the row measures instead of claiming more.
 initial_prompt: >-
-  Give this session a name, and set it yourself with
+  Set this session's title yourself with
   mcp__Claude_Code_Remote__set_session_title.
 
 agent:
