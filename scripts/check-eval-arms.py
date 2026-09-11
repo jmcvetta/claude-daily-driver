@@ -8,22 +8,34 @@ on Omp — the call they name differs, or the rule itself is Claude Code only pe
 `omp-only` and `make evals-run-omp` excludes `claude-only`, so the tag is what
 routes a row to its arm.
 
-Nothing else checks that. A fork whose tag is missing runs in BOTH arms and
-grades one harness's route under the other's, which fails for a reason that has
-nothing to do with the skill. A Claude-only row whose tag is dropped does the
-same in the other direction. And a fork deleted without its sibling leaves an
-arm quietly measuring one row fewer than the other. None of those is visible in
-a report; every one of them is visible here, in `make check`, for free.
+The `review-depth` rows are tagged `claude-only` too, without a counterpart:
+they pin `agent.type: claude-code` and drive Claude's own settings and hooks,
+so they have no Omp form at all. Untagged, they would run inside the Omp arm as
+Claude sessions and be reported as Omp results.
+
+Nothing else checks any of that. A fork whose tag is missing runs in BOTH arms
+and grades one harness's route under the other's, which fails for a reason that
+has nothing to do with the skill. A sibling that loses its own tag does the
+same in the other direction. Neither is visible in a report; both are visible
+here, in `make check`, for free.
 
 WHAT IT ASSERTS
 
     No task carries both arm tags.
-    Every `claude-only` suite has as many `omp-only` rows, and the other way
-    about -- so a fork added or removed on one side is caught on the other.
+    Every `omp-only` row names the Claude row it forks, as a `forks:<task_id>`
+    tag, and that row exists and is tagged `claude-only`. Seven of the ten
+    forks are not their sibling's name plus `-omp` -- the sibling's name states
+    Claude's route, which on Omp is the wrong answer -- so the pairing is
+    declared rather than inferred from a filename. It is also what catches the
+    sibling losing its own tag, which would run Claude's route in the Omp arm.
     Every `task_id` in the tree is unique. Forking a file and forgetting its
     `task_id` is the easy mistake, and `coder_eval` keys its report on that id.
     A `task_id` that ends in `-omp` carries the `omp-only` tag, and no other
     task carries it. The name and the tag are two statements of the same fact.
+    A task that pins `agent.type` is tagged for the arm that kind belongs to.
+    The `review-depth` rows pin `claude-code` because they drive Claude's own
+    settings and hooks, and an untagged one would run in the Omp arm as a
+    Claude session -- billed to that arm, and reported as it.
     Every experiment file parses, declares variants, and names an agent kind
     for each -- read with `evals-variants.py`'s own parser, so the parser that
     guards a paid run is itself exercised here.
@@ -43,7 +55,6 @@ requires of this repository.
 from __future__ import annotations
 
 import sys
-from collections import Counter, defaultdict
 from pathlib import Path
 
 
@@ -59,6 +70,10 @@ EXPERIMENTS = ROOT / "evals" / "experiments"
 
 CLAUDE_TAG = "claude-only"
 OMP_TAG = "omp-only"
+
+# The namespaced tag an Omp row names its Claude sibling with. `coder_eval`
+# accepts a `key:value` tag, so the pairing needs no field of its own.
+FORK_TAG = "forks:"
 
 
 class CheckFailed(Exception):
@@ -100,8 +115,10 @@ def load_tasks() -> list[tuple[Path, dict]]:
 
 
 def check_arm_tags(tasks: list[tuple[Path, dict]]) -> None:
-    """One arm tag at most per row, and one fork per suite on each side."""
-    per_suite: dict[str, Counter[str]] = defaultdict(Counter)
+    """One arm tag at most per row, and every fork paired with its sibling."""
+    claude_rows: dict[str, Path] = {}
+    forks: list[tuple[Path, str]] = []
+
     for path, document in tasks:
         tags = document.get("tags") or []
         if not isinstance(tags, list):
@@ -112,16 +129,36 @@ def check_arm_tags(tasks: list[tuple[Path, dict]]) -> None:
                 f"{path.relative_to(ROOT)} carries both arm tags; a row belongs to one arm or to both, "
                 "and both is spelled by carrying neither"
             )
-        for tag in arm_tags:
-            per_suite[path.parent.name][tag] += 1
+        task_id = document.get("task_id")
+        if CLAUDE_TAG in tags and isinstance(task_id, str):
+            claude_rows[task_id] = path
 
-    for suite, counts in sorted(per_suite.items()):
-        claude = counts[CLAUDE_TAG]
-        omp = counts[OMP_TAG]
-        if claude != omp:
+        declared = [tag.split(":", 1)[1] for tag in tags if isinstance(tag, str) and tag.startswith(FORK_TAG)]
+        if OMP_TAG in tags:
+            if len(declared) != 1:
+                raise CheckFailed(
+                    f"{path.relative_to(ROOT)}: an {OMP_TAG} row must name the Claude row it forks, "
+                    f"as exactly one `{FORK_TAG}<task_id>` tag; found {declared}"
+                )
+            forks.append((path, declared[0]))
+        elif declared:
+            raise CheckFailed(f"{path.relative_to(ROOT)}: carries a `{FORK_TAG}` tag but is not tagged {OMP_TAG}")
+
+        pinned = document.get("agent")
+        pinned_kind = pinned.get("type") if isinstance(pinned, dict) else None
+        if pinned_kind == "claude-code" and CLAUDE_TAG not in tags:
             raise CheckFailed(
-                f"suite {suite!r} has {claude} {CLAUDE_TAG} row(s) and {omp} {OMP_TAG} row(s); "
-                "a forked row needs its counterpart, or one arm measures fewer rows than the other"
+                f"{path.relative_to(ROOT)}: pins `agent.type: claude-code` but is not tagged {CLAUDE_TAG}, "
+                "so the Omp run would bill a Claude session to the Omp arm and report it as one"
+            )
+        if pinned_kind == "omp" and OMP_TAG not in tags:
+            raise CheckFailed(f"{path.relative_to(ROOT)}: pins `agent.type: omp` but is not tagged {OMP_TAG}")
+
+    for path, sibling in forks:
+        if sibling not in claude_rows:
+            raise CheckFailed(
+                f"{path.relative_to(ROOT)} forks {sibling!r}, which is not a task tagged {CLAUDE_TAG}; "
+                "either the sibling lost its tag — and now runs in both arms — or the id is wrong"
             )
 
 
@@ -177,8 +214,21 @@ def check_the_checks() -> None:
             check_arm_tags,
         ),
         (
-            "a fork with no counterpart",
-            [(TASKS / "pr" / "x.yaml", {"task_id": "x", "tags": [CLAUDE_TAG]})],
+            "an omp row naming no sibling",
+            [(TASKS / "pr" / "x.yaml", {"task_id": "x-omp", "tags": [OMP_TAG]})],
+            check_arm_tags,
+        ),
+        (
+            "an omp row whose sibling is not tagged",
+            [
+                (TASKS / "pr" / "x.yaml", {"task_id": "x-omp", "tags": [OMP_TAG, f"{FORK_TAG}x"]}),
+                (TASKS / "pr" / "y.yaml", {"task_id": "x", "tags": []}),
+            ],
+            check_arm_tags,
+        ),
+        (
+            "a claude-code task with no arm tag",
+            [(TASKS / "pr" / "x.yaml", {"task_id": "x", "tags": [], "agent": {"type": "claude-code"}})],
             check_arm_tags,
         ),
         (
@@ -215,7 +265,7 @@ def main() -> None:
     check_task_ids(tasks)
     check_experiments()
     forks = sum(1 for _, document in tasks if OMP_TAG in (document.get("tags") or []))
-    print(f"check-eval-arms: {len(tasks)} task(s), {forks} forked row(s) per arm, every experiment variant named")
+    print(f"check-eval-arms: {len(tasks)} task(s), {forks} fork(s) paired with their siblings, every variant named")
 
 
 if __name__ == "__main__":

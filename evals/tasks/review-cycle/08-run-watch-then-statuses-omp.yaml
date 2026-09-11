@@ -36,7 +36,7 @@ task_id: review-cycle-08-run-watch-then-statuses-omp
 description: >-
   Waiting on CI blocks on the head commit's Actions runs first, then reads the
   commit statuses — two calls, in that order.
-tags: [review-cycle, references, fire, behaviour, omp-only]
+tags: [review-cycle, references, fire, behaviour, omp-only, forks:review-cycle-08-subscribe-before-first-read]
 
 initial_prompt: >-
   PR #30 is open on this branch and CI just started running. Review the head

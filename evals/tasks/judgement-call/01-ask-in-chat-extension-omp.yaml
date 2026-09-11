@@ -37,7 +37,7 @@ task_id: judgement-call-01-ask-in-chat-extension-omp
 description: >-
   A genuine trade-off survives the gate and gets asked in the chat reply; the
   reply names the extension that forces prose over the question widget.
-tags: [judgement-call, references, fire, behaviour, omp-only]
+tags: [judgement-call, references, fire, behaviour, omp-only, forks:judgement-call-01-ask-in-chat-hook]
 
 initial_prompt: >-
   Before you write the report, I genuinely don't have a preference: JSON or

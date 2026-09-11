@@ -86,9 +86,20 @@ the run, so one invocation carrying both sets would grade Omp's routes under a
 Claude arm and pay for it. Each of the ten is therefore two files: the Claude
 one tagged `claude-only`, the Omp one tagged `omp-only`, with `-omp` on the
 `task_id`. `make evals-run` excludes `omp-only`; `make evals-run-omp` excludes
-`claude-only`. `scripts/check-eval-arms.py` holds the two sets in step in
-`make check`, because a fork that loses its tag runs in both arms and fails for
-a reason that has nothing to do with the skill.
+`claude-only`. Each Omp row names its sibling with a `forks:<task_id>` tag —
+`coder_eval` accepts a namespaced tag, so the pairing needs no field of its own
+— and `scripts/check-eval-arms.py` pairs them by it in `make check`. Inferring
+the pair from the filename would not work: seven of the ten counterparts are
+deliberately not the sibling's stem plus `-omp`, because that stem names
+Claude's route and on Omp the row grades the opposite.
+
+**`review-depth` is Claude-only, with no counterpart.** Its seven rows pin
+`agent.type: claude-code` and drive Claude's own settings and its dispatch
+hook, so they have no Omp form. Measured while building this: `coder-eval plan`
+resolved them under the Omp experiment as `Variant 'omp': claude-code`, which
+would have run seven Claude sessions inside the Omp arm and reported them as
+Omp results. They carry `claude-only`, and `check-eval-arms` now fails any task
+that pins an agent kind its arm tag does not match.
 
 *The issue said eleven rows in three groups; there are ten.* Seven grade a
 route that is renamed on Omp, three grade a rule that `0011` makes Claude Code

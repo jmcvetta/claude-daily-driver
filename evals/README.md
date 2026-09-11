@@ -623,6 +623,15 @@ and fails for a reason that has nothing to do with the skill.
 | `undertake` | `08-wake-slot-is-refilled` | `08-cadence-stops-at-ready-omp` |
 | `undertake` | `09-session-fields-for-claim` | `09-claim-carries-the-branch-alone-omp` |
 
+Each Omp row names its sibling with a `forks:<task_id>` tag, which is what
+`check-eval-arms` pairs them by — and what catches a sibling that loses its own
+tag and starts running in both arms.
+
+The seven `review-depth` rows carry `claude-only` with no counterpart. They pin
+`agent.type: claude-code` and drive Claude's own settings and dispatch hook, so
+they have no Omp form; untagged, they would run inside the Omp arm as Claude
+sessions and be billed and reported as Omp results.
+
 Seven counterparts are not the sibling stem plus `-omp`, and that is
 deliberate: those stems name Claude's route, and on Omp the row grades the
 opposite. `08-cadence-stops-at-ready-omp` is the clearest case — Omp has no

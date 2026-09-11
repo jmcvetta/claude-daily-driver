@@ -1,7 +1,7 @@
 task_id: review-depth-neg-opening-a-pr
 description: >-
   Opening a pull request is not a review. The suite's no-fire case.
-tags: [review-depth, routing, no-fire]
+tags: [review-depth, routing, no-fire, claude-only]
 
 # The fixture matters more here than in the fire cases. Without a repository
 # `review` declines for the wrong reason — "there's no branch, no commit

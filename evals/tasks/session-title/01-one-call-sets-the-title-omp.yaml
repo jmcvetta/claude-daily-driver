@@ -33,7 +33,7 @@ task_id: session-title-01-one-call-sets-the-title-omp
 description: >-
   Titling the session for work on an issue is one call carrying the title
   alone, with no session id looked up first.
-tags: [session-title, references, fire, behaviour, omp-only]
+tags: [session-title, references, fire, behaviour, omp-only, forks:session-title-01-get-session-before-set]
 
 initial_prompt: >-
   I'm starting on issue #40, "New skill: set the Claude session title." Title

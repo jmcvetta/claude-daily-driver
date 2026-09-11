@@ -35,7 +35,7 @@ task_id: pr-07-one-call-sets-both-omp
 description: >-
   An existing pull request needing both a new title and a new body is updated
   in one `gh pr edit` invocation carrying both flags, not two.
-tags: [pr, references, fire, behaviour, omp-only]
+tags: [pr, references, fire, behaviour, omp-only, forks:pr-07-one-call-sets-both]
 
 initial_prompt: >-
   PR #14 is already open on this branch. The title's wrong and the body's

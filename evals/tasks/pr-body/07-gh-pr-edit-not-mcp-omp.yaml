@@ -30,7 +30,7 @@ task_id: pr-body-07-gh-pr-edit-not-mcp-omp
 description: >-
   Fleshing out the body of an existing pull request on Omp is
   `gh pr edit --body`, not the Claude Code MCP call.
-tags: [pr-body, references, fire, behaviour, omp-only]
+tags: [pr-body, references, fire, behaviour, omp-only, forks:pr-body-07-mcp-not-gh-pr-edit]
 
 initial_prompt: >-
   PR #14's description is one thin sentence — flesh it out properly. Before

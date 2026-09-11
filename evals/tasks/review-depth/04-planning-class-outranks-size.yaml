@@ -2,7 +2,7 @@ task_id: review-depth-planning-class-outranks-size
 description: >-
   Nine hundred lines of planning document still route to the planning panel,
   not to the full code panel the size alone would buy.
-tags: [review-depth, routing, fire]
+tags: [review-depth, routing, fire, claude-only]
 
 sandbox:
   # Two sources, both mounted at `.fixture`, so the sandbox gets the shared

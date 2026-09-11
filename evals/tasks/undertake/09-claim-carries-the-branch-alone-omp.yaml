@@ -36,7 +36,7 @@ task_id: undertake-09-claim-carries-the-branch-alone-omp
 description: >-
   Claiming an assigned issue on Omp takes the branch from git and records that
   the surface supplied no model and no session.
-tags: [undertake, references, fire, behaviour, omp-only]
+tags: [undertake, references, fire, behaviour, omp-only, forks:undertake-09-session-fields-for-claim]
 
 initial_prompt: >-
   I'm handing you issue #52 to build. Before you post the claim comment, walk

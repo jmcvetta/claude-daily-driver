@@ -30,7 +30,7 @@ task_id: undertake-08-cadence-stops-at-ready-omp
 description: >-
   A CI wait ending on a ready pull request hands `Keep it current` to the next
   session rather than claiming a watch this harness cannot keep.
-tags: [undertake, behaviour, fire, omp-only]
+tags: [undertake, behaviour, fire, omp-only, forks:undertake-08-wake-slot-is-refilled]
 
 initial_prompt: >-
   PR #25 is open and ready for review on issue #24. I merged master into it a

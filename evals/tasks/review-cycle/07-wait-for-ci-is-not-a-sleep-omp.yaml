@@ -26,7 +26,7 @@
 task_id: review-cycle-07-wait-for-ci-is-not-a-sleep-omp
 description: >-
   A round entered while CI is still running waits without sleeping the shell.
-tags: [review-cycle, behaviour, fire, omp-only]
+tags: [review-cycle, behaviour, fire, omp-only, forks:review-cycle-07-wait-for-ci-is-not-a-sleep]
 
 initial_prompt: >-
   I have pushed the branch and PR #25 is open on it. CI is still running.

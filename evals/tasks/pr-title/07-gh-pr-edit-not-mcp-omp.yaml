@@ -29,7 +29,7 @@ task_id: pr-title-07-gh-pr-edit-not-mcp-omp
 description: >-
   Fixing the title of an existing pull request on Omp is `gh pr edit --title`,
   not the Claude Code MCP call.
-tags: [pr-title, references, fire, behaviour, omp-only]
+tags: [pr-title, references, fire, behaviour, omp-only, forks:pr-title-07-mcp-not-gh-pr-edit]
 
 initial_prompt: >-
   The title on PR #14 doesn't follow our convention — fix it. Before you do,

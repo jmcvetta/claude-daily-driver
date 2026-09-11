@@ -2,7 +2,7 @@ task_id: review-depth-mixed-diff-falls-through-to-code
 description: >-
   A branch carrying a planning document AND a source change is code, not
   planning.
-tags: [review-depth, routing, fire]
+tags: [review-depth, routing, fire, claude-only]
 
 sandbox:
   # Two sources, both mounted at `.fixture`, so the sandbox gets the shared

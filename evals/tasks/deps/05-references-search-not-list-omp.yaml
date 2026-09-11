@@ -35,7 +35,7 @@ task_id: deps-05-references-search-not-list-omp
 description: >-
   A bulk upgrade names the exact Omp call used to find Dependabot's open pull
   requests, and why the plainer-sounding listing will not do it.
-tags: [deps, references, fire, behaviour, omp-only]
+tags: [deps, references, fire, behaviour, omp-only, forks:deps-05-references-search-not-list]
 
 initial_prompt: >-
   Dependabot has a pile of PRs open on this repo and I want them all rolled
