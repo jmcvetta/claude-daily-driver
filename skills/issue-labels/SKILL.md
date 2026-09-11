@@ -41,7 +41,7 @@ harness in use before writing a label.
 | ----- | ----------- | ------------------ |
 | `epic` | Coordinates a sequence of other issues; never worked directly | No — work its children |
 | `task` | Discrete work, specified well enough to hand to an agent | Yes |
-| `bug` | A defect: the thing is specified and does not do it | Yes |
+| `bug` | Meant to do this, and does it wrong | Yes |
 | `proposal` | A capability wanted, not yet decomposed into tasks | No — decompose it first |
 | `research` | A question to answer; the deliverable is prose, not a change | Yes |
 

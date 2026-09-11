@@ -42,7 +42,7 @@ resource "github_issue_label" "bug" {
   repository  = github_repository.this.name
   name        = "bug"
   color       = "d73a4a"
-  description = "A defect: the thing is specified and does not do it"
+  description = "Meant to do this, and does it wrong"
 }
 
 resource "github_issue_label" "proposal" {
