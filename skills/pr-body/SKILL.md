@@ -25,10 +25,11 @@ The body of a pull request, whether it is being opened or rewritten. In order:
 - **Salutation**: A poetic summary. Immediately after the one-line summary,
   separated by a blank line. A brief poem, in classical style, conveying the
   gist of the PR. Formatted in italics.
-- **Issues**: The issue this pull request closes, under heading "Issues".
-  Immediately after the salutation, where a reader meets it before the prose.
-  The section below has the format and the rule that governs it.
-- **Executive Summary**: After the issues, under heading "Summary", give a
+- **Issues**: If this pull request closes a Github Issue, the reference to it,
+  under heading "Issues". Immediately after the salutation, separated by a
+  blank line, where a reader meets it before the prose. The section below has
+  the format and the rule that decides whether it appears at all.
+- **Executive Summary**: Next, under heading "Summary", give a
   concise high level executive summary of the PR.  If you understand the
   importance of the PR for the larger software development or business
   perspectives, include that positioning.
