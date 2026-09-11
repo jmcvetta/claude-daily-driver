@@ -156,7 +156,13 @@ stop arriving as one word. **A `proposal` is a stop as well** — its shape is
 still open, so decomposing it is `epic`'s work and agreeing the plan is the
 user's. **Two of the five on one issue is a stop too**: the label answers the
 readiness question twice, and `issue-labels` says why neither answer wins.
-`task`, `bug` and `research`, one of them and no other, run through.
+`task`, `bug` and `research`, one of them and no other, run through — with
+one caveat on the last. **A `research` issue whose answer turns out to be a
+set of issues, or a decision not to do the thing, has nothing to put on a
+branch**, and that is a finished research issue rather than a failed one.
+Where `Implement` reaches that conclusion, say so and stop: the answer goes
+on the issue, `epic` writes the issues where there are issues to write, and
+this sequence does not open a pull request with nothing in it.
 
 **An issue carrying no label is labelled here rather than merely noted.** It
 runs through — unlabelled is not blocked — and it is the only place the

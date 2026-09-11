@@ -43,7 +43,7 @@ harness in use before writing a label.
 | `task` | Discrete work, specified well enough to hand to an agent | Yes |
 | `bug` | Meant to do this, and does it wrong | Yes |
 | `proposal` | Wanted, but not yet planned into tasks | No — decompose it first |
-| `research` | A question to answer; the deliverable is prose, not a change | Yes |
+| `research` | A question to settle; the answer may be notes, new issues, or a no | Yes |
 
 The descriptions are the ones GitHub shows, verbatim. They live twice — here
 and in `infra/github/labels.tf` — and `scripts/check-labels.py` fails
@@ -64,10 +64,16 @@ Ask the question in this order. The first answer that holds is the label.
    `bug`. The test is the same one `conventional-commits-type` uses for
    `fix`: the thing could already do this, and does it wrong. A capability
    that never once worked has not regressed, so it is not a bug.
-3. **Is the deliverable an answer rather than a change?** A question to
-   settle, an option to compare, a spike to run — `research`. The output is
-   a document, usually under `docs/`, and the issue closes when the question
-   is answered. Work that *follows* from the answer is a separate issue.
+3. **Does it close on an answer rather than on a change?** A question to
+   settle, an option to compare, a spike to run — `research`. What the answer
+   produces is not fixed: a note under `docs/`, a set of task issues and an
+   epic over them, or a decision not to do the thing at all. **A no is a
+   finished `research` issue, not an abandoned one** — the question was
+   settled, which is what the label promised.
+
+   Where the answer is issues, writing them is `epic`'s, and they are the
+   deliverable rather than a separate follow-up. Where it is code, that is a
+   separate issue: the research closes, and a `task` opens.
 4. **Is the intent settled?** Where what "done" means is written down and
    needs no further decision, it is a `task`. Where it is not — a capability
    somebody wants, with the shape of it still open — it is a `proposal`.
@@ -95,8 +101,11 @@ its edges`, and one label out of the five is a stop in two cases:
   so it goes to the user.
 
 Two labels out of the five is a third stop, and it is below with its remedy.
-`task`, `bug` and `research` all run through. They differ in what the pull
-request contains, not in whether one is opened.
+`task` and `bug` run through, and both end in a pull request. **`research`
+runs through and need not**: where the answer is a note it lands as a pull
+request like any other, and where the answer is a set of issues or a no,
+there is nothing to put on a branch. The issue closes on the answer either
+way, and `undertake` is not the route for the two that carry no code.
 
 The invariant at the top of this file breaks two ways, and they are answered
 differently.

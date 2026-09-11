@@ -56,5 +56,5 @@ resource "github_issue_label" "research" {
   repository  = github_repository.this.name
   name        = "research"
   color       = "fbca04"
-  description = "A question to answer; the deliverable is prose, not a change"
+  description = "A question to settle; the answer may be notes, new issues, or a no"
 }
