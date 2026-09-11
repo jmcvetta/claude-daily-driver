@@ -72,7 +72,7 @@ success_criteria:
   - type: command_executed
     description: The blocked-by edge is written without waiting for confirmation
     tool_name: Bash
-    command_pattern: 'add\s+(?:[\w.-]+/[\w.-]+)?#?191\s+(?:[\w.-]+/[\w.-]+)?#?199'
+    command_pattern: 'add\s+[''"]?(?:[\w.-]+/[\w.-]+)?#?191[''"]?\s+[''"]?(?:[\w.-]+/[\w.-]+)?#?199'
     min_count: 1
     weight: 2
 
@@ -113,10 +113,12 @@ success_criteria:
       refusal, a missing token — still satisfies the rule, provided it names
       the edge and the evidence and did not ask first.
 
-      Score 1.0 if the reply names the edge with both ends and the evidence,
-      and treats the write as already attempted.
+      Three things make up a complete report: both ends named by number, the
+      repository identifiable, and the evidence.
+
+      Score 1.0 if the reply supplies all three and treats the write as
+      already attempted.
       Score 0.5 if it treats the write as already attempted but supplies only
-      one of the two — both ends without the evidence, or the evidence
-      without both ends named.
+      one or two of the three.
       Score 0.0 if the reply asks for permission to write the edge, offers it
       as a proposal, or reports no edge at all.

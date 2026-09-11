@@ -112,18 +112,32 @@ write.
   blocking side anyway — `The traps` says why — so the fact is in hand before
   the report is written.
 - **Reading is free**, and needs neither a confirmation nor a report.
-- **The one stop is contradiction.** Where the edge contradicts something the
-  user has said, name both and ask. Nothing else here waits.
+- **Two things stop a write, and only two.** A **contradiction** — the edge
+  disagrees with something the user has said — and a **plan not yet agreed**:
+  inside `epic`, every edge waits for `Agree the plan`, the one stop that step
+  is, whether it was drafted there or noticed while drafting. Name what is
+  wrong, or what the edge is waiting on, and ask. Nothing else here waits.
 
-**The evidence test is now the whole guard**, so it is stated exactly. Both of
-these must hold before a blocked-by edge is **inferred** and written:
+**The evidence test is now the whole guard**, so it is stated exactly. It
+covers **every inferred edge** — blocked-by, sub-issue and parent alike, which
+is the reach the confirmation had. Both of these must hold before one is
+written:
 
-- **The dependency was discovered in the work in hand** — while planning a
+- **The relationship was discovered in the work in hand** — while planning a
   change, or while writing a PR body and realising it cannot merge first. Not
   while reading the issue list for edges to add.
-- **The evidence is a statement about the code.** One issue reads a function
-  the other adds; one issue's fix is in a file the other deletes. A shared
-  subject is not evidence, and neither is a shared label, milestone or author.
+- **The evidence is a statement about the issues, of the kind the edge
+  claims.** The two kinds are different claims, so the evidence is different
+  too, and evidence for one is never evidence for the other:
+  - **Blocked-by** says *this must close first*, so the evidence is about the
+    code. One issue reads a function the other adds; one issue's fix is in a
+    file the other deletes.
+  - **Sub-issue or parent** says *this is part of that*, so the evidence is
+    about scope. The parent states scope the child is one piece of, and the
+    child closes without the parent closing.
+
+  A shared subject is evidence of neither, and neither is a shared label,
+  milestone or author.
 
 **An edge that is given rather than inferred does not go to the test**, and
 there is nothing there for it to weigh. `epic` writes the parent edges and the
