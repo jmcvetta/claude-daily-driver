@@ -1,0 +1,24 @@
+task_id: embark-01-slash-embark
+description: The literal slash command. Nothing else is being asked for.
+tags: [trigger-accuracy, embark, fire]
+
+initial_prompt: "/embark"
+
+agent:
+  # See the `pr` suite for why this is `disallowed_tools` rather than
+  # `allowed_tools`: a *denied* read of `skills/embark/SKILL.md` still scores
+  # as engaging the skill, so the path must be impossible to type.
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`embark` fires on the literal /embark"
+    expected_skill: embark
+    skill_name: embark
+    stop_early:
+      on_pass: stop
