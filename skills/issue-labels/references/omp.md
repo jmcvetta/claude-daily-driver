@@ -20,9 +20,14 @@ Reading and writing a label
 | Take a label off | `gh issue edit <number> --remove-label proposal` |
 
 **`--add-label` adds; it does not replace.** That is the opposite of the
-Claude route, and it is the safer half: nothing else on the issue is lost. It
-is also why swapping one label for another takes both flags — `--add-label
-task --remove-label proposal` — rather than one.
+Claude route, and it is the safer half: nothing else on the issue is lost —
+no read-first is needed here.
+
+It is also the half that breaks the exactly-one invariant. Swapping one
+standard label for another takes both flags — `--add-label task
+--remove-label proposal` — and an `--add-label` on its own leaves the issue
+carrying two of the five, which `SKILL.md` makes a stop. Write the swap as
+one call with both flags rather than as two calls with one each.
 
 Finding the issues that carry a label is `gh issue list --label task`, or
 `github.search_issues` with `label:task` in the query.

@@ -18,6 +18,8 @@ WHAT IT ASSERTS
 
     The same set of label names in both files.
     The same description for every name.
+    No two Tofu resources declaring one label name -- which Tofu rejects at
+    apply time, and which a check keyed on the name would swallow whole.
     A non-empty colour on every Tofu resource, and no two labels sharing one.
 
 WHAT IT DOES NOT ASSERT
@@ -48,9 +50,12 @@ TABLE_MARKER = "<!-- labels-table -->"
 # | `name` | description | anything |
 TABLE_ROW = re.compile(r"^\|\s*`([^`]+)`\s*\|\s*([^|]+?)\s*\|")
 
-# resource "github_issue_label" "epic" { ... }
+# resource "github_issue_label" "epic" { ... }. The resource's own label is
+# captured as well as its body: two resources declaring one `name` is a
+# duplicate Tofu rejects at apply time, and naming both halves of the pair is
+# what lets this script say which two.
 TF_RESOURCE = re.compile(
-    r'resource\s+"github_issue_label"\s+"[^"]+"\s*\{(.*?)^\}',
+    r'resource\s+"github_issue_label"\s+"([^"]+)"\s*\{(.*?)^\}',
     re.DOTALL | re.MULTILINE,
 )
 TF_ATTR = re.compile(r'^\s*(\w+)\s*=\s*"([^"]*)"\s*$', re.MULTILINE)
@@ -74,27 +79,52 @@ def parse_skill_table(text: str) -> dict[str, str]:
     return labels
 
 
-def parse_labels_tf(text: str) -> tuple[dict[str, str], dict[str, str]]:
-    """Return ({name: description}, {name: colour}) from the Tofu resources."""
-    descriptions: dict[str, str] = {}
-    colours: dict[str, str] = {}
-    for body in TF_RESOURCE.findall(text):
+def parse_labels_tf(text: str) -> list[tuple[str, str, str, str]]:
+    """Return one (resource, name, description, colour) row per Tofu resource.
+
+    A list rather than a dict keyed on the label name, because two resources
+    declaring one `name` is a real failure and a dict would swallow it: the
+    second row would overwrite the first, the set comparison would still
+    match the skill's table, and the apply would be the thing that discovered
+    the duplicate.
+    """
+    rows: list[tuple[str, str, str, str]] = []
+    for resource, body in TF_RESOURCE.findall(text):
         attrs = dict(TF_ATTR.findall(body))
         name = attrs.get("name")
         if not name:
-            sys.exit(f"{LABELS_TF}: a github_issue_label resource declares no name")
-        descriptions[name] = attrs.get("description", "")
-        colours[name] = attrs.get("color", "")
-    if not descriptions:
+            sys.exit(
+                f"{LABELS_TF}: github_issue_label.{resource} declares no name"
+            )
+        rows.append(
+            (resource, name, attrs.get("description", ""), attrs.get("color", ""))
+        )
+    if not rows:
         sys.exit(f"{LABELS_TF}: no github_issue_label resources found")
-    return descriptions, colours
+    return rows
 
 
 def main() -> int:
     table = parse_skill_table(SKILL.read_text(encoding="utf-8"))
-    declared, colours = parse_labels_tf(LABELS_TF.read_text(encoding="utf-8"))
+    rows = parse_labels_tf(LABELS_TF.read_text(encoding="utf-8"))
 
     problems: list[str] = []
+
+    # Duplicates first, and by resource rather than by label name, so the two
+    # collapsing rows are both reported before anything reads them as one.
+    by_name: dict[str, str] = {}
+    for resource, name, _, _ in rows:
+        if name in by_name:
+            problems.append(
+                f"github_issue_label.{resource} and "
+                f"github_issue_label.{by_name[name]} both declare the label "
+                f"`{name}`; the apply fails on the second"
+            )
+        else:
+            by_name[name] = resource
+
+    declared = {name: description for _, name, description, _ in rows}
+    colours = {name: colour for _, name, _, colour in rows}
 
     for name in sorted(set(table) - set(declared)):
         problems.append(
@@ -114,19 +144,22 @@ def main() -> int:
                 f"    tofu:  {declared[name]}"
             )
 
-    for name in sorted(declared):
-        if not colours.get(name):
-            problems.append(f"`{name}` declares no colour in labels.tf")
+    # Colours are checked per resource, not per label name, for the same
+    # reason: a duplicate name must not hide one of the two colours.
     seen: dict[str, str] = {}
-    for name in sorted(declared):
-        colour = colours.get(name)
-        if colour and colour in seen:
+    for resource, name, _, colour in rows:
+        if not colour:
+            problems.append(
+                f"github_issue_label.{resource} (`{name}`) declares no colour"
+            )
+            continue
+        if colour in seen and seen[colour] != name:
             problems.append(
                 f"`{name}` and `{seen[colour]}` share the colour {colour}; "
                 f"a label is told apart by it"
             )
-        elif colour:
-            seen[colour] = name
+        else:
+            seen.setdefault(colour, name)
 
     if problems:
         print("the label standard disagrees with itself:", file=sys.stderr)

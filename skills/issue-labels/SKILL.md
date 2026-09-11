@@ -90,13 +90,23 @@ its edges`, and it is a stop in two cases:
 `task`, `bug` and `research` all run through. They differ in what the pull
 request contains, not in whether one is opened.
 
-An issue carrying **no** label is not a stop. It is unlabelled rather than
+The invariant at the top of this file breaks two ways, and they are answered
+differently.
+
+**No label at all is not a stop.** The issue is unlabelled rather than
 blocked, and the answer is to label it: `Picking one` returns the label and
-the issue client applies it, in passing, before the work goes on.
-`Open the issue` labels every issue it writes, so an unlabelled issue is one a
-person opened — which makes this the one moment the invariant at the top of
-this file is ever put back. Naming the label without writing it leaves the
-next session to name it again.
+the issue client applies it, in passing, before the work goes on. `Open the
+issue` labels every issue it writes, so an unlabelled issue is one a person
+opened. Naming the label without writing it leaves the next session to name
+it again.
+
+**Two of the five on one issue is a stop.** They are two answers to a single
+question, and nothing here ranks them — a `proposal` that is also a `task`
+says the shape is both open and settled, and picking either reading is
+guessing at intent. Say which two are on it, say which one `Picking one`
+returns, and wait. Adding rather than replacing is how it happens by
+accident, so the reference file for a harness whose label write *adds* says
+that a swap takes two operations rather than one.
 
 
 What a label is not
@@ -146,7 +156,7 @@ so the names, colours and descriptions on GitHub come from a file under
 review rather than from whoever clicked last. OpenTofu owns only what it
 declares, so the stock labels above survive an apply untouched.
 
-Two consequences worth knowing:
+Three consequences worth knowing:
 
 - **A label that already exists must be imported before the first apply.**
   Creating one GitHub already has fails the apply rather than adopting it.
