@@ -51,36 +51,6 @@ jobs:
       - name: Install the Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code@latest
 
-      # Omp, from its official binary installer. The binary carries its own
-      # runtime, so there is no Bun to install — see
-      # docs/notes/0011-two-harnesses-one-skill-tree.md for why that route and
-      # not `bun install -g`.
-      #
-      # Unpinned, for the reason the Claude install above is unpinned: the
-      # question CI is asking is whether the harness people actually run loads
-      # this plugin.
-      #
-      # This is what keeps `check-omp-plugin` from skipping. That leg's guard
-      # exists for a laptop; a CI job without Omp would take the skip and
-      # report green having checked nothing.
-      # `--retry-all-errors` is what makes `--retry` cover a connection reset:
-      # without it curl retries only the errors it considers transient, and a
-      # reset on the TLS handshake is not one of them. Measured — this job's
-      # first run installed Omp and its second got `curl: (35) Recv failure`
-      # from the same URL two minutes later. A real outage still fails the
-      # step, and the version call below still fails the job.
-      - name: Install Omp
-        run: |
-          curl -fsSL --retry 5 --retry-delay 2 --retry-all-errors https://omp.sh/install | sh
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-
-      # `GITHUB_PATH` takes effect on the next step, so the version call is its
-      # own step. It is here to fail loudly: without it an installer that put
-      # the binary somewhere else would leave `check-omp-plugin` taking its
-      # laptop skip, and the job would go green having checked nothing.
-      - name: Verify Omp is on PATH
-        run: omp --version
-
       # ShellCheck ships in the ubuntu-latest image; the guard is for the day
       # it does not, and costs nothing on the day it does.
       - name: Ensure ShellCheck

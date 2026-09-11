@@ -61,8 +61,11 @@ WHY IT NEEDS NO CREDENTIALS
     this pass -- or fail -- on their own, and `omp plugin link` writes inside
     it.
 
-Omp on `PATH` is the one thing it does need, and the `check-omp-plugin` leg of
-`make check` is what decides whether the machine has it. See the Makefile.
+Omp on `PATH` is the one thing it does need, and it is why `make
+check-omp-plugin` sits outside `make check` rather than inside it -- a laptop
+editing a skill must not start needing a second harness. `.github/workflows/
+omp.yml` is what runs it, on the files that can actually break the integration;
+its header lists them and says why each is there.
 
 No third-party imports, for the reason `check-manifests.py` gives: a
 dependency install between the laptop and CI is a place for them to differ.

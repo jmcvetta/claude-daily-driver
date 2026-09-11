@@ -42,7 +42,7 @@ git_sync:
 # than restating its legs, so a leg added here is a leg CI gains — and there
 # is no second command line to fall behind this one.
 check: check-plugin check-skills check-agents check-scripts check-manifests \
-	check-constitution check-ask-in-chat check-omp-extension check-omp-plugin \
+	check-constitution check-ask-in-chat check-omp-extension \
 	check-eval-fixtures check-step-names check-labels
 
 # `claude plugin validate --strict` reads one manifest at a time and picks the
@@ -122,16 +122,17 @@ check-omp-extension:
 # the installed-plugin routes, and the extension on the one route that loads
 # it. Credential-free, against a throwaway HOME. See the script's docstring.
 #
-# Guarded the way check-agents is guarded, and for the same reason: `check`
-# must not start requiring Omp on a laptop that is only editing a skill. CI
-# installs Omp, so CI never takes the skip -- which is what keeps the guard
-# from quietly becoming a way of never running this at all.
+# Not part of `check`, for the reason check-infra is not: it needs a toolchain
+# -- here a whole second harness -- and `check` must not start requiring Omp on
+# a laptop that is only editing a skill. .github/workflows/omp.yml runs it, on
+# the files that can actually break the Omp integration.
+#
+# No guard on `omp` either, and that is the same decision as check-infra's. A
+# target nobody runs by accident should fail loudly when its toolchain is
+# absent; a target inside `check` would have needed the guard, and the guard is
+# what would have let it silently check nothing.
 check-omp-plugin:
-	@if command -v omp > /dev/null 2>&1; then \
-		python3 scripts/check-omp-plugin.py; \
-	else \
-		echo 'omp is not on PATH; skipping check-omp-plugin (CI installs Omp and does not skip it)'; \
-	fi
+	python3 scripts/check-omp-plugin.py
 
 # check-scripts: lint the shell a skill ships. `claude plugin validate` reads
 # manifests and never opens a `scripts/` file, so without this leg the plugin's

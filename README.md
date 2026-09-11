@@ -116,8 +116,9 @@ Omp's rule provider injects `rules/*.md` carrying `alwaysApply: true`.
 
 **Whether either still fires**: `scripts/check-constitution.py` and
 `scripts/check-ask-in-chat.py` run both hooks against synthetic event JSON, and
-`scripts/check-omp-extension.mjs` and `scripts/check-omp-plugin.py` do the same
-job for Omp — all four in `make check`. An adapter that stops firing does not
+`scripts/check-omp-extension.mjs` does the same job for the Omp adapter — all
+three in `make check`, with `scripts/check-omp-plugin.py` covering discovery
+from its own workflow. An adapter that stops firing does not
 fail; it silently reverts the behaviour it was installed for, which is the one
 failure nothing else would report.
 
@@ -251,17 +252,23 @@ from each; `scripts/check-labels.py`, which asserts the issue-label standard
 says the same thing in `issue-labels` and in the OpenTofu that declares it; and
 `scripts/check-eval-fixtures.sh`.
 
-**Two of its legs are Omp's.** `scripts/check-omp-extension.mjs` imports the
+**One of its legs is Omp's.** `scripts/check-omp-extension.mjs` imports the
 adapter under Node with a faked `ExtensionAPI` and asserts the `ask` deny and
-the three tools behave. `scripts/check-omp-plugin.py` starts a real
-`omp --mode rpc` and asks the running agent what it got: every skill offered as
-a `skill:<name>` command on the `--plugin-dir` route and again on the installed
-route, `omp plugin list` reporting the plugin after `omp plugin link .`, and
-the extension loading rather than failing silently. Both are credential-free
-and call no model; the second runs against a throwaway `HOME`, and skips with
-one line where `omp` is not on `PATH`. CI installs Omp, so CI never skips it.
+the three tools behave. It needs only Node, so it runs everywhere the rest of
+`check` does.
 
-Two more checks are deliberately outside it. `make check-infra` parses the OpenTofu
+Three more checks are deliberately outside it. `make check-omp-plugin` starts a
+real `omp --mode rpc` and asks the running agent what it got: every skill
+offered as a `skill:<name>` command on the `--plugin-dir` route and again on
+the installed route, `omp plugin list` reporting the plugin after `omp plugin
+link .`, and the extension loading rather than failing silently. It is
+credential-free and calls no model, against a throwaway `HOME` — but it needs
+Omp installed, which `make check` must not start requiring of a laptop that is
+only editing a skill. [`.github/workflows/omp.yml`](.github/workflows/omp.yml)
+runs it, filtered to the files that can actually break the integration:
+`package.json`, `.claude-plugin/`, `extensions/`, and the check itself — its
+header says why each is on that list, and why `skills/` is not.
+`make check-infra` parses the OpenTofu
 stack — see [infra/github/README.md](infra/github/README.md). `make evals-run`
 needs a live model, and CI here is credential-free — see
 [evals/README.md](evals/README.md); `TASKS='tasks/constitution/*.yaml'` is the
