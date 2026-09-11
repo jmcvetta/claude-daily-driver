@@ -10,7 +10,8 @@ description: >-
   for it. It is also where `undertake`'s `Open the issue` sends work too big for
   the one issue that step writes, and it fires on an attempt to undertake an
   epic, which carries no code. Supplies the two gates that decide whether there
-  is an epic at all, what a task issue is, the one stop where the plan is agreed
+  is an epic at all, what a task issue is and the model it records for the
+  session that will undertake it, the one stop where the plan is agreed
   before anything is written, and the shape of the epic body — the sequencing
   and the waves that neither the sub-issue panel nor the dependency graph
   renders. The graph writes themselves are `issue-deps`'. Not for taking a task
@@ -127,12 +128,38 @@ edge means and what it must not be used to record.
 it to be true. What the epic body carries is the *reading* of it, under
 `The epic body` below.
 
+**Each task records the model that should undertake it.** Sizing a task is the
+moment it is known whether the work is a documentation edit or a schema
+migration, and that judgement is otherwise thrown away: `embark` opens one
+session per task and deliberately does not choose. Pick the lightest model that
+can do the task well — the constitution's *Delegation* rule is that quota is
+the user's money, and it cuts both ways, because a schema migration on a small
+model costs more than it saves.
+
+**The form is exact, because a skill parses it rather than a person.** The last
+line of the task issue body, and nothing after it:
+
+```
+Model: claude-sonnet-5
+```
+
+The identifier must be one the harness's session client accepts. The reference
+file for the harness in use names them, and it is read rather than recalled.
+**Where no valid identifier can be named, write no line at all**: a missing
+line means the session inherits the orchestrator's model, which is a working
+default, and a session opened on a model that does not exist is not.
+
+**Reasoning effort cannot be recorded.** The session client takes a model and
+has no effort parameter — effort is session configuration rather than a
+dispatch argument — so an `Effort:` line beside the model would be read by
+nothing. Do not write one.
+
 2 — Agree the plan
 ------------------
 
-The one stop. Put the plan in the reply — each task as a title and a line,
-each edge as what it waits on, and the gates' answer from `Size the work` —
-and write nothing until the user agrees.
+The one stop. Put the plan in the reply — each task as a title, a line, and the
+model it suggests, each edge as what it waits on, and the gates' answer from
+`Size the work` — and write nothing until the user agrees.
 
 It clears `judgement-call`'s gate twice over. A decomposition is a statement of
 scope: it says what the pieces are and what done means for each, and craft does
@@ -148,6 +175,9 @@ again, one at a time, at `Write the graph`.
 **Search before writing**, for the reason `undertake`'s `Open the issue` gives:
 a change described in a prompt has often been described in an issue already,
 and a second issue for it splits the trail in two.
+
+Each task's body records what was asked and ends with its `Model` line, both
+settled at `Draft the plan`.
 
 Where an issue already describes the whole change, **that issue becomes the
 epic**. Rewrite its body to the shape below and give it the tasks as children.

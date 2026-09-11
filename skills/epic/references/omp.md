@@ -38,3 +38,17 @@ The graph
 
 `issue-deps` owns both relationships and picks its own client. Read that
 skill's routes before `Write the graph`.
+
+
+The model a task records
+========================
+
+`Draft the plan` writes a `Model:` line into each task issue. **Omp has no
+session-opening client**, so nothing on this harness reads that line: it is
+written for `embark`, which runs on Claude Code and opens a cloud session per
+task.
+
+Write it anyway. The judgement is made here, at decomposition time, and a task
+issue planned on Omp is undertaken wherever the wave is put to sea. The
+identifiers are the ones the Claude route accepts, and
+[`claude.md`](claude.md) is where they are named.

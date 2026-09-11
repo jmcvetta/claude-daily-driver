@@ -47,3 +47,35 @@ The graph
 blocked-by on a Claude Code web worker is its script rather than the MCP,
 because neither generation of the GitHub MCP server writes that edge at all.
 Read that skill's routes before `Write the graph`.
+
+
+The model a task records
+========================
+
+`Draft the plan` writes a `Model:` line into each task issue, and `embark`
+passes that identifier to `mcp__Claude_Code_Remote__create_session`. So the
+identifier has to be one that call accepts — a marketing name recalled from
+training is not one, and the session it opens fails rather than falling back.
+
+**Read one rather than recall one.** `mcp__Claude_Code_Remote__get_session`,
+with `session_id` omitted, reports this session's own identifier at
+`session_context.model` and `configured_model`, which is always a valid answer
+and is the right one for a task no lighter than the planning session.
+
+The family, as the harness named it on 2026-09-11:
+
+| Weight | Identifier |
+| ------ | ---------- |
+| Heaviest | `claude-opus-5` |
+| Middle | `claude-sonnet-5` |
+| Lightest | `claude-haiku-4-5-20251001` |
+
+`claude-fable-5-1` exists beside these and is not a weight on that scale.
+Model identifiers move; this table is a measurement with a date on it, not a
+contract. Where it disagrees with what the harness reports, the harness is
+right and this table is stale.
+
+**`create_session` takes `model` and has no effort parameter.** Effort is
+session configuration — `session_context.effort_level` — rather than a
+dispatch argument, so it cannot be carried on a task issue. `SKILL.md` says
+not to write an `Effort:` line, and this is why.
