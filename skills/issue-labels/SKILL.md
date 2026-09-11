@@ -40,10 +40,10 @@ harness in use before writing a label.
 | Label | Description | Ready for an agent |
 | ----- | ----------- | ------------------ |
 | `epic` | Coordinates a sequence of other issues | Not `undertake`'s — `embark` takes one |
-| `task` | Discrete work, specified and ready to start | Yes |
+| `task` | Discrete work, specified and ready for an agent | Yes |
 | `bug` | Bug report | Yes |
-| `proposal` | Wanted, but not yet planned into tasks | No — decompose it first |
-| `research` | A question to settle; the answer may be notes, new issues, or a no | Yes |
+| `proposal` | Feature request, not yet planned into tasks | No — decompose it first |
+| `research` | A question to settle | Yes |
 
 The descriptions are the ones GitHub shows, verbatim. They live twice — here
 and in `infra/github/labels.tf` — and `scripts/check-labels.py` fails

@@ -33,7 +33,7 @@ resource "github_issue_label" "task" {
   repository  = github_repository.this.name
   name        = "task"
   color       = "0e8a16"
-  description = "Discrete work, specified and ready to start"
+  description = "Discrete work, specified and ready for an agent"
 }
 
 # Red is GitHub's own colour for this label, kept so an imported `bug` reports
@@ -49,12 +49,12 @@ resource "github_issue_label" "proposal" {
   repository  = github_repository.this.name
   name        = "proposal"
   color       = "1d76db"
-  description = "Wanted, but not yet planned into tasks"
+  description = "Feature request, not yet planned into tasks"
 }
 
 resource "github_issue_label" "research" {
   repository  = github_repository.this.name
   name        = "research"
   color       = "fbca04"
-  description = "A question to settle; the answer may be notes, new issues, or a no"
+  description = "A question to settle"
 }
