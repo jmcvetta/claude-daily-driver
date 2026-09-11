@@ -1,0 +1,44 @@
+task_id: session-title-02-rename-this-session
+description: >-
+  "Rename" and no noun but "session". One noun away from `pr-title`'s own
+  rename phrasing, which is the whole reason this row exists.
+tags: [trigger-accuracy, session-title, fire]
+
+initial_prompt: 'Rename this session — it is still called "New session".'
+
+agent:
+  # `allowed_tools` is a permission allowlist, not a tool filter: the model is
+  # still offered `Read` and friends and merely denied at the permission check.
+  # That is not enough here. Telemetry records a `tool_use` block when it is
+  # generated, before any result, and `skill_triggered` counts a `skills/<name>/`
+  # path in ANY tool parameter as engaging that skill — so a *denied* read of
+  # `skills/pr-title/SKILL.md`, which is exactly what a model weighing two
+  # sibling skills about a title reaches for, would fail a no-fire row.
+  # `disallowed_tools` is the one that actually removes a tool, so the path can
+  # never be typed.
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  # `turn_timeout` is the agent's budget; `task_timeout` is the watchdog around
+  # the whole evaluation, armed before the turn starts and still running while
+  # the criteria are checked. Equal values mean a turn that uses its budget is
+  # killed as a TIMEOUT before it can be graded, so `task_timeout` carries
+  # headroom on top.
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`session-title` fires on a rename request naming the session"
+    expected_skill: session-title
+    skill_name: session-title
+    # Armed so the watcher counts it as pass-capable and defers the
+    # distractor's fail-stop until recall is decided; `on_pass` stays at its
+    # default `continue`, so this never truncates a run itself.
+    stop_early: {}
+  - type: skill_triggered
+    description: "`pr-title` does not fire on a session rename"
+    expected_skill: session-title
+    skill_name: pr-title
+    stop_early: {}

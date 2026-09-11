@@ -1,6 +1,6 @@
 # Evals
 
-Fourteen suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
+Fifteen suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
 than by `claude plugin eval`. The reasoning for the harness is
 [`docs/notes/0002-eval-harness.md`](../docs/notes/0002-eval-harness.md);
 the short version is that the built-in cannot be run on this account, is
@@ -87,9 +87,13 @@ the one adjacent request where a type is tempting and wrong: a commit
 message, which is prose by the constitution's rule. Each suite has two
 halves, and the second is the one that earns its keep:
 
-- **Fire cases** — four per skill, covering the literal `/pr`, natural
-  phrasings, and Claude's own use of `mcp__github__create_pull_request` /
-  `mcp__github__update_pull_request`.
+- **Fire cases** — four per skill, covering the literal slash command,
+  natural phrasings, and Claude's own use of the call that skill's description
+  names. That call is `mcp__github__create_pull_request` /
+  `mcp__github__update_pull_request` on the three PR suites, and it is
+  whatever the skill actually routes to elsewhere —
+  `mcp__Claude_Code_Remote__set_session_title` on `session-title`, which is
+  not a GitHub call at all.
 - **No-fire cases** — two per skill, drawn from the *adjacent* skills rather
   than from unrelated work. "Fix just the title" asserts that `pr-title` fires
   and `pr` does not; a request to write a commit message asserts that none of
@@ -166,6 +170,29 @@ subject. The four fire rows are the slash command, the label for an issue not
 yet filed, an epic-or-task choice, and the readiness question asked of a whole
 backlog — the last of which is the question the standard exists to answer and
 the one `undertake` asks on every issue it is handed.
+
+`session-title/` is the pair that sits closest together: two skills about a
+*title*, one noun apart, and two of `session-title`'s natural phrasings live
+inside `pr-title`'s vocabulary. So the boundary is asserted in both
+directions rather than one. `02` renames the session and asserts `pr-title`
+stays out; `05` fixes a pull request title with the session name ruled out,
+and asserts `session-title` stays out. A suite that only proved
+`session-title` fires would stay green with both descriptions collapsed into
+one.
+
+`04` is the row that had to be designed rather than written down. It is the
+initiative trigger — work on an issue beginning, and nothing in the prompt
+asking for a title or a name — so the issue it quotes decides whether the row
+tests anything. It quotes `session-title`'s own #212 worked example, whose
+title shares no vocabulary with the skill. Quote an issue called "set the
+session title" instead and the row passes on a keyword match without ever
+reaching the clause it exists for.
+
+`07-get-session-before-set` is the suite's behaviour row, and it grades the
+reading rather than the triggering: `SKILL.md` sends the caller to the
+reference file for the call, and the reference file is where the two-call
+order lives — `get_session` with no id first, then `set_session_title` with
+the id it returned.
 
 `constitution/` is not a trigger-accuracy suite: it is the live half of the
 constitution's own test, described under "Checks" in the repository README. Its credential-free half is
