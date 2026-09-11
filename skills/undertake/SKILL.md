@@ -143,23 +143,29 @@ blocked by an open one is a stop, not a start** — say which issue blocks it
 and wait. Reading the graph is free and needs no confirmation; `issue-deps`
 says so.
 
+**An issue too big for one pull request is `epic`'s, not this sequence's**, and
+this is where that is noticed — here rather than at `Open the issue`, which is
+skipped in the common case where the issue was handed over. `epic` sizes it,
+decomposes it, and each task issue it opens comes back here as the issue this
+sequence takes in. **An epic itself is a stop**, under `Where it stops and
+waits`.
+
 The label too, because it states whether the issue is ready for an agent at
-all, and `issue-labels` says what each one means. **An `epic` and a `proposal`
-are both stops.** An epic coordinates issues rather than describing work, so
-say which child to work instead and wait; a proposal has its shape still open,
-so decomposing it into tasks is a decision and it goes to the user. **Two of
-the five on one issue is a stop too** — the label answers the readiness
-question twice, and `issue-labels` says why neither answer wins. `task`,
-`bug` and `research`, one of them and no other, run through.
+all, and `issue-labels` says what each one means. The `epic` label is that
+stop arriving as one word. **A `proposal` is a stop as well** — its shape is
+still open, so decomposing it is `epic`'s work and agreeing the plan is the
+user's. **Two of the five on one issue is a stop too**: the label answers the
+readiness question twice, and `issue-labels` says why neither answer wins.
+`task`, `bug` and `research`, one of them and no other, run through.
 
 **An issue carrying no label is labelled here rather than merely noted.** It
 runs through — unlabelled is not blocked — and it is the only place the
 standard's one-label-per-issue invariant is ever repaired: `Open the issue`
-labels everything it writes, so an unlabelled issue is one a person opened.
-`issue-labels` picks the label and the issue client applies it, on a write
-that needs no more permission than the claim a moment later. Naming
-the label and moving on leaves the next session asking the same question of
-the same issue.
+labels everything it writes and so does `epic`, so an unlabelled issue is one
+a person opened. `issue-labels` picks the label and the issue client applies
+it, on a write that needs no more permission than the claim a moment later.
+Naming the label and moving on leaves the next session asking the same
+question of the same issue.
 
 The comments too, because `Claim the issue` needs to know whether it is claimed
 already — by this session, which means the sequence is being re-entered, or by
@@ -461,23 +467,28 @@ for the second round.
 Where it stops and waits
 ========================
 
-Autonomy is the point, so each pause has to earn itself. Eight stop the
-sequence. Six stop it to *ask* — the ambiguous issue, the request too vague
-to write one for, an issue whose label does not clear it for work, the failing
-approach, a designated branch the harness states ambiguously, and a base merge
-whose conflict is a real one. A blocked issue and a running check stop it to
-report, and wait on something other than an answer.
+Autonomy is the point, so each pause has to earn itself. Ten stop the
+sequence. Seven stop it to *ask* — the ambiguous issue, the request too vague
+to write one for, an issue labelled `proposal`, an issue carrying two of the
+five labels, the failing approach, a designated branch the harness states
+ambiguously, and a base merge whose conflict is a real one. A blocked issue, an
+epic, and a running check stop it to report, and wait on something other than
+an answer.
 
 - **A blocked issue, an issue whose intent is genuinely ambiguous, or a
   request too vague to write an issue for.** The constitution forbids guessing
   at intent; this is that rule, at `Open the issue` and at `Read the issue and
   its edges`.
+- **An epic**, at `Read the issue and its edges`. An epic carries no code, so
+  there is no branch to cut and no pull request to open. Say which issue is the
+  epic, name the tasks that are ready, and undertake one of those — `epic` owns
+  the stop and the wording, and the `epic` label is what says so in one word.
 - **An issue whose label does not clear it for work**, at `Read the issue and
-  its edges`. An `epic`'s work is in its children and a `proposal`'s shape is
-  not yet decided, so neither is work an agent may start unattended; an issue
-  carrying two of the five answers the readiness question twice and answers
-  it neither way. `issue-labels` is what each label claims, and what a
-  contradiction between two of them costs.
+  its edges`. A `proposal`'s shape is not yet decided, so deciding it is the
+  user's and decomposing it is `epic`'s; an issue carrying two of the five
+  answers the readiness question twice and answers it neither way.
+  `issue-labels` is what each label claims, and what a contradiction between
+  two of them costs.
 - **More than one designated branch** for this repository, at `Cut the
   branch`'s first source. Guessing which one the harness will accept risks a
   claim already posted at `Claim the issue` that no push can honour.
@@ -514,6 +525,9 @@ Non-goals
 - **Does not fire on reading an issue.** Discussing #191 is not undertaking
   it. "What does #191 say", "summarise #191", "is #191 still relevant" are
   questions; answer them, and do not cut a branch.
+- **Does not undertake an epic.** An epic carries no code, so there is no
+  branch to cut and no pull request to open. `epic` owns that stop, and says
+  to undertake one of the epic's ready tasks instead.
 - **Does not fire on work it was not asked to undertake.** "Implement a retry
   loop", with neither an issue nor an invocation, is ordinary work, and running
   eleven steps and a review round over it would be the heaviest possible way

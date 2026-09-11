@@ -1,0 +1,26 @@
+task_id: epic-02-too-big-for-one-pr
+description: >-
+  The natural phrasing, with no invocation and no issue. This is the case
+  `Size the work` exists for — the user has already answered gate one, and the
+  skill is what turns that into issues and an epic.
+tags: [trigger-accuracy, epic, fire]
+
+initial_prompt: >-
+  Rewriting the config loader is too big for one PR. Break it down into issues,
+  with an epic to coordinate them.
+
+agent:
+  disallowed_tools: [Read, Write, Edit, NotebookEdit, Glob, Grep, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 5
+  task_timeout: 300
+  turn_timeout: 120
+
+success_criteria:
+  - type: skill_triggered
+    description: "`epic` fires on work stated to be too big for one pull request"
+    expected_skill: epic
+    skill_name: epic
+    stop_early:
+      on_pass: stop
