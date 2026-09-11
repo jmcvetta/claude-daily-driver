@@ -49,7 +49,7 @@ resource "github_issue_label" "proposal" {
   repository  = github_repository.this.name
   name        = "proposal"
   color       = "1d76db"
-  description = "Feature request, not yet planned into tasks"
+  description = "Proposed feature"
 }
 
 resource "github_issue_label" "research" {

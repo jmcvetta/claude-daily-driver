@@ -42,7 +42,7 @@ harness in use before writing a label.
 | `epic` | Coordinates a sequence of other issues | Not `undertake`'s — `embark` takes one |
 | `task` | Discrete work, specified and ready for an agent | Yes |
 | `bug` | Bug report | Yes |
-| `proposal` | Feature request, not yet planned into tasks | No — decompose it first |
+| `proposal` | Proposed feature | No — decompose it first |
 | `research` | A question to settle | Yes |
 
 The descriptions are the ones GitHub shows, verbatim. They live twice — here
