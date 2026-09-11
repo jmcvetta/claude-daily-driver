@@ -11,8 +11,8 @@ The issues
 | ---- | --------- | ---- |
 | `Size the work` | Read an issue already in hand | `mcp__github__issue_read` |
 | `Open the issues` | Search the open issues | `mcp__github__search_issues` |
-| `Open the issues` | Open the epic, and each task | `mcp__github__issue_write`, `method: create` |
-| `Open the issues` | Turn an existing issue into the epic | `mcp__github__issue_write`, `method: update` |
+| `Open the issues` | Open the epic, and each task | `mcp__github__issue_write`, `method: create`, with `labels` |
+| `Open the issues` | Turn an existing issue into the epic | read `labels` with `mcp__github__issue_read`, then `mcp__github__issue_write`, `method: update`, sending that set with the old standard label swapped for `epic` |
 | `Fill in the epic` | Replace the epic's body | `mcp__github__issue_write`, `method: update` |
 
 `method: update` replaces `body` outright rather than appending to it, so
@@ -22,6 +22,11 @@ new.
 
 The parent, at creation
 =======================
+
+**The read in that row is not optional.** `labels` replaces the whole set, so
+an update sending `["epic"]` deletes every other label the issue had — the
+stock and bot-owned ones `issue-labels` says to leave alone included. A new
+issue has nothing to lose and needs no read; a converted one does.
 
 `mcp__github__issue_write` with `method: create` takes `parent_issue_number`,
 and attaches the new issue to that parent in the same operation. Where that

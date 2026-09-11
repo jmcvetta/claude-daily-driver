@@ -1,6 +1,6 @@
 # Evals
 
-Thirteen suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
+Fourteen suites, run by [`coder_eval`](https://github.com/UiPath/coder_eval) rather
 than by `claude plugin eval`. The reasoning for the harness is
 [`docs/notes/0002-eval-harness.md`](../docs/notes/0002-eval-harness.md);
 the short version is that the built-in cannot be run on this account, is
@@ -21,6 +21,7 @@ evals/
 │   ├── epic/            … when work is broken up, and never when it fits one PR?
 │   ├── deps/            … when the deps are upgraded in bulk, and not for one?
 │   ├── issue-deps/      … when an issue relationship is read or written?
+│   ├── issue-labels/    … when an issue is labelled, and not when it is linked?
 │   ├── judgement-call/  … when a choice is about to be put to the user?
 │   ├── session-title/   … when the session is named, and not the PR?
 │   ├── constitution/    does the constitution reach a subagent, and land?
@@ -142,6 +143,19 @@ in would answer a one-line ask by upgrading everything in the repository. `04`
 is the ambient case: Dependabot's pull requests visible in the prompt and other
 work asked for, which is the shape a description reaching for "noticing" would
 misread as an invitation.
+
+`issue-labels/` is separated from `issue-deps`, and the two are one word
+apart: both are about an issue, and both are reached for with "what does this
+issue need". The line is that a label says what *kind* of issue this is and a
+relationship says what it *waits on*, so `05` is a blocked-by request, which
+asserts `issue-deps` fires and `issue-labels` does not. `06` is the other
+temptation, and it is the word rather than the subject: a label on a pull
+request, written by a bot, where "label" is the whole of the pull. Nothing
+fires, and `deps` is the distractor because a bot's pull requests are its
+subject. The four fire rows are the slash command, the label for an issue not
+yet filed, an epic-or-task choice, and the readiness question asked of a whole
+backlog — the last of which is the question the standard exists to answer and
+the one `undertake` asks on every issue it is handed.
 
 `constitution/` is not a trigger-accuracy suite: it is the live half of the
 constitution's own test, described under "Checks" in the repository README. Its credential-free half is
