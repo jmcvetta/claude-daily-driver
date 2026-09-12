@@ -1,0 +1,129 @@
+# The Codex half of `08-subscribe-before-first-read`, which is tagged
+# `claude-only` because the mechanism it names is Claude's. `SKILL.md`'s
+# `How to wait` says only that "the mechanism is the harness's" and points at
+# the reference files. `skills/review-cycle/references/codex.md` names Codex's,
+# and it is neither a subscription nor a watch — it is one read of each of two
+# endpoints:
+#
+#   | The check runs   | `gh api /repos/{owner}/{repo}/commits/{sha}/check-runs` |
+#   | The commit statuses | `gh api /repos/{owner}/{repo}/commits/{sha}/status`  |
+#
+#   "Both, because `SKILL.md` says *reported* is the union of the two, and one
+#   read of each is the whole of the wait here."
+#
+# A row that passes without the reference file being read is wrong, so the
+# graded content is the two endpoints and that one read of each is the whole of
+# it.
+#
+# Why the Claude sibling could not be reused: it grades
+# `mcp__github__subscribe_pr_activity` taken once before the first read. Codex
+# has no subscription and no durable wake, so there is no ordering to grade —
+# an ordering rubric would fail a Codex run for answering correctly.
+#
+# Why not the Omp fork either: Omp's grades a blocking `github.run_watch`
+# followed by the statuses, and the blocking call is the half Codex does not
+# have. What survives on both is that the commit statuses are the second half of
+# *reported*, and that is what this row keeps.
+#
+# Why this row and `07-there-is-no-wait-codex` are not the same row: 07 grades
+# the instrument — no sleep, on a harness that ships one — and 08 grades the
+# shape of the read. A reply can refuse to sleep and still read only the check
+# runs, which is the half of *reported* that GitHub Actions writes and the half
+# an external CI service does not.
+#
+# What this row can and cannot see. The sandbox has no GitHub client, so
+# neither read can actually be made — there is no live pull request. What is
+# observable is what the agent says it will do, so the graded assertion is an
+# `agent_judge` on the reply, plus the skill having fired at all.
+#
+# Why this fails the `without` arm: a model with no plugin loaded reaches for
+# `gh pr checks`, which answers in one call and looks complete. That *reported*
+# means the union of the check runs and the commit statuses, that they are two
+# separate endpoints keyed on the head commit, and that one read of each is the
+# entire wait on this harness, lives only in this skill's own reference file.
+
+task_id: review-cycle-08-both-endpoints-once-codex
+description: >-
+  Waiting on CI reads the head commit's check runs and its commit statuses —
+  both halves of *reported*, once each, and that is the whole wait.
+tags: [review-cycle, references, fire, behaviour, codex-only, "forks:review-cycle-08-subscribe-before-first-read"]
+
+initial_prompt: >-
+  PR #30 is open on this branch and CI just started running. Review the head
+  and bring me the findings once it's green — but first, walk me through the
+  exact sequence of calls you're going to make to find out whether CI has
+  finished, in order.
+
+agent:
+  # Recorded and NOT enforced on this harness — see "The Codex arm" in
+  # ../../README.md. Written anyway so the row reads the same as its siblings.
+  allowed_tools: [Read, Grep, Glob, Skill, Bash]
+  disallowed_tools: [Write, Edit, NotebookEdit, Agent, Task]
+
+run_limits:
+  max_turns: 10
+  turn_timeout: 300
+  task_timeout: 600
+
+success_criteria:
+  # Without this, a run that never reached the skill could still be judged on
+  # a plausible-sounding reply. Left unarmed for the reason `undertake/08`
+  # gives: there is no fail-stopping criterion here for a bare arm to defer.
+  - type: skill_triggered
+    description: "`review-cycle` fires on a pull request whose CI is being waited on"
+    expected_skill: review-cycle
+    skill_name: review-cycle
+
+  # The finding.
+  - type: agent_judge
+    description: The reply reads check runs and commit statuses, once each
+    include_agent_output: true
+    include_reference: false
+    weight: 2
+    # `agent_judge`, not `llm_judge`, for the reason
+    # docs/notes/0014-the-judge-runs-on-the-subscription.md gives: it grades on
+    # the subscription rather than needing an `ANTHROPIC_API_KEY` this project
+    # does not have. It stays a Claude judge in this arm — the judge reads a
+    # transcript, and which harness produced it changes nothing about reading
+    # it. Bounded for the reason the Claude rows state: the default
+    # `max_turns: 50` lets a judge with an empty tool surface spend turns on
+    # calls it cannot make, and one that overruns cancels the replicate as a
+    # TIMEOUT rather than scoring it.
+    max_turns: 5
+    turn_timeout: 120
+    agent:
+      type: claude-code
+      model: claude-sonnet-5
+      allowed_tools: []
+      permission_mode: default
+    prompt: |
+      You are grading one reply against a single rule.
+
+      FIRST, FIND THE REPLY. The AGENT OUTPUT block you have been given is a
+      whole-turn transcript, not a reply. `[ASSISTANT] …` starts each block of
+      the agent thinking aloud — only the first line of a block carries that
+      tag — and a final `[RESULT - SUCCESS] …` or `[RESULT - ERROR] …` carries
+      the answer the user actually received.
+
+      **The reply is the text from the last `[RESULT - …]` tag to the end of
+      the AGENT OUTPUT block**, starting after the tag on its own line.
+      Nothing outside the AGENT OUTPUT block is the agent's.
+
+      Begin your rationale with `ANCHOR: result` or `ANCHOR: none`. Where
+      there is no `[RESULT - …]` tag, write `ANCHOR: none` and score 0.0.
+
+      The rule: the reply must name TWO reads against the head commit — its
+      CHECK RUNS and its COMMIT STATUSES — and say that one read of each is
+      the whole of it. Naming them as API paths
+      (`/commits/{sha}/check-runs` and `/commits/{sha}/status`) or plainly
+      ("the check runs, and the commit statuses") both count, and so does
+      saying they answer from different endpoints and that *reported* means
+      the union of the two.
+
+      Score 1.0 if the REPLY names both reads, keyed on the head commit, and
+      treats one read of each as the entire sequence.
+      Score 0.5 if it names both but implies a repeated poll, or names both
+      without tying them to the head commit.
+      Score 0.0 if it names only one of the two (the check runs alone,
+      `gh pr checks` alone), names a subscription or a blocking watch, or
+      names no specific call at all.

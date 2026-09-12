@@ -172,20 +172,37 @@ a positive row and a negative row in one run, and a second variant doubles what
 the arm costs. It is the obvious addition the day the delta is what someone is
 reading.
 
-**There are no `codex-only` rows yet, and that is deliberate.** Ten rows are
-forked between the Claude and Omp arms today. Seven of them grade a route stated
-in a `skills/<name>/references/omp.md`, and their Codex counterparts would grade
-a `references/codex.md` that does not exist: writing those files is
-[#183](https://github.com/jmcvetta/claude-daily-driver/issues/183) and
-[#184](https://github.com/jmcvetta/claude-daily-driver/issues/184), in the same
-wave as this issue rather than before it. The remaining three grade a rule
-`0011` makes Claude Code only, and what replaces that rule on Codex is #184's
-call too. Forking them now means inventing the routes those issues decide, which
-is guessing at intent.
+**Three `codex-only` rows, not ten, and the other seven wait on a reference
+file that does not exist yet.** Ten rows are forked between the Claude and Omp
+arms today, and each grades a route stated in a `skills/<name>/references/*.md`.
+[#184](https://github.com/jmcvetta/claude-daily-driver/issues/184) merged while
+this work was in review and wrote three of the Codex ones, so three forks became
+writable and are here:
 
-What this issue owes them is the mechanism, and that is complete: the tag, the
-pairing, the run target, the exclusions and the guard. A `codex-only` row added
-by #183 or #184 needs nothing built for it.
+| Suite | Claude row | Codex counterpart | What the Codex row grades |
+| --- | --- | --- | --- |
+| `session-title` | `07-get-session-before-set` | `07-one-call-or-no-surface-codex` | one `agent_tasks` call with `threadId` omitted, or the stop where the namespace is absent — and no invented shell route |
+| `review-cycle` | `07-wait-for-ci-is-not-a-sleep` | `07-there-is-no-wait-codex` | no sleep on a harness that ships one, and the stop rather than an improvised wait |
+| `review-cycle` | `08-subscribe-before-first-read` | `08-both-endpoints-once-codex` | the check runs and the commit statuses, one read of each |
+
+None of the three is its sibling's stem plus `-codex`, and that is the same
+reason `0013` gives for seven of the Omp counterparts: the sibling's stem states
+Claude's route, and on Codex the row grades the opposite. Two of them grade a
+*stop* rather than a call, which is new — Codex is the first harness where the
+correct answer to "title this session" and to "wait for CI" is that there is no
+way to do it.
+
+The remaining seven grade routes
+[#183](https://github.com/jmcvetta/claude-daily-driver/issues/183) writes, and
+it is still open. Forking them now means inventing the routes that issue
+decides, which is guessing at intent. What this issue owes it is the mechanism,
+and that is complete: the tag, the pairing, the run target, the exclusions and
+the guard. A `codex-only` row added by #183 needs nothing built for it.
+
+*The scope of this was put to the user rather than decided here*, because
+picking between a coherent ten-row set later and a three-of-ten set now is a
+question about the deliverable rather than about craft. The answer was to write
+the three that #184 unblocked.
 
 ## Known limits, recorded rather than fixed
 

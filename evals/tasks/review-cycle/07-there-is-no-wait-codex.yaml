@@ -1,0 +1,153 @@
+# The Codex half of `07-wait-for-ci-is-not-a-sleep`, which is tagged
+# `claude-only` because the mechanism it guards is Claude's. Both rows exist for
+# the same defect — #96's background job named "Wait ~3 minutes for CI" that sat
+# until it timed out and never brought the session back — and on Codex the trap
+# is sharper, because the harness ships the instrument.
+# `skills/review-cycle/references/codex.md`:
+#
+#   "There is nothing here that waits. Codex can neither block on the checks
+#   nor wake itself after the turn ends […] So, unattended: read the checks
+#   once, and where they have not all reported, say so and stop."
+#
+#   "`sleep_tool`. Codex ships a sleep. `SKILL.md` forbids one outright, in the
+#   foreground and in the background alike."
+#
+# A row that passes without the reference file being read is wrong, so the
+# graded content is both halves: no sleep of any kind, and the stop rather than
+# an improvised wait.
+#
+# Why the Claude sibling could not be reused: its rubric is satisfied by the
+# read-wake-read loop `references/claude.md` prescribes, which needs a durable
+# wake. Codex has none — `0011`'s scoping of `0010` to Claude Code is why — so a
+# Codex run against that row would be graded on a loop it cannot run, and the
+# honest answer here (read once, then stop) reads as not having waited at all.
+#
+# Why not the Omp fork either: Omp at least blocks on the Actions runs, so its
+# wait completes inside the turn. This harness does not wait at all, and that
+# difference is the whole row.
+#
+# What this row can and cannot see. The sandbox has no GitHub client and no
+# durable wake, which is the same position a real unattended Codex session is
+# in. So the negative control is real rather than vacuous, and the positive
+# assertion is an `agent_judge` on the reply.
+#
+# `Bash` is deliberately open, for the reason the Claude sibling gives: a
+# negative control on a tool the model was never offered passes vacuously, and
+# this one has to be able to fail. On this harness it is open regardless —
+# `disallowed_tools` is recorded and not enforced — which makes the control
+# stronger here than on Claude Code rather than weaker.
+#
+# Why this fails the `without` arm: a model with no plugin loaded, told CI is
+# still running and asked to review once it is green, waits. A shell `sleep`
+# before a re-read is the obvious improvisation, and on this harness a
+# `sleep_tool` call is offered to it as a first-class tool. That the correct
+# answer is to refuse to wait at all, read once, and stop is stated nowhere but
+# this skill's own reference file.
+
+task_id: review-cycle-07-there-is-no-wait-codex
+description: >-
+  A round entered while CI is still running does not sleep, and does not
+  improvise a wait this harness cannot keep — it reads once and stops.
+tags: [review-cycle, references, behaviour, fire, codex-only, "forks:review-cycle-07-wait-for-ci-is-not-a-sleep"]
+
+initial_prompt: >-
+  I have pushed the branch and PR #25 is open on it. CI is still running.
+  Review the head and bring me the findings once it's green.
+
+agent:
+  allowed_tools: [Bash, Read, Grep, Glob, Skill, Agent, Task]
+
+run_limits:
+  max_turns: 12
+  # `turn_timeout` is the agent's budget; `task_timeout` is the watchdog around
+  # the whole evaluation, armed before the turn starts and still running while
+  # the criteria are checked. Equal values mean a turn that uses its budget is
+  # killed as a TIMEOUT before it can be graded, so `task_timeout` carries
+  # headroom on top — and here it must also cover the judge below.
+  turn_timeout: 300
+  task_timeout: 600
+
+success_criteria:
+  # The negative control, unchanged from the Claude sibling. `commandExecution`
+  # reaches the criteria as `Bash` with its command string in
+  # `parameters["command"]`, so this reads identically on both harnesses.
+  # `sleep [0-9]` rather than bare `sleep`, so a command merely naming the word
+  # — a grep for it, a script that prints it — does not score as having slept.
+  - type: command_executed
+    description: The wait was not a shell sleep
+    tool_name: Bash
+    command_pattern: 'sleep [0-9]'
+    min_count: 0
+    max_count: 0
+    weight: 2
+    # A sleep has already lost the row, so ending the run on it costs nothing.
+    stop_early: {}
+
+  # Without this, a run that did nothing at all scores a pass on the criterion
+  # above. Armed, and armed for the reason `evals/README.md` gives: a bare
+  # block leaves `on_pass` at `continue`, so it truncates nothing — it puts
+  # this criterion in the watcher's pass-capable set, which is what defers the
+  # sleep guard's fail-stop until the skill has had its chance to fire.
+  - type: skill_triggered
+    description: "`review-cycle` fires on a pull request whose head needs reviewing"
+    expected_skill: review-cycle
+    skill_name: review-cycle
+    stop_early: {}
+
+  # The positive half, and the one that separates this row from its Claude
+  # sibling: not sleeping is not the same as knowing there is no wait to keep.
+  - type: agent_judge
+    description: The reply reads the checks once and stops rather than waiting
+    include_agent_output: true
+    include_reference: false
+    weight: 2
+    # `agent_judge`, not `llm_judge`, for the reason
+    # docs/notes/0014-the-judge-runs-on-the-subscription.md gives: it grades on
+    # the subscription rather than needing an `ANTHROPIC_API_KEY` this project
+    # does not have. It stays a Claude judge in this arm — the judge reads a
+    # transcript, and which harness produced it changes nothing about reading
+    # it. Bounded for the reason the Claude rows state: the default
+    # `max_turns: 50` lets a judge with an empty tool surface spend turns on
+    # calls it cannot make, and one that overruns cancels the replicate as a
+    # TIMEOUT rather than scoring it.
+    max_turns: 5
+    turn_timeout: 120
+    agent:
+      type: claude-code
+      model: claude-sonnet-5
+      allowed_tools: []
+      permission_mode: default
+    prompt: |
+      You are grading one reply against a single rule.
+
+      FIRST, FIND THE REPLY. The AGENT OUTPUT block you have been given is a
+      whole-turn transcript, not a reply. `[ASSISTANT] …` starts each block of
+      the agent thinking aloud — only the first line of a block carries that
+      tag — and a final `[RESULT - SUCCESS] …` or `[RESULT - ERROR] …` carries
+      the answer the user actually received.
+
+      **The reply is the text from the last `[RESULT - …]` tag to the end of
+      the AGENT OUTPUT block**, starting after the tag on its own line.
+      Nothing outside the AGENT OUTPUT block is the agent's.
+
+      Begin your rationale with `ANCHOR: result` or `ANCHOR: none`. Where
+      there is no `[RESULT - …]` tag, write `ANCHOR: none` and score 0.0.
+
+      The rule: this harness cannot wait for CI — it can neither block on the
+      checks nor wake itself after the turn ends. So the reply must say that
+      the checks were read ONCE, that they have not all reported, and that it
+      is stopping there rather than waiting; and it must NOT review the head
+      while a check is still unreported.
+
+      A reply that proposes any of these has broken the rule, whatever else it
+      says: a sleep of any kind (a shell `sleep`, a `sleep_tool` call, "wait
+      N minutes"), a polling loop, a blocking watch, or scheduling something
+      to come back later.
+
+      Score 1.0 if the REPLY reports one read, says the checks have not all
+      reported, and stops — with no wait of any kind proposed and no review
+      performed.
+      Score 0.5 if it stops without reviewing but is vague about having read
+      the checks, or leaves it open whether it will come back.
+      Score 0.0 if it proposes any wait, polls, reviews the head anyway, or
+      claims a wait it did not and could not perform.

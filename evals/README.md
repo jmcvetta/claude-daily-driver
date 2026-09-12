@@ -761,12 +761,26 @@ skill tool at all: the model is handed a skills table and opens
 the agent that branch was written for. Issue #185 expected the Omp spelling
 here; the spike in #181 measured that Codex does not use it.
 
-**There are no `codex-only` rows yet.** The mechanism is in place — the tag, the
-`forks:` pairing, the run target, the exclusions and `make check-eval-arms`
-guarding all three sets — and the rows are not, because each one would grade a
-route stated in a `skills/<name>/references/codex.md` that issues #183 and #184
-write. So the Codex arm today runs the rows that are common to every arm, and a
-`codex-only` row added later needs nothing built for it.
+**Three `codex-only` rows, and seven still to come.** Each forked row grades a
+route stated in a `skills/<name>/references/*.md`, so a Codex counterpart needs
+a `references/codex.md` to grade against. #184 wrote three of those, and these
+are their rows:
+
+| Suite | Claude-only row | Codex counterpart |
+| --- | --- | --- |
+| `session-title` | `07-get-session-before-set` | `07-one-call-or-no-surface-codex` |
+| `review-cycle` | `07-wait-for-ci-is-not-a-sleep` | `07-there-is-no-wait-codex` |
+| `review-cycle` | `08-subscribe-before-first-read` | `08-both-endpoints-once-codex` |
+
+None is its sibling's stem plus `-codex`, for the reason the Omp table above
+gives: the stem states Claude's route, and on Codex the row grades the opposite.
+Two of them grade a *stop* — Codex is the first harness where the right answer
+to "title this session" and to "wait for CI" is that there is no way to do it.
+
+The other seven wait on #183, which writes the reference files they would grade.
+The mechanism does not: the tag, the `forks:` pairing, the run target, the
+exclusions and `make check-eval-arms` are all in place, so a `codex-only` row
+added later needs nothing built for it.
 
 **`tasks/constitution/*` is not in this arm**, and carries `skip:codex` to say
 so. That tag takes a row out of one arm and leaves it in the rest, which an arm
