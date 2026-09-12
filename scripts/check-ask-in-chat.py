@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The acceptance test for the hook that closes the AskUserQuestion widget.
+"""The acceptance test for the hook that closes the question widget.
 
 The constitution carries the rule *code without tests is broken*, and a hook
 is the worst place to break that rule: it runs in one line of `hooks.json`
@@ -7,6 +7,13 @@ that nothing else reads, on an event nobody watches, and its failure mode is
 the widget quietly coming back. So the hook is run here exactly as the harness
 runs it — the real script, synthetic event JSON on stdin — and the answer is
 asserted on.
+
+Both harnesses are driven, because one `hooks.json` serves both and the
+widget has a different name on each: `AskUserQuestion` on Claude Code,
+`request_user_input` on Codex. The Codex envelope is the stdin measured in
+issue #181, not a guess at one. An adapter that quietly stops reaching one
+harness is the failure this half of the file exists to catch — it looks
+exactly like an adapter that was never installed.
 
 No model is needed for any of it, so it belongs in `make check` and in a CI
 that holds no credentials. There is no live half: unlike the constitution,
@@ -31,12 +38,22 @@ ROOT = Path(__file__).resolve().parent.parent
 HOOKS_JSON = ROOT / "hooks" / "hooks.json"
 SCRIPT = ROOT / "hooks" / "ask-in-chat.py"
 
-TOOL = "AskUserQuestion"
+# One widget, one name per harness. `AskUserQuestion` does not occur anywhere
+# in the Codex binary (measured, issue #181), so a matcher carrying only Claude
+# Code's spelling denies nothing there and the widget this hook exists to close
+# stays open. Both names are asserted on, because a matcher that drops either
+# one is the same silent failure pointed at the other harness.
+WIDGETS = {
+    "Claude Code": "AskUserQuestion",
+    "Codex": "request_user_input",
+}
+TOOLS = tuple(WIDGETS.values())
 
-# Tool names the matcher must leave alone. The last two are the point: a
-# matcher written without anchors — `AskUserQuestion` rather than
-# `^AskUserQuestion$` — matches both, and denying a tool nobody asked about is
-# a failure that reads like a broken session rather than like a wrong hook.
+# Tool names the matcher must leave alone. The last four are the point: a
+# matcher written without anchors — `AskUserQuestion|request_user_input` rather
+# than `^(AskUserQuestion|request_user_input)$` — matches every one of them, and
+# denying a tool nobody asked about is a failure that reads like a broken
+# session rather than like a wrong hook.
 NOT_THIS_TOOL = (
     "Bash",
     "Edit",
@@ -44,6 +61,8 @@ NOT_THIS_TOOL = (
     "Task",
     "AskUserQuestionLater",
     "MyAskUserQuestion",
+    "request_user_input_v2",
+    "my_request_user_input",
 )
 
 # The two instructions the denial reason carries, named here so that a rewrite
@@ -52,26 +71,67 @@ NOT_THIS_TOOL = (
 # calling again buys nothing.
 REQUIRED_IN_REASON = ("chat", "retry")
 
-EVENT = {
-    "session_id": "check-ask-in-chat",
-    "cwd": str(ROOT),
-    "hook_event_name": "PreToolUse",
-    "tool_name": TOOL,
-    "tool_input": {
-        "questions": [
-            {
-                "question": "Which retry backoff should the client use?",
-                "header": "Backoff",
-                "multiSelect": False,
-                "options": [
-                    {"label": "Exponential", "description": "Doubling, with a cap."},
-                    {"label": "Fixed", "description": "One interval, every time."},
-                ],
-            }
-        ]
-    },
-    "tool_use_id": "toolu_check",
+# What each harness puts in `tool_input`. Claude Code's `AskUserQuestion` takes
+# questions with a header, a multi-select flag and labelled options; Codex's
+# `request_user_input` takes questions with options too, in its own spelling.
+# The hook never opens either — it reads `tool_name` and nothing else — so the
+# shapes are here to make the event realistic rather than to be asserted on.
+QUESTIONS = {
+    "AskUserQuestion": [
+        {
+            "question": "Which retry backoff should the client use?",
+            "header": "Backoff",
+            "multiSelect": False,
+            "options": [
+                {"label": "Exponential", "description": "Doubling, with a cap."},
+                {"label": "Fixed", "description": "One interval, every time."},
+            ],
+        }
+    ],
+    "request_user_input": [
+        {
+            "question": "Which retry backoff should the client use?",
+            "options": [
+                {"label": "Exponential"},
+                {"label": "Fixed"},
+            ],
+        }
+    ],
 }
+
+
+def event_for(harness: str) -> dict:
+    """The `PreToolUse` event `harness` sends when the widget is called.
+
+    Both envelopes are measured rather than invented. Claude Code's is the one
+    this check has always driven; Codex's is the stdin recorded in issue #181
+    — `transcript_path`, `model` and `permission_mode` alongside the common
+    keys, a `turn_id`, and a `call_`-prefixed tool use id.
+
+    The hook reads `tool_name` and nothing else, so the envelope is not what is
+    under test. What is under test is that an envelope this script has never
+    seen does not change the answer, which is exactly how a harness-specific
+    regression would arrive.
+    """
+    tool = WIDGETS[harness]
+    event = {
+        "session_id": "check-ask-in-chat",
+        "cwd": str(ROOT),
+        "hook_event_name": "PreToolUse",
+        "tool_name": tool,
+        "tool_input": {"questions": QUESTIONS[tool]},
+    }
+    if harness == "Codex":
+        return dict(
+            event,
+            transcript_path=str(ROOT / "rollout-check.jsonl"),
+            model="stub-model",
+            permission_mode="bypassPermissions",
+            tool_use_id="call_check",
+            turn_id="01a09630-check",
+        )
+    return dict(event, tool_use_id="toolu_check")
+
 
 # Stdin the harness should never send, in the two kinds it comes in: input that
 # does not parse, and input that parses into something that is not an event.
@@ -231,11 +291,12 @@ def check_wiring(errors: list[str]) -> None:
             f"hooks/hooks.json: PreToolUse matcher {matcher!r} is not a "
             f"regular expression ({error}), so it matches nothing"
         ) from None
-    if not re.search(matcher, TOOL):
-        errors.append(
-            f"hooks/hooks.json: matcher {matcher!r} does not match {TOOL!r}, "
-            f"so the widget opens as before"
-        )
+    for harness, tool in WIDGETS.items():
+        if not re.search(matcher, tool):
+            errors.append(
+                f"hooks/hooks.json: matcher {matcher!r} does not match "
+                f"{tool!r}, so the widget opens as before on {harness}"
+            )
     for tool in NOT_THIS_TOOL:
         if re.search(matcher, tool):
             errors.append(
@@ -276,8 +337,13 @@ def denial(errors: list[str], where: str, stdin: str) -> None:
 
 
 def check_denies(errors: list[str]) -> None:
-    """A real call is denied, and so is one the hook cannot read."""
-    denial(errors, "a real AskUserQuestion call", json.dumps(EVENT))
+    """A real call is denied on either harness, and so is one the hook cannot read."""
+    for harness, tool in WIDGETS.items():
+        denial(
+            errors,
+            f"a real {tool} call from {harness}",
+            json.dumps(event_for(harness)),
+        )
     for stdin in BAD_STDIN:
         denial(errors, f"unusable stdin {stdin!r}", stdin)
 
@@ -290,7 +356,9 @@ def check_allows_other_tools(errors: list[str]) -> None:
     and shutting off an unrelated tool with a message about a widget is worse
     than one widget getting through.
     """
-    event = dict(EVENT, tool_name="Bash", tool_input={"command": "ls"})
+    event = dict(
+        event_for("Claude Code"), tool_name="Bash", tool_input={"command": "ls"}
+    )
     where = "an event naming Bash"
     payload = run_hook(errors, where, json.dumps(event))
     if payload is None:
@@ -310,7 +378,7 @@ def check_allows_other_tools(errors: list[str]) -> None:
 
 def check_bad_argv(errors: list[str]) -> None:
     """A typo in hooks.json exits nonzero rather than passing silently."""
-    result = spawn("session-start", stdin=json.dumps(EVENT))
+    result = spawn("session-start", stdin=json.dumps(event_for("Claude Code")))
     if result.returncode == 0:
         errors.append(
             "an unexpected argument exited 0; a typo in hooks.json would be "
@@ -334,7 +402,8 @@ def main() -> int:
         return 1
     print(
         f"the question widget is closed: {SCRIPT.relative_to(ROOT)} denies "
-        f"{TOOL} with a reason that sends the question to the chat reply"
+        f"{' and '.join(TOOLS)} with a reason that sends the question to the "
+        f"chat reply"
     )
     return 0
 

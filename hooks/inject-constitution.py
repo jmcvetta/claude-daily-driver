@@ -1,11 +1,23 @@
 #!/usr/bin/env python3
 """Carry the constitution into a session, and into every subagent it spawns.
 
-One script, two modes, one file. `SessionStart` reaches the main session and
+One script, three modes, one file. `SessionStart` reaches the main session and
 does not reach subagents — measured, not assumed; the evidence table is in
 `docs/planning/plugin-replaces-global-memory.md` under R2 — so a second
 injection point on the `Agent` tool is what keeps a plugin-delivered
 constitution from being strictly weaker than the `CLAUDE.md` it replaces.
+
+`SubagentStart` is the third injection point, and it is there for Codex. Codex
+delegates through `multi_agent_v1` rather than through `Agent` or `Task`, so
+the `PreToolUse` matcher reaches nothing on that harness and `SubagentStart` is
+the only route a Codex subagent's constitution can arrive by. Claude Code fires
+that event too and honours the same `additionalContext`, so a Claude Code
+subagent is handed the constitution twice — once prepended to its prompt by
+`pre-tool-use`, once as context by this mode. That duplicate is the price of
+one `hooks.json` serving both harnesses: `SubagentStart` carries only
+`agent_id` and `agent_type`, so neither mode can see that the other has already
+fired, and sniffing the harness to suppress one of them is a workaround this
+file does not carry.
 
 The file lives at `rules/constitution.md`, the one source for both Claude Code
 and Oh My Pi. Omp's rule provider reads it from `rules/`, strips the
@@ -13,14 +25,14 @@ and Oh My Pi. Omp's rule provider reads it from `rules/`, strips the
 subagent; this hook reads the same file, validates that exact frontmatter and
 strips it, so the two harnesses inject the identical body.
 
-Two injection points are two chances to disagree with each other. They are
-kept honest structurally rather than by discipline: one script holds both, so
-there is one path constant (`CONSTITUTION`, no glob) and one renderer
+Three injection points are three chances to disagree with each other. They
+are kept honest structurally rather than by discipline: one script holds all
+three, so there is one path constant (`CONSTITUTION`, no glob) and one renderer
 (`render()`), and the subagent prompt is the main session's context plus the
 original prompt, byte for byte. `scripts/check-constitution.py` asserts that
 equality rather than trusting this paragraph.
 
-Usage: inject-constitution.py {session-start,pre-tool-use}
+Usage: inject-constitution.py {session-start,subagent-start,pre-tool-use}
 
 The event JSON arrives on stdin and the hook's answer goes to stdout. See
 `hooks/hooks.json` for the wiring.
@@ -56,7 +68,16 @@ CONSTITUTION = PLUGIN_ROOT / "rules" / "constitution.md"
 FRONTMATTER_OPEN = "---"
 FRONTMATTER_BLOCK = "alwaysApply: true"
 
-MODES = ("session-start", "pre-tool-use")
+# The modes, and the event name each one echoes back. The echo is a contract
+# rather than a courtesy: Codex rejects a handler whose
+# `hookSpecificOutput.hookEventName` is not the event it was sent — the output
+# is dropped and the hook reports `Failed` — and Claude Code keys its own
+# reading of the output off the same field.
+MODES = {
+    "session-start": "SessionStart",
+    "subagent-start": "SubagentStart",
+    "pre-tool-use": "PreToolUse",
+}
 
 # The tool input keys a subagent prompt can live under. `Agent` uses `prompt`;
 # the tool was called `Task` for years and some harness versions still send
@@ -86,7 +107,7 @@ BANNER = (
 
 
 def render() -> tuple[str, str | None]:
-    """The text both injection points carry, and the failure reason if any.
+    """The text every injection point carries, and the failure reason if any.
 
     Returns `(text, None)` when the constitution was read, and
     `(banner, reason)` when it was not. There is no third case: the hook
@@ -166,12 +187,20 @@ def emit(payload: dict, reason: str | None) -> int:
     return 0
 
 
-def session_start(_event: dict) -> int:
+def additional_context(event_name: str) -> int:
+    """Deliver the constitution as context, for an event whose output takes it.
+
+    `SessionStart` and `SubagentStart` differ in nothing but the name they echo
+    and neither reads its event, so they share one body. Two copies would be
+    two texts to keep equal, and the equality is the whole point:
+    `scripts/check-constitution.py` asserts that every injection point carries
+    the same bytes.
+    """
     text, reason = render()
     return emit(
         {
             "hookSpecificOutput": {
-                "hookEventName": "SessionStart",
+                "hookEventName": event_name,
                 "additionalContext": text,
             }
         },
@@ -242,7 +271,9 @@ def main(argv: list[str]) -> int:
         )
         event = {}
 
-    return session_start(event) if argv[1] == "session-start" else pre_tool_use(event)
+    if argv[1] == "pre-tool-use":
+        return pre_tool_use(event)
+    return additional_context(MODES[argv[1]])
 
 
 if __name__ == "__main__":
