@@ -103,6 +103,33 @@ Two names in it are easy to get wrong, and each fails the same silent way:
   `daily-driver@daily-driver` names a marketplace that does not exist, and an
   entry whose marketplace is not registered is skipped as orphaned.
 
+## Codex has no stanza at all
+
+Everything above is Claude Code's. On Codex there is no repository-level enable
+of any kind — not a weak one, none. Measured against `codex-cli` 0.154.0:
+
+| Question | Answer |
+| -------- | ------ |
+| Where `codex plugin marketplace add` and `codex plugin add` write their state | `$CODEX_HOME/config.toml`, in `[marketplaces.<name>]` and `[plugins."<plugin>@<marketplace>"]` |
+| Is there a separate install manifest | no — that file is the whole record, and rewriting it uninstalls every plugin silently |
+| Is a project `.codex/config.toml` read | no: `codex doctor` names the user file as the only config it loaded, and a `model` line in the project file had no effect |
+| …and does a marketplace and plugin declared there load the skills | no |
+
+So `template/.claude/settings.json` has no Codex counterpart to ship, and the
+cheapest thing a shared repository can do on that harness is name the two
+commands in its own README. A repository *can* carry a
+`.agents/plugins/marketplace.json` to **offer** a plugin, but a non-default
+marketplace path is not discovered implicitly and still needs `codex plugin
+marketplace add`.
+
+One failure mode is Codex's own, and it is the same silent shape this page
+exists for: **hooks need persisted trust**. Untrusted, they are skipped with no
+warning, no log line and no output, so the constitution and the question
+widget's deny are simply absent. `codex exec --dangerously-bypass-hook-trust`
+is the documented escape hatch for automation that has already vetted its
+sources. [`notes/0016`](notes/0016-three-harnesses-one-skill-tree.md) is where
+that and the rest of the third harness's decisions are recorded.
+
 ## Cloud environments: the Setup script
 
 Nothing in the container fills the cache on its own. Granted a registered
