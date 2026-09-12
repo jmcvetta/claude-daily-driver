@@ -2,7 +2,7 @@
 
 `SKILL.md` names each operation in words. This file names the call, for a
 session running in Oh My Pi. Claude Code's routes are in
-[`claude.md`](claude.md).
+[`claude.md`](claude.md), Codex's in [`codex.md`](codex.md).
 
 - **Checking whether a pull request already exists for the branch.**
   `gh pr view` (or `gh pr list --head <branch>`) finds it.

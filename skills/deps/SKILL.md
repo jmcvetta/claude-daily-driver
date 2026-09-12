@@ -6,16 +6,15 @@ description: >-
   answer — including when the user says "/deps", "dependabot is complaining",
   "upgrade the deps", "these dependency PRs are piling up", or "bump
   everything". Noticing open Dependabot pull requests during other work is
-  worth a line to the user and is not itself a trigger, because a bulk upgrade
-  started mid-task is scope nobody asked for. Supplies the one-branch bulk
-  upgrade, the bulk command each manager already has, green CI as the whole
-  acceptance test, and the boundary an unattended run stays inside — no merge,
-  no code edited around a breaking change, and nothing outside the pull
-  request it opens — and names the harness's PR routes (`mcp__github__…` MCP
-  calls on Claude, Omp's `github` tool and `gh` routes for the same
-  operations). Not for a
-  single named dependency, which is ordinary work, and not for a major version
-  bump, which this skill reports and hands to `undertake`.
+  worth a line to the user and is not itself a trigger: a bulk upgrade started
+  mid-task is scope nobody asked for. Supplies the one-branch bulk upgrade,
+  the bulk command each manager already has, green CI as the whole acceptance
+  test, and the boundary an unattended run stays inside — no merge, no code
+  edited around a breaking change, and nothing outside the pull request it
+  opens — and names the harness's PR routes (`mcp__github__…` on Claude Code,
+  the `github` tool on Omp, and `gh` on Omp and on Codex). Not for a single
+  named dependency, which is ordinary work, and not for a major version bump,
+  which this skill reports and hands to `undertake`.
 ---
 
 # Bulk dependency upgrade
@@ -31,7 +30,8 @@ and it is not restated here.
 **The routes are per harness, and they live beside this file.** Every
 operation below is named in words here and resolved to a call there:
 [`references/claude.md`](references/claude.md) for Claude Code,
-[`references/omp.md`](references/omp.md) for Oh My Pi. Read the one for the
+[`references/omp.md`](references/omp.md) for Oh My Pi,
+[`references/codex.md`](references/codex.md) for Codex. Read the one for the
 harness in use before the first search or write call.
 
 

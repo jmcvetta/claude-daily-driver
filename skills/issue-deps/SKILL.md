@@ -5,16 +5,16 @@ description: >-
   being recorded, read, or relied upon — one issue blocking another, a
   sub-issue or parent, or which pull request closes an issue. It fires on the
   literal "/issue-deps", on natural phrasings ("this is blocked by #123",
-  "what's blocking this", "make it a sub-issue of the epic", "what does this
-  depend on"), on noticing while planning or while writing a PR body that some
-  other work must land first, and on Claude's own use of `gh issue edit` with
-  `--add-blocked-by`, `--add-blocking`, `--add-sub-issue` or `--parent`, of
-  `mcp__github__sub_issue_write`, `mcp__github__issue_read` with
-  `get_sub_issues` or `get_parent`, `mcp__github__issue_write` with
+  "what's blocking this", "make it a sub-issue of the epic"), on noticing
+  while planning or writing a PR body that other work must land first, and on
+  Claude's own use of `gh issue edit` with `--add-blocked-by`,
+  `--add-blocking`, `--add-sub-issue` or `--parent`, which is the route on Omp
+  and on Codex, of `mcp__github__sub_issue_write`, `mcp__github__issue_read`
+  with `get_sub_issues` or `get_parent`, `mcp__github__issue_write` with
   `parent_issue_number`, or of a `Closes #123` line in a pull request body.
   Supplies the three clients these relationships need and the probe that picks
   one, the script for a token without `gh`, and the rule that an edge the
-  evidence supports is written and reported, never asked about first.
+  evidence supports is written and reported rather than asked about.
 ---
 
 # Issue relationships
@@ -39,7 +39,8 @@ writer into it.
 **The exact form is per harness, and it lives beside this file.** Every
 operation below is named in words here and resolved to a call there:
 [`references/claude.md`](references/claude.md) for Claude Code,
-[`references/omp.md`](references/omp.md) for Oh My Pi. Read the one for the
+[`references/omp.md`](references/omp.md) for Oh My Pi,
+[`references/codex.md`](references/codex.md) for Codex. Read the one for the
 harness in use before the first call.
 
 
@@ -230,13 +231,15 @@ Always invoke it through the harness's own injected skill-directory path,
 never a relative one. A skill's Bash runs in the user's project, not in the
 plugin, so a relative `scripts/issue-deps.sh` is "No such file or
 directory" — or worse, silently runs an unrelated file in a project that
-has its own `scripts/`. Each harness injects this path under its own name;
-the reference file for the harness in use gives the exact form.
+has its own `scripts/`. Each harness makes this path reachable its own way —
+two inject it under a name of their own, and the third expects it to be
+derived — so the reference file for the harness in use gives the exact form.
 
 ```sh
 # $deps is this skill's own script. The assignment differs by harness —
-# references/claude.md or references/omp.md gives the exact form — and the
-# guard makes an unresolved path fail loudly rather than run an empty command.
+# references/claude.md, references/omp.md or references/codex.md gives the
+# exact form — and the guard makes an unresolved path fail loudly rather than
+# run an empty command.
 : "${deps:?resolve the script path per the reference files}"
 
 "$deps" blocked-by 191            # what #191 waits on

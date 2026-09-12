@@ -2,7 +2,7 @@
 
 `SKILL.md` names each operation in words. This file names the call, for a
 session running in Oh My Pi. Claude Code's routes are in
-[`claude.md`](claude.md).
+[`claude.md`](claude.md), Codex's in [`codex.md`](codex.md).
 
 - **Finding what is behind.** `search_prs`, the `github` tool's search op,
   with `is:open author:app/dependabot` — the same underlying
