@@ -234,8 +234,10 @@ knowing before it surprises you, both measured against `codex-cli` 0.154.0:
   `--dangerously-bypass-hook-trust` for automation that has already vetted the
   source.
 
-In the cloud the same commands go in the environment's **Setup script**, which
-is the one writer that beats the plugin scan. The environment dialog is behind
+In the cloud — meaning a Claude Code cloud environment, so the Claude Code pair
+above rather than either of the others — the same two commands go in the
+environment's **Setup script**, which is the one writer that beats the plugin
+scan. The environment dialog is behind
 the cloud icon above the message box at [claude.ai/code][web].
 
 [web]: https://claude.ai/code

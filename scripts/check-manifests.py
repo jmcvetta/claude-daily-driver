@@ -392,21 +392,25 @@ def main() -> int:
             "expected exactly one marketplace entry with source './', "
             f"found {len(own)}"
         )
-    elif own[0]["name"] != plugin["name"]:
-        errors.append(
-            f"marketplace entry name is {own[0]['name']!r} "
-            f"but plugin.json says {plugin['name']!r}"
-        )
-    elif own[0].get("description") != plugin.get("description"):
+    else:
+        # Two independent comparisons rather than an elif chain: a tree that
+        # drifted on both reports both, and the maintainer fixes them in one
+        # pass instead of learning about the second from the next CI run.
+        if own[0]["name"] != plugin["name"]:
+            errors.append(
+                f"marketplace entry name is {own[0]['name']!r} "
+                f"but plugin.json says {plugin['name']!r}"
+            )
         # The same sentence is written twice, and each catalog renders a
         # different copy of it: `claude plugin marketplace` lists the
         # marketplace entry, `claude plugin details` reads plugin.json. A
         # drift is therefore visible to users and to nothing else -- both
         # copies stay valid, and neither command shows the other's text.
-        errors.append(
-            f"marketplace entry description is {own[0].get('description')!r} "
-            f"but plugin.json says {plugin.get('description')!r}"
-        )
+        if own[0].get("description") != plugin.get("description"):
+            errors.append(
+                f"marketplace entry description is {own[0].get('description')!r} "
+                f"but plugin.json says {plugin.get('description')!r}"
+            )
 
     skills = sorted((ROOT / "skills").glob("*/SKILL.md"))
     if not skills:
