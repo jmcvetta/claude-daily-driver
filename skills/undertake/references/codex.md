@@ -18,7 +18,12 @@ The issue
 | `Open the issue` | Open one, labelled | `gh issue create --label task` |
 | `Read the issue and its edges` | Read the body and the graph | `gh issue view <number> --json body,labels,blockedBy,subIssues,parent` |
 | `Read the issue and its edges` | Label an issue that carries none | `gh issue edit <number> --add-label task` |
-| `Claim the issue` | Comment on the issue | `gh issue comment <number> -b "…"` |
+| `Claim the issue` | Comment on the issue | `gh issue comment <number> --body-file <path>` |
+
+`--body-file` rather than `-b`: the claim carries backticks and markdown
+links, and a double-quoted shell argument substitutes the backticks before
+`gh` sees them. `pr-body`'s [`codex.md`](../../pr-body/references/codex.md)
+makes the same argument at length.
 
 The `--json` fields in the read row need `gh` at its stated floor.
 `issue-deps` owns the edge reads and picks its own client — two clients here
