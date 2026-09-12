@@ -1,8 +1,9 @@
 # Claude Code routes — embark
 
 `SKILL.md` names each operation in words. This file names the call, for a
-session running in Claude Code. Omp's routes are in [`omp.md`](omp.md), and
-that file is a stop rather than a table.
+session running in Claude Code. Omp's routes are in [`omp.md`](omp.md) and
+Codex's in [`codex.md`](codex.md); both of those are stops rather than tables,
+for different reasons each states.
 
 
 The epic
