@@ -1,7 +1,8 @@
 # Claude Code routes — deps
 
 `SKILL.md` names each operation in words. This file names the call, for a
-session running in Claude Code. Omp's routes are in [`omp.md`](omp.md).
+session running in Claude Code. Omp's routes are in [`omp.md`](omp.md),
+Codex's in [`codex.md`](codex.md).
 
 - **Finding what is behind.** `mcp__github__search_pull_requests` with
   `is:open author:app/dependabot` is the list, and each title names the

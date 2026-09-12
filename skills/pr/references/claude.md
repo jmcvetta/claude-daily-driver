@@ -1,7 +1,8 @@
 # Claude Code routes — pr
 
 `SKILL.md` names each operation in words. This file names the call, for a
-session running in Claude Code. Omp's routes are in [`omp.md`](omp.md).
+session running in Claude Code. Omp's routes are in [`omp.md`](omp.md),
+Codex's in [`codex.md`](codex.md).
 
 - **Checking whether a pull request already exists for the branch.**
   `mcp__github__list_pull_requests` filtered to `head` finds it;

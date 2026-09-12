@@ -6,13 +6,12 @@ description: >-
   description", "update the PR body", "the PR description is thin", or asks
   for more detail in a PR, and including any call Claude makes on its own
   initiative to `mcp__github__create_pull_request`, to
-  `mcp__github__update_pull_request` that sets a `body`, to
-  `gh pr edit --body` on a harness that still reaches for it, or to Omp's
-  `github` tool's `pr_create` op (`body`) and `gh pr edit --body` for
-  revisions. Supplies the
-  required structure: one-line summary, salutation in verse, the
-  issue-reference section, executive summary, and engineering detail.
-  Not for the PR title — that is `pr-title`.
+  `mcp__github__update_pull_request` that sets a `body`, to Omp's `github`
+  tool's `pr_create` op (`body`), or to `gh pr create` / `gh pr edit` with the
+  body flag — `--body` on Omp, `--body-file` on Codex. Supplies the required
+  structure: one-line summary, salutation in verse, the issue-reference
+  section, executive summary, and engineering detail. Not for the PR title —
+  that is `pr-title`.
 ---
 
 # PR Body
@@ -40,8 +39,9 @@ The body of a pull request, whether it is being opened or rewritten. In order:
 
 **The call that sets the body is per harness, and it lives beside this
 file.** [`references/claude.md`](references/claude.md) is the route for
-Claude Code, [`references/omp.md`](references/omp.md) for Oh My Pi. Read
-the one for the harness in use before the first call.
+Claude Code, [`references/omp.md`](references/omp.md) for Oh My Pi, and
+[`references/codex.md`](references/codex.md) for Codex. Read the one for
+the harness in use before the first call.
 
 Opening a pull request is the `pr` skill's job. When the body is being written
 as part of opening one, follow `pr` as well, for the branch guard, the
