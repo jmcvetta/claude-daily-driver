@@ -1,7 +1,8 @@
 # Claude Code routes — judgement-call
 
 `SKILL.md` names each operation in words. This file names the call, for a
-session running in Claude Code. Omp's routes are in [`omp.md`](omp.md).
+session running in Claude Code. Omp's routes are in [`omp.md`](omp.md),
+Codex's in [`codex.md`](codex.md).
 
 Claude denies `AskUserQuestion` through the `PreToolUse` hook
 `hooks/ask-in-chat.py`. The hook fires the moment the model reaches for the

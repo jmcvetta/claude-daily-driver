@@ -26,9 +26,10 @@ a later edit to a title or a body follows the same rules whether or not it
 arrived through here.
 
 The GitHub calls behind each step below differ by harness.
-[`references/claude.md`](references/claude.md) and
-[`references/omp.md`](references/omp.md) name them, operation by operation,
-in the order this file raises them.
+[`references/claude.md`](references/claude.md),
+[`references/omp.md`](references/omp.md) and
+[`references/codex.md`](references/codex.md) name them, operation by
+operation, in the order this file raises them.
 
 
 Branch

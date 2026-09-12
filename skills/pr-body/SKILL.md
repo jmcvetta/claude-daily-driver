@@ -40,8 +40,9 @@ The body of a pull request, whether it is being opened or rewritten. In order:
 
 **The call that sets the body is per harness, and it lives beside this
 file.** [`references/claude.md`](references/claude.md) is the route for
-Claude Code, [`references/omp.md`](references/omp.md) for Oh My Pi. Read
-the one for the harness in use before the first call.
+Claude Code, [`references/omp.md`](references/omp.md) for Oh My Pi, and
+[`references/codex.md`](references/codex.md) for Codex. Read the one for
+the harness in use before the first call.
 
 Opening a pull request is the `pr` skill's job. When the body is being written
 as part of opening one, follow `pr` as well, for the branch guard, the

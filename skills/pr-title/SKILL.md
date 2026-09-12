@@ -30,8 +30,9 @@ The title of a pull request, whether it is being opened or corrected.
 
 **The call that sets the title is per harness, and it lives beside this
 file.** [`references/claude.md`](references/claude.md) is the route for
-Claude Code, [`references/omp.md`](references/omp.md) for Oh My Pi. Read
-the one for the harness in use before the first call.
+Claude Code, [`references/omp.md`](references/omp.md) for Oh My Pi, and
+[`references/codex.md`](references/codex.md) for Codex. Read the one for
+the harness in use before the first call.
 
 
 The type

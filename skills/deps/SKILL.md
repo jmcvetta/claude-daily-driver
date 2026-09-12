@@ -31,7 +31,8 @@ and it is not restated here.
 **The routes are per harness, and they live beside this file.** Every
 operation below is named in words here and resolved to a call there:
 [`references/claude.md`](references/claude.md) for Claude Code,
-[`references/omp.md`](references/omp.md) for Oh My Pi. Read the one for the
+[`references/omp.md`](references/omp.md) for Oh My Pi,
+[`references/codex.md`](references/codex.md) for Codex. Read the one for the
 harness in use before the first search or write call.
 
 

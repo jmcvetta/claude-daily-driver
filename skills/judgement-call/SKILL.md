@@ -27,8 +27,9 @@ round trip costs the user a word nobody should have had to type.
 **The widget is denied per harness, and the adapter that denies it lives
 beside this file.** [`references/claude.md`](references/claude.md) names the
 Claude Code adapter, [`references/omp.md`](references/omp.md) the Oh My Pi
-one. Read the one for the harness in use before putting a question to the
-user: it says what the denial does when the widget is reached for.
+one, and [`references/codex.md`](references/codex.md) the Codex one. Read
+the one for the harness in use before putting a question to the user: it
+says what the denial does when the widget is reached for.
 
 
 The gate

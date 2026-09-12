@@ -1,12 +1,12 @@
-# Omp routes — issue-labels
+# Codex routes — issue-labels
 
 `SKILL.md` names each operation in words. This file names the call, for a
-session running in Oh My Pi. Claude Code's routes are in
-[`claude.md`](claude.md), Codex's in [`codex.md`](codex.md).
+session running in Codex. Claude Code's routes are in
+[`claude.md`](claude.md), Oh My Pi's in [`omp.md`](omp.md).
 
-Two clients share the work, as they do for `undertake`: the built-in `github`
-tool reads what it covers, `gh` writes, and `issue://<number>` resolves a read
-from the same cache the `github` tool writes to.
+**Codex has no GitHub tool of its own** — no `mcp__github__*` server, and no
+built-in `github` tool with an `issue://` cache behind it. There is one
+client, `gh` in the shell.
 
 
 Reading and writing a label
@@ -14,7 +14,7 @@ Reading and writing a label
 
 | Operation | Call |
 | --------- | ---- |
-| Read the labels on one issue | `issue://<number>`, or `gh issue view <number> --json labels` |
+| Read the labels on one issue | `gh issue view <number> --json labels` |
 | Label an issue being opened | `gh issue create --label task` |
 | Label an issue that exists | `gh issue edit <number> --add-label task` |
 | Take a label off | `gh issue edit <number> --remove-label proposal` |
@@ -30,4 +30,4 @@ carrying two of the five, which `SKILL.md` makes a stop. Write the swap as
 one call with both flags rather than as two calls with one each.
 
 Finding the issues that carry a label is `gh issue list --label task`, or
-`github.search_issues` with `label:task` in the query.
+`gh search issues` with `label:task` in the query.
