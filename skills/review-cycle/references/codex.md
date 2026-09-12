@@ -33,6 +33,25 @@ one checked out, and its base has to be a ref this clone has. That is a real
 difference from Claude Code, where the round can review a pull request it never
 checked out.
 
+**And that costs `Does it go again?` its premise.** That stage defaults a base
+merge to `Neither` — not a new diff — *because* the pull request's diff is
+three-dot, so a clean merge changes the head and changes nothing the review
+would read. Here the review reads a local comparison against a local ref, and
+whether `--base` resolves to the merge base or to the branch tip is **not
+measured**. Two rules follow, and neither of them is a re-reading of the
+default:
+
+- **The classification is unchanged.** `Does it go again?` classifies the
+  commits made after the recorded SHA, not what a surface would read, and a
+  clean base merge is still `Neither`. A default that flipped per harness would
+  buy a review a day on a base branch that moves daily, which is the thing that
+  rule exists to refuse.
+- **A round that runs for some other reason after a base merge may raise
+  findings in code the pull request never touched.** Answer those as findings
+  about the base branch rather than about this diff — a reply saying so, and
+  resolved — under `Fix, answer, resolve, push`'s *rejected* verdict. Fixing
+  them is widening the pull request.
+
 **It takes no effort level**, so `SKILL.md`'s `Name the level` has nothing to
 bind — there is no remembered level to override, and the depth judgement is the
 surface's. `-c model_reasoning_effort=…` sets a config value for the run rather

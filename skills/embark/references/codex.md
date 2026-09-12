@@ -96,6 +96,8 @@ Recorded so that one of these arriving is not read as enough on its own.
    `Waves launch without confirmation` and therefore not one made in passing.
 3. A durable wake, for the watch and for the `Keep it current` cadence every
    task session would be holding.
+4. A fleet that outlives one local daemon, or a deliberate decision that a
+   wave may sink with the machine it was launched from.
 
 
 Provenance

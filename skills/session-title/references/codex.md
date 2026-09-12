@@ -44,6 +44,16 @@ That second use is the one worth writing for: a name is an **address** here,
 and `#{number} {shortened issue title}` is already the form that makes one
 session distinguishable from a dozen siblings started the same afternoon.
 
+An address has two traps a label does not, and both are the reader's to carry
+because the form does not solve either:
+
+- **The form is not unique.** Two sessions on one issue title to the same
+  string, and that string is what a destructive subcommand takes. Address a
+  session by its UUID wherever the operation is one that cannot be undone, and
+  keep the name for reading.
+- **It starts with `#`.** Unquoted in a shell, the whole argument is a comment
+  and the subcommand is called with none. Quote it.
+
 
 Provenance
 ==========

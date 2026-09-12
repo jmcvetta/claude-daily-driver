@@ -86,7 +86,10 @@ ROUTES = {
     "run_watch": re.compile(r"run_watch"),
     "skill://": re.compile(r"skill://"),
     "request_user_input": re.compile(r"request_user_input"),
-    "codex CLI": re.compile(r"\bcodex (?:exec|review|queue)\b"),
+    "codex CLI": re.compile(
+        r"\bcodex (?:exec|review|queue|agents|resume|fork|archive|unarchive"
+        r"|delete|plugin|app-server)\b"
+    ),
     "agent_tasks tool": re.compile(
         r"\b(?:agent_tasks|create_thread|fork_thread|read_thread|wait_threads"
         r"|list_threads|list_archived_threads|send_message_to_thread"
@@ -246,9 +249,9 @@ def body_of(path: Path) -> tuple[str, int]:
 
     The frontmatter is exempt from the route rules, and that exemption is the
     point rather than a concession: the `description` is what triggers the
-    skill, so a skill that fires on a tool call has to name that call — both
-    harnesses' — to fire on either. A file with no frontmatter is all body,
-    which is the safe reading: it exempts nothing.
+    skill, so a skill that fires on a tool call has to name that call — on
+    every harness — to fire on any of them. A file with no frontmatter is all
+    body, which is the safe reading: it exempts nothing.
     """
     text = path.read_text(encoding="utf-8")
     lines = text.splitlines()
