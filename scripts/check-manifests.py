@@ -21,10 +21,13 @@ are checked here, each measured against the CLI rather than assumed:
   `codex-cli` 0.154.0. Nothing warns: the skill still loads, and the tail that
   was doing the discriminating simply is not there. `validate` never sees
   Codex at all, so this is the only leg that can catch it.
-- A `name` disagreeing between plugin.json and its marketplace entry, or
-  between the marketplace and the repository it names. `validate` reads one
-  manifest at a time, so it never compares them. (It *does* compare the
-  `version` fields, so those are its job and not this script's.)
+- A `name` or a `description` disagreeing between plugin.json and its
+  marketplace entry, or a `name` disagreeing between the marketplace and the
+  repository it names. `validate` reads one manifest at a time, so it never
+  compares them. (It *does* compare the `version` fields, so those are its job
+  and not this script's.) The description is written twice on purpose -- the
+  marketplace listing renders one copy and `claude plugin details` the other --
+  so a drift shows up to users and to nothing else.
 - Root `package.json` (the Omp runtime adapter's manifest, name
   `daily-driver`) disagreeing with plugin.json or the marketplace entry about
   the plugin name or version, or missing or mispointing the Omp extension
@@ -390,11 +393,25 @@ def main() -> int:
             "expected exactly one marketplace entry with source './', "
             f"found {len(own)}"
         )
-    elif own[0]["name"] != plugin["name"]:
-        errors.append(
-            f"marketplace entry name is {own[0]['name']!r} "
-            f"but plugin.json says {plugin['name']!r}"
-        )
+    else:
+        # Two independent comparisons rather than an elif chain: a tree that
+        # drifted on both reports both, and the maintainer fixes them in one
+        # pass instead of learning about the second from the next CI run.
+        if own[0]["name"] != plugin["name"]:
+            errors.append(
+                f"marketplace entry name is {own[0]['name']!r} "
+                f"but plugin.json says {plugin['name']!r}"
+            )
+        # The same sentence is written twice, and each catalog renders a
+        # different copy of it: `claude plugin marketplace` lists the
+        # marketplace entry, `claude plugin details` reads plugin.json. A
+        # drift is therefore visible to users and to nothing else -- both
+        # copies stay valid, and neither command shows the other's text.
+        if own[0].get("description") != plugin.get("description"):
+            errors.append(
+                f"marketplace entry description is {own[0].get('description')!r} "
+                f"but plugin.json says {plugin.get('description')!r}"
+            )
 
     skills = sorted((ROOT / "skills").glob("*/SKILL.md"))
     if not skills:
