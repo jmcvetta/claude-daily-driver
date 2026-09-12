@@ -26,11 +26,12 @@ are checked here, each measured against the CLI rather than assumed:
   entry. Release-please bumps the three manifests together, so a tree where
   they disagree has already drifted.
 - A `SKILL.md` naming a harness's own tool routes in its body. The skills run
-  on Claude Code and on Omp, and the routes differ; `0011` puts the body's
-  operation in words and the call in `skills/<name>/references/claude.md` or
-  `references/omp.md`. A route written back into the body is not wrong on the
+  on Claude Code, on Omp and on Codex, and the routes differ; `0011` puts the
+  body's operation in words and the call in
+  `skills/<name>/references/claude.md`, `references/omp.md` or
+  `references/codex.md`. A route written back into the body is not wrong on the
   harness it was written for, which is exactly why nothing else catches it: it
-  reads correctly, and it is silently wrong on the other harness.
+  reads correctly, and it is silently wrong on the other two.
 - A reference file no `SKILL.md` links, or a reference link that resolves to
   nothing. The move only works if the session opens the file when the skill
   fires, and the link is the whole of that pointer. An unlinked file is a
@@ -84,6 +85,13 @@ ROUTES = {
     "daily_driver_": re.compile(r"daily_driver_"),
     "run_watch": re.compile(r"run_watch"),
     "skill://": re.compile(r"skill://"),
+    "request_user_input": re.compile(r"request_user_input"),
+    "codex CLI": re.compile(r"\bcodex (?:exec|review|queue)\b"),
+    "agent_tasks tool": re.compile(
+        r"\b(?:agent_tasks|create_thread|fork_thread|read_thread|wait_threads"
+        r"|list_threads|list_archived_threads|send_message_to_thread"
+        r"|set_thread_title|set_thread_archived)\b"
+    ),
 }
 
 # A markdown link into the skill's own `references/` directory. The link text
@@ -270,8 +278,9 @@ def reference_errors(skills: list[Path]) -> list[str]:
                 if pattern.search(line):
                     errors.append(
                         f"{where}:{lineno}: names the {name} route in the body; "
-                        "put the call in references/claude.md or references/omp.md "
-                        "and name the operation in words here"
+                        "put the call in references/claude.md, references/omp.md "
+                        "or references/codex.md, and name the operation in words "
+                        "here"
                     )
             for target in REFERENCE_LINK.findall(line):
                 linked.add(target)

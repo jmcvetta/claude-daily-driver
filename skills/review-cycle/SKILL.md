@@ -5,18 +5,16 @@ description: >-
   review is then answered — including when the user says "/review-cycle",
   "review the PR and fix what it finds", "address the review feedback", "reply
   to the review comments", "resolve those threads", or "does that need another
-  review?", and including any call Claude makes on its own initiative to a
-  harness's review surface aimed at a pull request — Claude's built-in
-  `/code-review`, or Omp's `reviewer` task agent — to a review-thread reply or
-  resolution — `mcp__github__add_reply_to_pull_request_comment` and
-  `mcp__github__resolve_review_thread` on Claude, the equivalent `gh` calls on
-  Omp — or to a wait on a pull request's checks, `github.run_watch` among
-  them. Supplies the wait for CI on the pushed
-  head — the mechanism, not only the rule — the review invocation and its
-  named effort level, the protocol every finding is answered under, and the
-  test for whether a later push has earned a second round. Do NOT use this skill for opening a pull request or bringing
-  one up to date — that is `pr` — nor for marking a draft ready, which is the
-  caller's gate and not part of the round.
+  review?", and on any call to a harness's review surface aimed at a pull
+  request — Claude's `/code-review`, Omp's `reviewer` task agent, or
+  `codex exec review` — to a review-thread reply or resolution —
+  `mcp__github__add_reply_to_pull_request_comment`,
+  `mcp__github__resolve_review_thread`, or the `gh` equivalents — or to a wait
+  on a pull request's checks, `github.run_watch` among them. Supplies the CI
+  wait on the pushed head, the review invocation and its level, the protocol
+  every finding is answered under, and the test for whether a later push earns
+  a second round. Not for opening a pull request or bringing one up to date —
+  that is `pr` — nor for marking a draft ready, which is the caller's gate.
 ---
 
 # Review cycle
@@ -33,9 +31,10 @@ surface has an opinion about, and all four of which are the ones that go wrong.
 **The routes are per harness, and they live beside this file.** Every operation
 below is named in words here and resolved to a call there:
 [`references/claude.md`](references/claude.md) for Claude Code,
-[`references/omp.md`](references/omp.md) for Oh My Pi. Read the one for the
+[`references/omp.md`](references/omp.md) for Oh My Pi,
+[`references/codex.md`](references/codex.md) for Codex. Read the one for the
 harness in use, and read it before the wait rather than during it — the wait is
-where the two harnesses differ most.
+where the harnesses differ most, and one of them cannot wait at all.
 
 Callers keep their own gates. `undertake` runs this round between its `Open the
 draft` and `Ready for review` steps, runs it again where its `Keep it current`
@@ -89,9 +88,10 @@ How to wait
 -----------
 
 **The mechanism is the harness's, and the harnesses differ.** One blocks until
-the checks report; the other cannot block at all and waits by waking itself.
-The reference file has the calls and the discipline each mechanism needs. What
-follows holds whichever one is in use.
+the checks report; one cannot block at all and waits by waking itself; one does
+neither, and *a surface that can neither block nor wake itself cannot wait*
+below is what it does instead. The reference file has the calls and the
+discipline each mechanism needs. What follows holds whichever one is in use.
 
 - **Every wake ends in a read**, and the read is what decides. An event is a
   wake, never a verdict — a harness that delivers CI results as events does not
@@ -136,7 +136,9 @@ what was rejected with it.
 **A surface that can neither block nor wake itself cannot wait.** Read the
 checks once, and where they have not all reported, say so and stop. A wait a
 session only claims to perform is worse than the stop. Whether the surface in
-use is one of these is the reference file's answer, not a guess made here.
+use is one of these is the reference file's answer, not a guess made here —
+and one harness answers yes for every unattended session on it, so this is the
+ordinary path there rather than the degraded one.
 
 
 Name the level
