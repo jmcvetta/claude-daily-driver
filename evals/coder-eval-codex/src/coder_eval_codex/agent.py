@@ -45,9 +45,10 @@ from pathlib import Path
 from typing import Any, Literal
 
 from coder_eval.agents.codex_agent import CodexAgent
+from coder_eval.errors import AgentConfigError
 from coder_eval.models import ApiRoute, CodexAgentConfig, TurnRecord
 
-from .plugins import resolve_local_plugins
+from .plugins import PluginPathError, resolve_local_plugins
 from .transcript import is_already_tagged, render_agent_output
 
 
@@ -125,7 +126,17 @@ class CodexDailyDriverAgent(CodexAgent):
         answer at all rather than a count of directory entries.
         """
         if self.config.plugins:
-            self.config.plugins = resolve_local_plugins(list(self.config.plugins), base=Path.cwd())
+            try:
+                self.config.plugins = resolve_local_plugins(list(self.config.plugins), base=Path.cwd())
+            except PluginPathError as failure:
+                # Typed on the way out. `coder_eval` categorises a bare
+                # `RuntimeError` as the retryable `AGENT_API_ERROR` -- three
+                # retries at 5/10/20s, the Codex client re-spawned each time,
+                # and a deterministic path failure finally reported as a network
+                # problem. `AgentConfigError` is routed by `isinstance` to the
+                # non-retryable `AGENT_CONFIG_ERROR`, which is what a mistyped
+                # plugin root actually is.
+                raise AgentConfigError(str(failure)) from failure
         await super().start(
             working_directory,
             env_path_prepend=env_path_prepend,
@@ -133,7 +144,9 @@ class CodexDailyDriverAgent(CodexAgent):
         )
         self._linked_skills = self._read_linked_skills()
         if self.config.plugins and not self._linked_skills:
-            raise RuntimeError(
+            # `AgentConfigError` for the reason above: retrying a plugin root
+            # that linked nothing links nothing again, three times over.
+            raise AgentConfigError(
                 "codex-daily-driver: plugins were declared but no skill with a readable SKILL.md is under "
                 f"{SKILLS_DIR}; the arm would run untreated"
             )

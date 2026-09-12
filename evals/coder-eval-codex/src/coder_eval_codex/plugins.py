@@ -31,7 +31,17 @@ from typing import Any, Mapping
 
 
 class PluginPathError(RuntimeError):
-    """A `plugins:` entry that cannot be turned into a usable root."""
+    """A `plugins:` entry that cannot be turned into a usable root.
+
+    A plain `RuntimeError` subclass, because this module imports nothing — that
+    is what lets `scripts/check-codex-agent.py` drive it with no `coder_eval`
+    installed. It is NOT the exception the agent raises: `coder_eval`
+    categorises a bare `RuntimeError` as the retryable `AGENT_API_ERROR`, so a
+    deterministic path failure would be retried three times with backoff, the
+    Codex client re-spawned each time, and finally reported as a network
+    problem. `agent.py` catches this and re-raises `coder_eval`'s typed
+    `AgentConfigError`, which is non-retryable by `isinstance`.
+    """
 
 
 def resolve_local_plugins(plugins: list[Any], *, base: Path) -> list[dict[str, Any]]:

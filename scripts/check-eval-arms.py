@@ -43,10 +43,13 @@ WHAT IT ASSERTS
     A `skip:<arm>` names a known arm, is not contradicted by the row's own arm
     tag, and does not take the row out of every arm -- a row in no arm is a row
     nothing runs, which is spelled by deleting it.
-    A task that pins `agent.type` is tagged for the arm that kind belongs to.
-    The `review-depth` rows pin `claude-code` because they drive Claude's own
-    settings and hooks, and an untagged one would run in the other arms as a
-    Claude session -- billed to them, and reported as them.
+    A task that pins `agent.type` names a kind one of the arms owns, and is
+    tagged for that arm. The `review-depth` rows pin `claude-code` because they
+    drive Claude's own settings and hooks, and an untagged one would run in the
+    other arms as a Claude session -- billed to them, and reported as them. A
+    kind NO arm owns fails outright: the built-in `codex` is registered, so
+    every other guard passes it, and it would run in all three arms and score
+    0.0 on every judged criterion.
     Each arm's `make evals-run…` target excludes every other arm's tag and its
     own `skip:`, in ONE comma-separated `--exclude-tags` value. The routing is
     stated in this file and in the Makefile, and neither half reads the other.
@@ -223,7 +226,20 @@ def check_arm_tags(tasks: list[tuple[Path, dict]]) -> None:
 
         pinned = document.get("agent")
         pinned_kind = pinned.get("type") if isinstance(pinned, dict) else None
-        if isinstance(pinned_kind, str) and pinned_kind in KIND_ARMS:
+        if isinstance(pinned_kind, str) and pinned_kind:
+            # A pinned kind outside the table is checked FIRST, and it is a
+            # failure rather than a row to skip. `codex` -- the built-in, which
+            # hands the judge bare text -- is a registered kind with no arm, so
+            # gating this check on membership would let it through untagged, run
+            # it in all three arms, bill each of them, and score 0.0 on every
+            # judged criterion. That is the "registered but wrong kind" failure
+            # `check_experiments` catches on the experiment side.
+            if pinned_kind not in KIND_ARMS:
+                raise CheckFailed(
+                    f"{path.relative_to(ROOT)}: pins `agent.type: {pinned_kind!r}`, which belongs to no arm; "
+                    f"the kinds this repository runs are {sorted(KIND_ARMS)}, and an unowned kind runs in "
+                    "every arm, is billed to each, and is reported as each"
+                )
             wanted = KIND_ARMS[pinned_kind]
             if arm != wanted:
                 raise CheckFailed(
@@ -442,6 +458,11 @@ def check_the_checks() -> None:
         (
             "a claude-code task with no arm tag",
             [(here / "x.yaml", {"task_id": "x", "tags": [], "agent": {"type": "claude-code"}})],
+            check_arm_tags,
+        ),
+        (
+            "a task pinning a kind no arm owns",
+            [(here / "x.yaml", {"task_id": "x", "tags": [], "agent": {"type": "codex"}})],
             check_arm_tags,
         ),
         (

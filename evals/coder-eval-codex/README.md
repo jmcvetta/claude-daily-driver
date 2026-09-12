@@ -51,6 +51,14 @@ linked" warning counts `iterdir()` entries, so it stays silent on it.
 delegating, and `start()` then raises — rather than warning — when plugins were
 declared and no readable skill arrived.
 
+Both raises are `coder_eval`'s typed `AgentConfigError`, never a bare
+`RuntimeError`. Measured: `coder_eval` categorises a bare `RuntimeError` as
+`agent_api_error`, which carries three retries at 5/10/20s with the Codex client
+re-spawned each time, and a mistyped plugin root retried three times is a
+mistyped plugin root three times over, finally reported as a network problem.
+`AgentConfigError` is routed by `isinstance` to `agent_config_error`, whose
+retry count is zero.
+
 **It is registered as a new kind, not as a replacement for `codex`.** The
 registry rejects two implementations claiming one kind, so shadowing the
 built-in would change what every other `coder_eval` user's `codex` means. The
