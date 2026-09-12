@@ -2,7 +2,7 @@
 
 `SKILL.md` names each operation in words. This file names the call, for a
 session running in Oh My Pi. Claude Code's routes are in
-[`claude.md`](claude.md).
+[`claude.md`](claude.md), Codex's in [`codex.md`](codex.md).
 
 One call: `daily_driver_set_session_title({ title })`. It takes the title
 alone — the runtime adapter (`extensions/daily-driver.js`) applies it to the
