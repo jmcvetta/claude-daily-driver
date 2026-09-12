@@ -818,14 +818,20 @@ a report is read with them in mind.
 - **The model pin is unverified.** `gpt-5-codex`, pinned so a report says what
   produced it. Nothing here has resolved it against an account.
 
-`codex_skills_linked`, `codex_transcripts_retagged` and
-`codex_transcripts_already_tagged` land in each run's `environment_info`, for
-the reason the Omp arm's equivalents do: a red arm and an arm whose skills never
-arrived must not read alike. `codex_skills_linked` counts skills with a readable
-`SKILL.md` rather than directory entries, which is what makes it an answer. The last of those should be zero on every run under
-the pinned `CODER_EVAL_VERSION`; any other number means the built-in has started
-rendering the transcript itself and `coder-eval-codex` has become a no-op worth
-deleting.
+`codex_skills_linked` lands in each run's `environment_info`, for the reason the
+Omp arm's equivalents do: a red arm and an arm whose skills never arrived must
+not read alike. It counts skills with a readable `SKILL.md` rather than
+directory entries, which is what makes it an answer — fourteen broken symlinks
+are fourteen entries.
+
+**It is the only such field, because `coder_eval` reads
+`get_environment_info()` once, during setup, before any turn runs.** A counter
+kept over the turns — how many transcripts this package retagged, say — would
+always be recorded as zero, which is worse than absent: a field that says
+nothing while looking like a measurement. The one thing worth alarming on, a
+turn arriving with the anchor already in it, is logged where it happens instead:
+it means the built-in has started rendering the transcript itself and
+`coder-eval-codex` has become a no-op worth deleting.
 
 ## Two defaults, decided on purpose
 

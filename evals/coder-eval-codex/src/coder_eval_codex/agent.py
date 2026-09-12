@@ -174,29 +174,46 @@ class CodexDailyDriverAgent(CodexAgent):
         return self._retagged(record, is_error=False)
 
     def get_environment_info(self) -> dict[str, Any]:
-        """The built-in's routing record, plus what this arm loaded and rewrote.
+        """The built-in's routing record, plus what this arm loaded.
 
         `codex_skills_linked` is the audit trail a run needs to tell a red arm
         from an arm whose plugin never arrived — `0013`'s reason for the Omp
-        arm's equivalent fields. `codex_transcripts_already_tagged` is the
-        drift alarm: it counts turns that arrived in the tagged shape, which
-        under the pinned `CODER_EVAL_VERSION` should be none. Any other number
-        means the built-in has started rendering the transcript itself and this
-        subclass has become a no-op worth deleting.
+        arm's equivalent fields. It is populated in `start()`, which is what
+        makes it recordable here.
+
+        **The retag counters are deliberately NOT here.** `coder_eval` merges
+        this dict into the result once, during setup, immediately after `start()`
+        and before any turn runs (`orchestrator.py`, `_record_route_environment_info`
+        at both of its call sites). A counter incremented in `communicate()` is
+        therefore always read as zero, so recording one would be a field that
+        says nothing while looking like a measurement. The drift it was meant to
+        alarm on is logged instead, in `_retagged`, where it happens.
         """
         return {
             **super().get_environment_info(),
             "codex_skills_linked": list(self._linked_skills),
-            "codex_transcripts_retagged": self._retagged_turns,
-            "codex_transcripts_already_tagged": self._already_tagged_turns,
         }
 
     # --- internals ---------------------------------------------------------
 
     def _retagged(self, record: TurnRecord, *, is_error: bool) -> TurnRecord:
-        """A copy of `record` whose `agent_output` carries the result anchor."""
+        """A copy of `record` whose `agent_output` carries the result anchor.
+
+        A turn that arrives ALREADY tagged warns, once per session. Under the
+        pinned `CODER_EVAL_VERSION` it never happens; if it starts happening the
+        built-in has begun rendering the transcript itself and this package has
+        become a no-op worth deleting. The warning goes to the run log rather
+        than to `environment_info`, because that dict is captured before any
+        turn has run — see `get_environment_info`.
+        """
         if is_already_tagged(record.agent_output):
             self._already_tagged_turns += 1
+            if self._already_tagged_turns == 1:
+                self._log.warning(
+                    "codex-daily-driver: a turn arrived already carrying the [RESULT - …] anchor. "
+                    "The built-in agent has started rendering the transcript itself, so this package's "
+                    "retag is now a no-op worth deleting — check it against the pinned CODER_EVAL_VERSION."
+                )
             return record
         self._retagged_turns += 1
         return record.model_copy(

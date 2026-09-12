@@ -86,14 +86,12 @@ rename.
 ## What it records
 
 `0013`'s rule for the Omp arm holds here too: a red arm and an arm whose plugin
-never arrived must not read alike. Two fields land in each run's
+never arrived must not read alike. One field lands in each run's
 `environment_info`, beside the routing keys the built-in already records.
 
 | Field | What it answers |
 | --- | --- |
 | `codex_skills_linked` | the skills with a readable `SKILL.md` under `.agents/skills/` after `start()` |
-| `codex_transcripts_retagged` | turns whose transcript this package rendered |
-| `codex_transcripts_already_tagged` | turns that arrived tagged — should be zero |
 
 `codex_skills_linked` is read from the directory, not from the session. The
 Codex app-server exposes no query for the skills it discovered, so unlike the
@@ -102,10 +100,18 @@ taken up. It requires a readable `SKILL.md` rather than counting directory
 entries, which is what makes it an answer: fourteen broken symlinks are fourteen
 entries.
 
-`codex_transcripts_already_tagged` is a drift alarm. Under the pinned
-`CODER_EVAL_VERSION` it is zero on every run. Any other number means the
-built-in has started rendering the transcript itself and this package has become
-a no-op worth deleting.
+**Only one field, and that is a constraint rather than a choice.** `coder_eval`
+merges `get_environment_info()` into the result once, during setup, right after
+`start()` and before any turn runs. So a counter incremented in `communicate()`
+would always be recorded as zero — a field that says nothing while looking like
+a measurement. `codex_skills_linked` is recordable precisely because `start()`
+fills it.
+
+The drift that a counter would have alarmed on is logged where it happens
+instead: the first turn to arrive already carrying the `[RESULT - …]` anchor
+warns, once per session. Under the pinned `CODER_EVAL_VERSION` that never
+happens; when it starts happening the built-in has begun rendering the
+transcript itself and this package is a no-op worth deleting.
 
 ## What is tested, and what is not
 
