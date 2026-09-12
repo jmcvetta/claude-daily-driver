@@ -246,6 +246,23 @@ and it was identical — but a session lacking both routes would have no way to
 post at all, which is the failure the degradation branch in `review-cycle`
 covers.
 
+**That session has now been met — measured 2026-09-12, on PR #190.** A Claude
+Code session on the web, in the remote execution environment, carries neither
+`create_inline_comment` nor the GitHub MCP: its GitHub access is a token and
+`curl`. `/code-review 190 medium --comment` ran and reviewed normally, and
+reported that `--comment` could not be honoured; the findings came back in the
+result and nowhere else. So the degradation is not hypothetical and it is not
+about the CLI: the review surface behaves identically, and the *posting* half
+of it is a property of the session's tool surface.
+
+What that costs is the record. The findings do not outlive the session, so
+nothing on the pull request says why the branch was judged ready — and
+`review-cycle`'s reply-and-resolve becomes *answer in the commit*, with the
+commit message carrying what a thread reply would have carried. Three findings
+were answered that way on #190, one of them a defect that would have voided a
+paid eval run. A session in this environment should expect it rather than
+rediscover it.
+
 ### 5. Claude Approvals and PR Steward were not verifiable here
 
 Both are described in this session's harness prompt — Approvals as a
