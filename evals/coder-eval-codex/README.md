@@ -12,6 +12,7 @@ coder-eval-codex/
 ├── pyproject.toml                  the `coder_eval.plugins` entry point
 └── src/coder_eval_codex/
     ├── transcript.py               the judge's anchor — pure, and tested
+    ├── plugins.py                  the plugin root, resolved — pure, and tested
     ├── agent.py                    the built-in agent, subclassed
     └── plugin.py                   register(registry)
 ```
@@ -21,7 +22,8 @@ coder-eval-codex/
 `coder_eval` 0.11.6 already ships a `codex` kind. It drives the Codex SDK, links
 a `plugins:` root's skills into `<cwd>/.agents/skills/`, and records command
 telemetry in the vocabulary the criteria are written in. This package inherits
-all of it. What it adds is one normalisation and one record.
+all of it. What it adds is two corrections and a record — and each correction
+is a silent zero rather than an error if it is missing.
 
 **The judge must find the reply.** Every judge rubric under `evals/tasks/`
 locates the reply at the last `[RESULT - …]` tag and scores 0.0 where there is
@@ -30,6 +32,24 @@ plausible. `coder_eval` builds that tagged transcript for its Claude Code agent
 only; its Codex agent hands the judge `result_text`, the turn's assistant
 deltas joined and nothing else. `transcript.render_agent_output` emits the
 tagged shape, so one rubric reads the same on all three harnesses.
+
+**The plugin root must be absolute before the built-in sees it.**
+`CodexAgent._setup_skills` links each skill with `target.symlink_to(skill_dir)`,
+where `skill_dir` is built from `config.plugins[].path` exactly as written. The
+experiments here write `path: ".."`, relative to the `evals/` directory the run
+targets `cd` into — which is right for the Claude agent, because `coder_eval`
+resolves plugin paths before that agent is built, and wrong for the Codex one,
+which never goes through that resolution.
+
+Measured against this repository's real layout: a relative root makes every link
+body relative too, so `.agents/skills/pr -> ../skills/pr` resolves back to the
+link's own directory and points at itself. Fourteen entries are created and not
+one of them has a readable `SKILL.md`; the treated arm runs with no skills and
+every trigger row scores 0, at full price. `_setup_skills`'s own "0 skills
+linked" warning counts `iterdir()` entries, so it stays silent on it.
+`plugins.resolve_local_plugins` makes the root absolute in `start()` before
+delegating, and `start()` then raises — rather than warning — when plugins were
+declared and no readable skill arrived.
 
 **It is registered as a new kind, not as a replacement for `codex`.** The
 registry rejects two implementations claiming one kind, so shadowing the
@@ -63,14 +83,16 @@ never arrived must not read alike. Two fields land in each run's
 
 | Field | What it answers |
 | --- | --- |
-| `codex_skills_linked` | the skills found under `.agents/skills/` after `start()` |
+| `codex_skills_linked` | the skills with a readable `SKILL.md` under `.agents/skills/` after `start()` |
 | `codex_transcripts_retagged` | turns whose transcript this package rendered |
 | `codex_transcripts_already_tagged` | turns that arrived tagged — should be zero |
 
 `codex_skills_linked` is read from the directory, not from the session. The
 Codex app-server exposes no query for the skills it discovered, so unlike the
 Omp arm's `omp_skills_loaded` this says what was *offered* rather than what was
-taken up.
+taken up. It requires a readable `SKILL.md` rather than counting directory
+entries, which is what makes it an answer: fourteen broken symlinks are fourteen
+entries.
 
 `codex_transcripts_already_tagged` is a drift alarm. Under the pinned
 `CODER_EVAL_VERSION` it is zero on every run. Any other number means the
@@ -79,15 +101,17 @@ a no-op worth deleting.
 
 ## What is tested, and what is not
 
-`transcript.py` imports nothing — not `coder_eval`, not the Codex SDK — and
-`scripts/check-codex-agent.py` drives it in `make check`. That leg also asserts
-the rendered shape is byte-identical to `coder_eval_omp.rpc.render_agent_output`
-for one block, which is what keeps one rubric readable on both harnesses without
-either package depending on the other.
+`transcript.py` and `plugins.py` import nothing — not `coder_eval`, not the
+Codex SDK — and `scripts/check-codex-agent.py` drives both in `make check`. That
+leg asserts the rendered shape is byte-identical to
+`coder_eval_omp.rpc.render_agent_output` for one block, which is what keeps one
+rubric readable on both harnesses without either package depending on the other;
+and it builds the self-referential symlink a relative root produces, so the
+assertion is the failure itself rather than a description of it.
 
 `agent.py` cannot be reached without a `coder-eval` install and the Codex SDK,
-and CI here has neither. What it holds is the subclass: the two overrides above
-and a directory read.
+and CI here has neither. What it holds is the subclass: two overrides, a
+directory read, and the calls into the two modules above.
 
 ## Installing it
 

@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
-"""The acceptance test for the Codex eval arm's transcript rendering.
+"""The acceptance test for the Codex eval arm's two silent zeros.
 
 `evals/coder-eval-codex/` teaches `coder_eval` to run the eval suites against
 Codex. Almost none of that package can be exercised in `make check`: it needs a
-`coder-eval` install and the Codex SDK, and CI here has neither. So the one part
-that decides whether a judged row scores at all lives in
-`coder_eval_codex/transcript.py`, which imports nothing, and this script drives
-it.
+`coder-eval` install and the Codex SDK, and CI here has neither. So the two parts
+that decide whether a row scores at all live in
+`coder_eval_codex/transcript.py` and `coder_eval_codex/plugins.py`, both of
+which import nothing, and this script drives them.
 
-The failure it guards against is silent. `coder_eval` builds the `[RESULT - …]`
-transcript for its Claude Code agent alone and hands the judge bare
-`result_text` from its Codex agent; every rubric under `evals/tasks/` anchors on
-that tag and scores 0.0 without it, deliberately and with no fallback. An arm
-that stopped rendering the tag would report zeros that read exactly like a
-plugin that never loaded.
+Both failures are silent, and both report zeros that read exactly like a plugin
+that never loaded.
+
+`coder_eval` builds the `[RESULT - …]` transcript for its Claude Code agent
+alone and hands the judge bare `result_text` from its Codex agent; every rubric
+under `evals/tasks/` anchors on that tag and scores 0.0 without it, deliberately
+and with no fallback. And `CodexAgent._setup_skills` symlinks each skill by the
+plugin path it was handed, so a relative root — which is what an experiment
+naturally writes — links fourteen skills that point at themselves.
 
 WHAT IT ASSERTS
 
@@ -32,6 +35,15 @@ WHAT IT ASSERTS
     a second result block.
     A reply that merely quotes the tag is still rendered, so the judge anchors
     on the tag this package wrote rather than on one the model typed.
+    A relative plugin root is made absolute before `CodexAgent._setup_skills`
+    sees it. That function symlinks each skill by the path it was handed, so a
+    relative root makes `.agents/skills/pr -> ../skills/pr` resolve back to the
+    link's own directory: fourteen entries, not one of them readable, and a
+    treated arm that ran with no skills at full price. `_setup_skills`'s own
+    "0 skills linked" warning counts directory entries, so it stays silent on
+    it.
+    A plugin root that does not resolve to a directory raises rather than
+    warning, and so does an entry that is not `type: local`.
 
 WHAT IT DOES NOT ASSERT
 
@@ -49,7 +61,9 @@ install between the laptop and CI is a place for them to differ.
 
 from __future__ import annotations
 
+import os
 import sys
+import tempfile
 from pathlib import Path
 
 
@@ -60,7 +74,11 @@ OMP_SRC = ROOT / "evals" / "coder-eval-omp" / "src"
 sys.path.insert(0, str(CODEX_SRC))
 sys.path.insert(0, str(OMP_SRC))
 
-from coder_eval_codex.transcript import (  # noqa: E402  (the path inserts must come first)
+from coder_eval_codex.plugins import (  # noqa: E402  (the path inserts must come first)
+    PluginPathError,
+    resolve_local_plugins,
+)
+from coder_eval_codex.transcript import (  # noqa: E402
     EMPTY_OUTPUT,
     is_already_tagged,
     render_agent_output,
@@ -150,11 +168,63 @@ def check_a_reply_quoting_the_tag_is_still_rendered() -> None:
     )
 
 
+def check_a_relative_plugin_root_is_made_absolute() -> None:
+    """The self-referential symlink this arm would otherwise link fourteen of."""
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp).resolve()
+        (base / "plugin" / "skills" / "pr").mkdir(parents=True)
+        (base / "plugin" / "skills" / "pr" / "SKILL.md").write_text("---\nname: pr\n---\n")
+        (base / "evals").mkdir()
+
+        resolved = resolve_local_plugins([{"type": "local", "path": ".."}], base=base / "evals")
+        check(
+            resolved == [{"type": "local", "path": str(base)}],
+            f"a relative root resolves against the base, got {resolved}",
+        )
+
+        # And the link that makes, against `_setup_skills`'s own construction.
+        for root, expect_readable in ((str(base / "plugin"), True), ("../plugin", False)):
+            work = base / f"work-{expect_readable}"
+            (work / ".agents" / "skills").mkdir(parents=True)
+            link = work / ".agents" / "skills" / "pr"
+            link.symlink_to(Path(root) / "skills" / "pr")
+            check(
+                (link / "SKILL.md").exists() is expect_readable,
+                f"a link built from {root!r} must be readable={expect_readable}; "
+                "a relative root is what points the link at itself",
+            )
+
+
+def check_a_plugin_root_that_does_not_resolve_raises() -> None:
+    """An arm that declared a plugin and loaded none must not run untreated."""
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp).resolve()
+        for entry, why in (
+            ({"type": "local", "path": "nowhere"}, "a path that is not a directory"),
+            ({"type": "local"}, "an entry with no path"),
+            ({"type": "github", "path": "x"}, "an entry that is not `type: local`"),
+            ("not-a-mapping", "an entry that is not a mapping"),
+        ):
+            try:
+                resolve_local_plugins([entry], base=base)
+            except PluginPathError:
+                continue
+            raise CheckFailed(f"{why} must raise rather than resolve")
+
+        os.environ.pop("CHECK_CODEX_AGENT_UNSET", None)
+        try:
+            resolve_local_plugins([{"type": "local", "path": "$CHECK_CODEX_AGENT_UNSET/x"}], base=base)
+        except PluginPathError as failure:
+            check("env var" in str(failure), f"an unset env var is named as such, got {failure}")
+        else:
+            raise CheckFailed("an unexpanded env var in a plugin path must raise")
+
+
 def main() -> None:
     for name, checker in sorted(globals().items()):
         if name.startswith("check_") and callable(checker):
             checker()
-    print("check-codex-agent: the Codex arm renders the transcript anchor the judge rubrics read")
+    print("check-codex-agent: the Codex arm renders the judge's transcript anchor and resolves its plugin roots")
 
 
 if __name__ == "__main__":

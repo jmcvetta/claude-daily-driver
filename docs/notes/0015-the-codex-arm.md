@@ -23,7 +23,7 @@ first decision below.
 0.11.6 ships a `codex` kind that drives the Codex SDK, links a `plugins:` root's
 skills into `<cwd>/.agents/skills/`, and records command telemetry in the
 vocabulary the criteria are written in. Every bit of that is inherited.
-`evals/coder-eval-codex/` adds one override and one record, through the same
+`evals/coder-eval-codex/` adds two overrides and a record, through the same
 `coder_eval.plugins` entry-point seam `coder-eval-omp` uses.
 
 *Rejected: registering as `codex` itself.* The registry refuses two
@@ -33,9 +33,10 @@ rather than sit beside it — changing what `codex` means for every other
 routing readable: `scripts/check-eval-arms.py` maps a pinned `agent.type` to the
 arm tag it must carry, and `codex-daily-driver` names exactly one arm.
 
-**One normalisation, where the Omp arm needed three.** Only the `[RESULT - …]`
-transcript. `coder_eval` builds it for its Claude Code agent alone and hands the
-judge `result_text` — the turn's assistant deltas joined — from its Codex agent.
+**Two corrections, where the Omp arm needed three.** The first is the
+`[RESULT - …]` transcript. `coder_eval` builds it for its Claude Code agent
+alone and hands the judge `result_text` — the turn's assistant deltas joined —
+from its Codex agent.
 Every rubric under `evals/tasks/` locates the reply at the last `[RESULT - …]`
 tag and scores 0.0 where there is none, deliberately and with no fallback, so an
 arm that shipped without this would score every judged row 0.0: most of the
@@ -49,8 +50,37 @@ them in step.
 Tool names need no renaming: the built-in already records `commandExecution` as
 `Bash` with `parameters["command"]`, which is what `command_executed` reads.
 
-**The second normalisation #185 asked for is not needed, and the issue was
-written against a reading #181 corrected.** #185 says Codex engages a skill
+**The second is the plugin root, and it was found in review rather than
+designed.** `CodexAgent._setup_skills` links each skill with
+`target.symlink_to(skill_dir)`, where `skill_dir` is built from
+`config.plugins[].path` exactly as written. Every experiment here writes
+`path: ".."`, relative to the `evals/` directory the run targets `cd` into,
+which is right for the Claude agent — `coder_eval` resolves plugin paths before
+that agent is built — and wrong for the Codex one, which never reaches that
+resolution.
+
+Measured against this repository's real layout, with the experiment's own
+`path: ".."` and the working directory the Makefile uses: fourteen links are
+created, every body is relative, `.agents/skills/pr -> ../skills/pr` resolves
+back to the link's own directory, and **not one of the fourteen has a readable
+`SKILL.md`**. The treated arm would have run with no skills at all, scored 0 on
+every trigger row, and cost a full `repeats: 5` sweep to say so — the silent
+zero this arm exists to prevent, arriving through the arm itself.
+
+`_setup_skills` does warn when it links nothing, and the warning does not fire
+here: it counts `iterdir()` entries, and fourteen broken links are fourteen
+entries. So two things changed rather than one.
+`plugins.resolve_local_plugins` makes the root absolute before `start()`
+delegates, and `start()` **raises** where it previously warned — an arm that
+declared plugins and has no readable skill runs untreated, which is the same
+judgement `coder_eval_omp`'s `_link_plugins` already makes for the same reason.
+
+The experiments keep `path: ".."`. Making them absolute would have fixed this
+one file and left the next experiment to rediscover it, and the paths are
+relative in the other two arms on purpose.
+
+**Neither correction is the one #185 asked for, and the issue was written
+against a reading #181 corrected.** #185 says Codex engages a skill
 through `skill://<name>`, the spelling Omp uses, which `skill_triggered` cannot
 see. Both halves of that turn out to be wrong.
 
@@ -72,7 +102,10 @@ skills, named bare — `pr`, `undertake`, `review-cycle` — which is the spelli
 every row's `skill_name` already uses.
 
 Adding a mapping would have renamed something already named, and it would have
-been untestable: there would be nothing for `check-codex-agent` to drive.
+been untestable: there would be nothing for `check-codex-agent` to drive. What
+that leg drives instead is the two corrections above — including the
+self-referential symlink itself, built in a temporary directory, so the
+assertion is the failure rather than a description of it.
 
 **Three arms, routed by tag, in three runs.** `0013`'s reasoning holds and the
 mechanism generalises: a `coder_eval` variant applies to every task in the run,
@@ -89,6 +122,14 @@ command line replaces the first rather than adding to it. A target written the
 obvious way would read correct, exclude one tag, and run the other arms' forks
 at full price. `check-eval-arms` now reads the Makefile and asserts each target
 passes the flag exactly once, with exactly the right set.
+
+*An experiment must name its own arm's agent kind.* `codex.yaml` set to the
+BUILT-IN `codex` passes every other guard in the repository — it is a registered
+kind, so `evals-variants.py` resolves it and says so, and that script's own
+docstring admits it cannot catch this — and then scores 0.0 on every judged row
+of a paid run. `check-eval-arms` reads each experiment's variants against the
+arm table, which is the experiment side of the same cross-check it does on the
+Makefile.
 
 **`skip:<arm>` is a new tag, because an arm tag cannot say "two of three".** An
 arm tag claims exactly one arm and every arm is spelled by carrying none. A row
@@ -184,6 +225,10 @@ no paid run has happened. What is measured is:
   `coder-eval plan -e experiments/codex.yaml tasks/*/*.yaml` resolves
   `Variant 'codex': codex-daily-driver (gpt-5-codex)` on every task it applies
   to, with no resolution failure and exit 0.
+- The built-in's own `_setup_skills`, driven with this repository as the plugin
+  root and the working directory the Makefile uses, links all fourteen skills
+  with a readable `SKILL.md` — and links fourteen unreadable ones without the
+  resolution above.
 - `make check` proves the transcript rendering is the shape the rubrics read and
   agrees with the Omp arm's byte for byte (`scripts/check-codex-agent.py`), and
   that the three arms' task sets and the Makefile's routing stay in step

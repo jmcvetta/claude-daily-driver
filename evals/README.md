@@ -739,8 +739,19 @@ into `<cwd>/.agents/skills/`, and records `commandExecution` as `Bash` with its
 command string. What it does not do is build the `[RESULT - …]` transcript, and
 every rubric here anchors on that tag and scores 0.0 without it. Point the
 experiment at `codex` and the suite runs, costs money, and reports zeros that
-read exactly like a plugin that never loaded. `coder-eval-codex/` is the
-built-in subclassed with that one thing added; its README says what and why.
+read exactly like a plugin that never loaded — so `make check-eval-arms` reads
+each experiment's variants against the arm table and refuses that spelling.
+`coder-eval-codex/` is the built-in subclassed; its README says what it adds and
+why.
+
+**It also resolves the plugin root**, which the built-in does not.
+`_setup_skills` symlinks each skill by the path it was handed, so the relative
+`path: ".."` every experiment here writes — right for the Claude agent, which
+never sees an unresolved path — links fourteen skills whose bodies point back at
+their own directory. Measured: fourteen entries, none with a readable
+`SKILL.md`, and `_setup_skills`'s own "0 skills linked" warning silent because it
+counts entries. `start()` makes the root absolute and then raises rather than
+warns when no readable skill arrived.
 
 **This arm needs no skill-engagement normalisation, and the Omp arm does.**
 Omp reads `skill://<name>`, which `skill_triggered` cannot see. Codex has no
@@ -788,7 +799,8 @@ a report is read with them in mind.
 `codex_skills_linked`, `codex_transcripts_retagged` and
 `codex_transcripts_already_tagged` land in each run's `environment_info`, for
 the reason the Omp arm's equivalents do: a red arm and an arm whose skills never
-arrived must not read alike. The last of those should be zero on every run under
+arrived must not read alike. `codex_skills_linked` counts skills with a readable
+`SKILL.md` rather than directory entries, which is what makes it an answer. The last of those should be zero on every run under
 the pinned `CODER_EVAL_VERSION`; any other number means the built-in has started
 rendering the transcript itself and `coder-eval-codex` has become a no-op worth
 deleting.

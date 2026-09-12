@@ -4,8 +4,8 @@ Unlike the Omp arm, this is not a harness driver. `coder_eval` 0.11.6 already
 ships a `codex` kind that drives the Codex SDK, links a `plugins:` root's skills
 into `<cwd>/.agents/skills/`, and records command telemetry in the vocabulary
 the criteria are written in. All of that is inherited unchanged. What is added
-is the one normalisation the built-in does not do, and one field that says what
-the session actually got.
+is two corrections the built-in does not make, and the fields that say what the
+session actually got.
 
 **Why a new kind rather than `agent: {type: codex}`.** The registry rejects two
 implementations claiming one kind, and shadowing a built-in would change what
@@ -13,14 +13,20 @@ every other `coder_eval` user's `codex` means. A distinct kind also makes the
 arm's routing readable: `scripts/check-eval-arms.py` maps a pinned `agent.type`
 to the arm tag it must carry, and `codex-daily-driver` names exactly one arm.
 
-**The normalisation.** `transcript.render_agent_output`, applied to the
+**The first correction** is `transcript.render_agent_output`, applied to the
 `TurnRecord` this agent hands back. `transcript.py` says what it is for; the
 short version is that every judge rubric under `evals/tasks/` locates the reply
 at the last `[RESULT - …]` tag and scores 0.0 where there is none, and
 `coder_eval` builds that shape for its Claude Code agent alone.
 
-**There is no second normalisation**, and issue #185 expected one. It asked for
-a `skill://<name>` mapping, the spelling Omp uses. The spike in #181 measured
+**The second** is `plugins.resolve_local_plugins`, applied to the plugin roots
+before `start()` delegates. `plugins.py` says what it is for; the short version
+is that `_setup_skills` symlinks each skill by the path it was handed, so the
+relative root an experiment naturally writes links fourteen skills that point at
+themselves.
+
+**Neither of them is the normalisation issue #185 expected.** It asked for a
+`skill://<name>` mapping, the spelling Omp uses. The spike in #181 measured
 that Codex does not use that spelling, and `coder_eval`'s `skill_triggered`
 already detects the spelling Codex does use — a shell read of
 `.agents/skills/<name>/SKILL.md`, whose command string carries the
@@ -41,6 +47,7 @@ from typing import Any, Literal
 from coder_eval.agents.codex_agent import CodexAgent
 from coder_eval.models import ApiRoute, CodexAgentConfig, TurnRecord
 
+from .plugins import resolve_local_plugins
 from .transcript import is_already_tagged, render_agent_output
 
 
@@ -95,28 +102,40 @@ class CodexDailyDriverAgent(CodexAgent):
         env_path_prepend: list[str] | None = None,
         plugin_tools_dir: str | None = None,
     ) -> None:
-        """Start the Codex session, then record which skills reached it.
+        """Resolve the plugin roots, start the session, then check what it got.
+
+        **The roots are made absolute first**, and `plugins.py` says why at
+        length: `CodexAgent._setup_skills` symlinks each skill by the path it was
+        handed, so a relative root — which is what these experiments write, and
+        what the Claude agent never sees because `coder_eval` resolves it before
+        that agent is built — produces fourteen links that point at themselves.
+
+        **Then the count is checked, and an empty one is fatal.** The Omp arm
+        raises in the same place and for the same reason: an arm that declared
+        plugins and loaded none runs untreated and reports zeros, which reads
+        exactly like a skill that never fires. `_setup_skills` only warns, and
+        only when it had sources to link from — fourteen broken links are
+        fourteen `iterdir()` entries, so its own warning stays silent on exactly
+        the failure above.
 
         The reading is done from the directory rather than from the session: the
         Codex app-server exposes no query for the skills it discovered, so unlike
         the Omp arm's `omp_skills_loaded` this says what was offered rather than
-        what was taken up. It still separates a red arm from an arm whose plugin
-        path resolved to nothing, which is the distinction the record is for.
+        what was taken up. Requiring a readable `SKILL.md` is what makes it an
+        answer at all rather than a count of directory entries.
         """
+        if self.config.plugins:
+            self.config.plugins = resolve_local_plugins(list(self.config.plugins), base=Path.cwd())
         await super().start(
             working_directory,
             env_path_prepend=env_path_prepend,
             plugin_tools_dir=plugin_tools_dir,
         )
         self._linked_skills = self._read_linked_skills()
-        if not self._linked_skills:
-            # `_setup_skills` warns when it linked nothing from sources it had;
-            # it is silent when there were no sources at all, which is the bare
-            # arm and also what a mistyped plugin path looks like.
-            self._log.warning(
-                "codex-daily-driver: no skills under %s — correct for a bare variant, "
-                "and what a plugin root that did not resolve also looks like",
-                SKILLS_DIR,
+        if self.config.plugins and not self._linked_skills:
+            raise RuntimeError(
+                "codex-daily-driver: plugins were declared but no skill with a readable SKILL.md is under "
+                f"{SKILLS_DIR}; the arm would run untreated"
             )
 
     async def communicate(self, user_input: str, **kwargs: Any) -> TurnRecord:

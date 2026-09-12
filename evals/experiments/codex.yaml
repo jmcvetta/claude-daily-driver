@@ -80,6 +80,13 @@ variants:
   # process working directory, so `coder-eval` must run from `evals/` — which is
   # the other reason all three eval targets `cd evals` first.
   #
+  # It stays relative here, matching the other two experiments, and
+  # `CodexDailyDriverAgent.start` makes it absolute before the built-in agent
+  # sees it. That step is not optional: `_setup_skills` symlinks each skill by
+  # the path it was handed, and a relative one links fourteen skills that point
+  # at themselves. `../coder-eval-codex/src/coder_eval_codex/plugins.py` has the
+  # measurement.
+  #
   # `CodexAgent._setup_skills` scans this root and the `skills/` directory under
   # it, and symlinks each skill into `<task cwd>/.agents/skills/<name>/`, where
   # Codex discovers it. That is skills alone: the hooks, the agents and the

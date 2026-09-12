@@ -50,9 +50,11 @@ WHAT IT ASSERTS
     Each arm's `make evals-run…` target excludes every other arm's tag and its
     own `skip:`, in ONE comma-separated `--exclude-tags` value. The routing is
     stated in this file and in the Makefile, and neither half reads the other.
-    Every experiment file parses, declares variants, and names an agent kind for
-    each -- read with `evals-variants.py`'s own parser, so the parser that
-    guards a paid run is itself exercised here.
+    Every experiment file exists, declares variants, and names its OWN arm's
+    agent kind in each -- read with `evals-variants.py`'s own parser, so the
+    parser that guards a paid run is itself exercised here. A registered but
+    wrong kind is the case no other guard catches: `codex.yaml` set to the
+    built-in `codex` resolves cleanly and then scores 0.0 on every judged row.
 
 WHAT IT DOES NOT ASSERT
 
@@ -82,14 +84,38 @@ ROOT = Path(__file__).resolve().parent.parent
 TASKS = ROOT / "evals" / "tasks"
 EXPERIMENTS = ROOT / "evals" / "experiments"
 
-# Every arm, by its short name: the tag that claims a row for it, the `task_id`
-# suffix that says so a second time, and the `agent.type` kinds that belong to
-# it. `claude` has no id suffix because it is where the suites started and its
-# rows are the ones the others fork.
+# Every arm, by its short name. This table is the routing: the tag that claims a
+# row for the arm, the `task_id` suffix that says so a second time, the
+# `agent.type` kinds that belong to it, the experiment file that runs it, and
+# the Makefile target that invokes that file. Every check below reads it, and
+# two of them read it against something outside this script -- the Makefile's
+# exclusions, and the experiment's own variants -- because the routing is stated
+# in three places and none of them reads the others.
+#
+# `claude` has no id suffix because it is where the suites started and its rows
+# are the ones the others fork.
 ARMS: dict[str, dict[str, object]] = {
-    "claude": {"tag": "claude-only", "id_suffix": None, "kinds": ("claude-code",)},
-    "omp": {"tag": "omp-only", "id_suffix": "-omp", "kinds": ("omp",)},
-    "codex": {"tag": "codex-only", "id_suffix": "-codex", "kinds": ("codex-daily-driver",)},
+    "claude": {
+        "tag": "claude-only",
+        "id_suffix": None,
+        "kinds": ("claude-code",),
+        "experiment": "with-without.yaml",
+        "run_target": "evals-run",
+    },
+    "omp": {
+        "tag": "omp-only",
+        "id_suffix": "-omp",
+        "kinds": ("omp",),
+        "experiment": "omp.yaml",
+        "run_target": "evals-run-omp",
+    },
+    "codex": {
+        "tag": "codex-only",
+        "id_suffix": "-codex",
+        "kinds": ("codex-daily-driver",),
+        "experiment": "codex.yaml",
+        "run_target": "evals-run-codex",
+    },
 }
 
 ARM_TAGS = {str(arm["tag"]): name for name, arm in ARMS.items()}
@@ -297,9 +323,9 @@ def check_makefile_routing() -> None:
     it. A target written that way reads correct and excludes one tag.
     """
     makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-    targets = {"claude": "evals-run", "omp": "evals-run-omp", "codex": "evals-run-codex"}
 
-    for arm, target in targets.items():
+    for arm, spec in ARMS.items():
+        target = str(spec["run_target"])
         # The recipe: from its target line to the first blank line.
         start = makefile.find(f"\n{target}:")
         if start < 0:
@@ -324,20 +350,52 @@ def check_makefile_routing() -> None:
 
 
 def check_experiments() -> None:
-    """Every experiment resolves to named variants, read by the run guard's parser."""
+    """Every experiment names variants, and every variant names its own arm's kind.
+
+    Naming a kind is not enough. `codex.yaml` set to the BUILT-IN `codex` kind
+    would pass every other guard in the repository — it is a registered kind, so
+    `evals-variants.py` resolves it and says so — and then score 0.0 on every
+    judged row of a paid run, because the built-in hands the judge bare text.
+    That is the same class of drift `check_makefile_routing` catches on the
+    other side of the routing, and this is the experiment side of it.
+
+    The experiment files are read with `evals-variants.py`'s own parser, so the
+    parser that guards a paid run is exercised here too.
+    """
     variant_kinds = _load_variant_kinds()
+    arm_of_experiment = {str(spec["experiment"]): name for name, spec in ARMS.items()}
 
     files = sorted(EXPERIMENTS.glob("*.yaml"))
     if not files:
         raise CheckFailed(f"no experiment files under {EXPERIMENTS.relative_to(ROOT)}")
+    for arm, spec in ARMS.items():
+        if not (EXPERIMENTS / str(spec["experiment"])).is_file():
+            raise CheckFailed(
+                f"the {arm} arm names {spec['experiment']} as its experiment, and there is no such file under "
+                f"{EXPERIMENTS.relative_to(ROOT)}"
+            )
     for path in files:
         try:
             variants = variant_kinds(path)
         except (OSError, ValueError, yaml.YAMLError) as exc:
             raise CheckFailed(f"{path.relative_to(ROOT)}: {exc}") from exc
+        arm = arm_of_experiment.get(path.name)
+        if arm is None:
+            raise CheckFailed(
+                f"{path.relative_to(ROOT)}: no arm names this experiment file, so nothing says which agent "
+                f"kind it should run; the arms and their files are "
+                f"{ {name: spec['experiment'] for name, spec in ARMS.items()} }"
+            )
+        wanted = ARMS[arm]["kinds"]
         for variant_id, kind in variants:
             if not kind:
                 raise CheckFailed(f"{path.relative_to(ROOT)}: variant {variant_id!r} names no agent type")
+            if kind not in wanted:  # type: ignore[operator]
+                raise CheckFailed(
+                    f"{path.relative_to(ROOT)}: variant {variant_id!r} names agent kind {kind!r}, which is not "
+                    f"the {arm} arm's ({sorted(wanted)}); a registered-but-wrong kind resolves cleanly and "  # type: ignore[arg-type]
+                    "then measures the wrong harness at full price"
+                )
 
 
 def check_the_checks() -> None:
