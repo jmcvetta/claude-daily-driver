@@ -9,10 +9,10 @@ SHELL := /bin/bash
 
 .PHONY: git_sync check check-plugin check-skills check-agents check-scripts \
 	check-manifests check-constitution check-ask-in-chat check-omp-extension \
-	check-omp-plugin check-omp-agent check-eval-fixtures check-eval-arms \
-	check-step-names check-evals-preflight check-labels check-infra \
-	evals-install evals-plan evals-variants evals-preflight evals-run \
-	evals-run-omp mcp-usage
+	check-omp-plugin check-omp-agent check-codex-agent check-eval-fixtures \
+	check-eval-arms check-step-names check-evals-preflight check-labels \
+	check-infra evals-install evals-plan evals-variants evals-preflight \
+	evals-run evals-run-omp evals-run-codex mcp-usage
 
 # The `coder_eval` release the eval suites are written against. Pinned on
 # purpose: being able to hold a version back is the whole reason the suites are
@@ -45,8 +45,8 @@ git_sync:
 # is no second command line to fall behind this one.
 check: check-plugin check-skills check-agents check-scripts check-manifests \
 	check-constitution check-ask-in-chat check-omp-extension check-omp-agent \
-	check-eval-fixtures check-eval-arms check-step-names check-evals-preflight \
-	check-labels
+	check-codex-agent check-eval-fixtures check-eval-arms check-step-names \
+	check-evals-preflight check-labels
 
 # `claude plugin validate --strict` reads one manifest at a time and picks the
 # marketplace when handed a directory, so the plugin manifest is named
@@ -164,6 +164,19 @@ check-scripts:
 # docstring, and evals/coder-eval-omp/README.md for the arm.
 check-omp-agent:
 	python3 scripts/check-omp-agent.py
+
+# check-codex-agent: the acceptance test for the Codex eval arm's one
+# normalisation -- the `[RESULT - ...]` transcript every judge rubric here
+# anchors on. Part of `check` for the same reason check-omp-agent is:
+# `evals/coder-eval-codex/src/coder_eval_codex/transcript.py` imports nothing,
+# so neither coder-eval nor the Codex SDK is needed to run it, and the failure
+# it catches is a row scored 0.0 rather than an error. It also asserts the
+# rendering agrees byte for byte with the Omp arm's, which is what holds one
+# rubric readable on both harnesses without either package depending on the
+# other. See the script's docstring, and evals/coder-eval-codex/README.md for
+# the arm.
+check-codex-agent:
+	python3 scripts/check-codex-agent.py
 
 # check-eval-arms: the two arms are routed by tag, and nothing else holds the
 # tags in step. A fork that loses its tag runs in both arms and grades one
