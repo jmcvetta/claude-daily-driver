@@ -231,13 +231,15 @@ Always invoke it through the harness's own injected skill-directory path,
 never a relative one. A skill's Bash runs in the user's project, not in the
 plugin, so a relative `scripts/issue-deps.sh` is "No such file or
 directory" — or worse, silently runs an unrelated file in a project that
-has its own `scripts/`. Each harness injects this path under its own name;
-the reference file for the harness in use gives the exact form.
+has its own `scripts/`. Each harness makes this path reachable its own way —
+two inject it under a name of their own, and the third expects it to be
+derived — so the reference file for the harness in use gives the exact form.
 
 ```sh
 # $deps is this skill's own script. The assignment differs by harness —
-# references/claude.md or references/omp.md gives the exact form — and the
-# guard makes an unresolved path fail loudly rather than run an empty command.
+# references/claude.md, references/omp.md or references/codex.md gives the
+# exact form — and the guard makes an unresolved path fail loudly rather than
+# run an empty command.
 : "${deps:?resolve the script path per the reference files}"
 
 "$deps" blocked-by 191            # what #191 waits on
