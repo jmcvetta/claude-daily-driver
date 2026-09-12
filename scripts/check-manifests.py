@@ -80,6 +80,7 @@ IGNORE = re.compile(r"<!--\s*stanza-check:\s*ignore\s*-->\s*\Z")
 ROUTES = {
     "mcp__": re.compile(r"mcp__"),
     "AskUserQuestion": re.compile(r"AskUserQuestion"),
+    "request_user_input": re.compile(r"request_user_input"),
     "/code-review": re.compile(r"/code-review"),
     "$CLAUDE_PLUGIN_ROOT": re.compile(r"\$\{?CLAUDE_PLUGIN_ROOT\}?"),
     "daily_driver_": re.compile(r"daily_driver_"),
