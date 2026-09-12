@@ -24,13 +24,12 @@ user: do it properly, or hack it; fix it now, or leave a TODO; the standard
 library, or a copy-paste. One option is correct and the rest are noise, and the
 round trip costs the user a word nobody should have had to type.
 
-**What closes the widget is per harness, and it lives beside this file.**
-[`references/claude.md`](references/claude.md) names the Claude Code adapter,
-[`references/omp.md`](references/omp.md) the Oh My Pi one, and
-[`references/codex.md`](references/codex.md) what Codex does instead — where
-the harness narrows the widget itself and no adapter is wired. Read the one
-for the harness in use before putting a question to the user: it says what
-happens when the model reaches for the widget.
+**The widget is denied per harness, and the adapter that denies it lives
+beside this file.** [`references/claude.md`](references/claude.md) names the
+Claude Code adapter, [`references/omp.md`](references/omp.md) the Oh My Pi
+one, and [`references/codex.md`](references/codex.md) the Codex one. Read
+the one for the harness in use before putting a question to the user: it
+says what the denial does when the widget is reached for.
 
 
 The gate
@@ -103,11 +102,11 @@ genuinely does not settle it:
   anything. This skill overrides none of them.
 
 **A question that survives is asked in prose, not in the widget.**
-The widget is closed on every harness, though not by the same mechanism on
-each — the reference file for the harness in use says which one, and what it
-does when the model reaches for the widget.
-[`0009`](../../docs/notes/0009-deny-the-question-widget.md) is why the widget
-is closed at all. So the question goes in the chat reply:
+The widget is closed on every harness, each by its own deny adapter — the
+reference file for the harness in use names the adapter and what it does
+when the model reaches for the widget.
+[`0009`](../../docs/notes/0009-deny-the-question-widget.md) is why every
+harness closes the widget at all. So the question goes in the chat reply:
 the question written out, the options as a short list, and the one
 recommended named with its reason. That deny and this gate are ordered
 rather than overlapping. It decides how a question is put; this skill
