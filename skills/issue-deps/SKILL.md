@@ -5,16 +5,16 @@ description: >-
   being recorded, read, or relied upon — one issue blocking another, a
   sub-issue or parent, or which pull request closes an issue. It fires on the
   literal "/issue-deps", on natural phrasings ("this is blocked by #123",
-  "what's blocking this", "make it a sub-issue of the epic", "what does this
-  depend on"), on noticing while planning or while writing a PR body that some
-  other work must land first, and on Claude's own use of `gh issue edit` with
-  `--add-blocked-by`, `--add-blocking`, `--add-sub-issue` or `--parent`, of
-  `mcp__github__sub_issue_write`, `mcp__github__issue_read` with
-  `get_sub_issues` or `get_parent`, `mcp__github__issue_write` with
+  "what's blocking this", "make it a sub-issue of the epic"), on noticing
+  while planning or writing a PR body that other work must land first, and on
+  Claude's own use of `gh issue edit` with `--add-blocked-by`,
+  `--add-blocking`, `--add-sub-issue` or `--parent`, which is the route on Omp
+  and on Codex, of `mcp__github__sub_issue_write`, `mcp__github__issue_read`
+  with `get_sub_issues` or `get_parent`, `mcp__github__issue_write` with
   `parent_issue_number`, or of a `Closes #123` line in a pull request body.
   Supplies the three clients these relationships need and the probe that picks
   one, the script for a token without `gh`, and the rule that an edge the
-  evidence supports is written and reported, never asked about first.
+  evidence supports is written and reported rather than asked about.
 ---
 
 # Issue relationships

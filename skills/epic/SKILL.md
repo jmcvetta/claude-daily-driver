@@ -3,21 +3,18 @@ name: epic
 description: >-
   This skill should be used whenever a piece of work is being broken into more
   than one issue, or an epic issue is being opened, read or corrected —
-  including when the user says "/epic", "break this down", "this is too big for
-  one PR", "split #142", "plan the epic", "make an epic for this", "what can be
-  worked in parallel", or "which of these has to land first", and on Claude's
-  own move from a request that will not fit one pull request to writing issues
-  for it. It is also where `undertake` sends work too big for the one
-  issue it takes in — from `Read the issue and its edges`, the step that always
-  runs — and it fires on an attempt to undertake an epic, which carries no
-  code. Supplies the two gates that decide whether there
-  is an epic at all, what a task issue is and the model it records for the
-  session that will undertake it, the one stop where the plan is agreed
-  before anything is written, and the shape of the epic body — the sequencing
-  and the waves that neither the sub-issue panel nor the dependency graph
-  renders. The graph writes themselves are `issue-deps`'. Not for taking a task
-  issue to a pull request, which is `undertake`, and never fired on work that
-  fits one pull request.
+  including when the user says "/epic", "break this down", "this is too big
+  for one PR", "split #142", "make an epic for this", or "which of these has
+  to land first", and on Claude's own move from a request that will not fit
+  one pull request to writing issues for it. It is also where `undertake`
+  sends work too big for the one issue it takes in, and it fires on an attempt
+  to undertake an epic, which carries no code. Supplies the two gates that
+  decide whether there is an epic at all, what a task issue is and the model
+  it records, the one stop where the plan is agreed before anything is
+  written, and the shape of the epic body — the sequencing and the waves
+  neither the sub-issue panel nor the dependency graph renders. The graph
+  writes are `issue-deps`'. Not for taking a task issue to a pull request,
+  which is `undertake`, and never fired on work that fits one.
 ---
 
 # Epic planning

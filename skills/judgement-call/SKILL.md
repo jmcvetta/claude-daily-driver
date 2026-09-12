@@ -3,15 +3,15 @@ name: judgement-call
 description: >-
   This skill should be used at the moment a choice between ways of doing the
   same task is about to be put to the user — on the harness's own use of the
-  question widget (Claude's `AskUserQuestion` or Omp's `ask`), on a reply
-  about to offer alternatives where one is quicker, less complete, or a
-  departure from the standard way ("fix it properly, or leave a TODO?",
-  "which approach do you prefer?", "should I …, or …?"), and when the user
-  hands the same choice back ("properly, or a TODO?", "you decide"). It also
-  fires on "/judgement-call", "just decide", "you pick", "use your judgement"
-  (or "judgment") and "stop asking me".
-  Supplies the test that separates a question only the user can answer from one
-  Claude can answer himself, and the rule that answers the second kind. It
+  question widget (Claude's `AskUserQuestion`, Omp's `ask`, Codex's
+  `request_user_input`), on a reply about to offer alternatives where one is
+  quicker, less complete, or a departure from the standard way ("fix it
+  properly, or leave a TODO?", "which approach do you prefer?", "should I …,
+  or …?"), and when the user hands the same choice back ("properly, or a
+  TODO?", "you decide"). It also fires on "/judgement-call", "just decide",
+  "you pick", "use your judgement" (or "judgment") and "stop asking me".
+  Supplies the test that separates a question only the user can answer from
+  one Claude can answer himself, and the rule that answers the second kind. It
   waives no confirmation another rule requires — the constitution's discussion
   of an unavoidable workaround among them — and relaxes nothing governing an
   irreversible, destructive or outward-facing action.

@@ -16,6 +16,11 @@ are checked here, each measured against the CLI rather than assumed:
 - A `description:` present but empty, in a skill or an agent. `validate` warns
   only when the key is missing outright, so `description: ""` is green under
   `--strict` and the component reaches users with nothing to trigger on.
+- A skill `description:` longer than Codex renders. Codex's prompt renderer
+  cuts a description at 1024 characters, mid-word, and shows `...` -- measured
+  against `codex-cli` 0.154.0. Nothing warns: the skill still loads, and the
+  tail that was doing the discriminating simply is not there. `validate` never
+  sees Codex at all, so this is the only leg that can catch it.
 - A `name` disagreeing between plugin.json and its marketplace entry, or
   between the marketplace and the repository it names. `validate` reads one
   manifest at a time, so it never compares them. (It *does* compare the
@@ -85,6 +90,14 @@ ROUTES = {
     "run_watch": re.compile(r"run_watch"),
     "skill://": re.compile(r"skill://"),
 }
+
+# What Codex's prompt renderer will show of a `description`. Beyond this the
+# description is cut mid-word and `...` is appended, so the tail triggers
+# nothing on that harness -- and the cut lands in the middle of the sentences
+# that discriminate, because those come last. Claude Code and Omp render the
+# whole thing, so a description over the cap reads as correct on two harnesses
+# out of three.
+DESCRIPTION_CAP = 1024
 
 # A markdown link into the skill's own `references/` directory. The link text
 # is not read: what matters is the target, which is what a reader follows and
@@ -270,8 +283,9 @@ def reference_errors(skills: list[Path]) -> list[str]:
                 if pattern.search(line):
                     errors.append(
                         f"{where}:{lineno}: names the {name} route in the body; "
-                        "put the call in references/claude.md or references/omp.md "
-                        "and name the operation in words here"
+                        "put the call in references/claude.md, references/omp.md "
+                        "or references/codex.md and name the operation in words "
+                        "here"
                     )
             for target in REFERENCE_LINK.findall(line):
                 linked.add(target)
@@ -374,8 +388,15 @@ def main() -> int:
                 f"{where}: frontmatter name is {fields.get('name')!r} "
                 f"but the directory is {skill.parent.name!r}"
             )
-        if not fields.get("description"):
+        description = fields.get("description", "")
+        if not description:
             errors.append(f"{where}: frontmatter description is empty")
+        elif len(description) > DESCRIPTION_CAP:
+            errors.append(
+                f"{where}: description is {len(description)} characters; "
+                f"Codex renders the first {DESCRIPTION_CAP} and cuts the rest "
+                "mid-word, so everything past that triggers nothing there"
+            )
 
     # Agents resolve by their frontmatter `name`, not their filename -- the
     # opposite of skills -- so a mismatch means the filename lies, and two
@@ -422,7 +443,8 @@ def main() -> int:
         f"manifests agree; {len(skills)} skill(s) "
         f"and {len(agents)} agent(s) checked; "
         "skill bodies are harness-neutral and their reference files are "
-        "linked; stanza copies agree"
+        f"linked; every description is inside Codex's {DESCRIPTION_CAP}-"
+        "character cap; stanza copies agree"
     )
     return 0
 

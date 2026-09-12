@@ -2,21 +2,20 @@
 name: review-cycle
 description: >-
   This skill should be used whenever a pull request is being reviewed and that
-  review is then answered — including when the user says "/review-cycle",
-  "review the PR and fix what it finds", "address the review feedback", "reply
-  to the review comments", "resolve those threads", or "does that need another
-  review?", and including any call Claude makes on its own initiative to a
-  harness's review surface aimed at a pull request — Claude's built-in
-  `/code-review`, or Omp's `reviewer` task agent — to a review-thread reply or
-  resolution — `mcp__github__add_reply_to_pull_request_comment` and
+  review is then answered — when the user says "/review-cycle", "review the PR
+  and fix what it finds", "address the review feedback", "reply to the review
+  comments", or "resolve those threads", and on any call Claude makes on its
+  own initiative to a harness's review surface aimed at a pull request —
+  Claude's built-in `/code-review`, or Omp's `reviewer` task agent — to a
+  review-thread reply or resolution —
+  `mcp__github__add_reply_to_pull_request_comment` and
   `mcp__github__resolve_review_thread` on Claude, the equivalent `gh` calls on
   Omp — or to a wait on a pull request's checks, `github.run_watch` among
-  them. Supplies the wait for CI on the pushed
-  head — the mechanism, not only the rule — the review invocation and its
-  named effort level, the protocol every finding is answered under, and the
-  test for whether a later push has earned a second round. Do NOT use this skill for opening a pull request or bringing
-  one up to date — that is `pr` — nor for marking a draft ready, which is the
-  caller's gate and not part of the round.
+  them. Supplies the wait for CI on the pushed head, the review invocation and
+  its effort level, the protocol every finding is answered under, and the test
+  for whether a later push earns a second round. Not for opening a pull
+  request or bringing one up to date, which is `pr`, nor for marking a draft
+  ready, which is the caller's gate.
 ---
 
 # Review cycle
