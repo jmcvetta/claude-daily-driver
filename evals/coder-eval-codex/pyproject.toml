@@ -1,0 +1,43 @@
+# The `codex-daily-driver` agent kind, installed beside `coder-eval` so the eval
+# suites can run a third arm on Codex. See README.md in this directory for what
+# it is, and ../README.md for how the arm is run.
+#
+# It is never published. `make evals-install` installs it from this checkout
+# with `uv tool install --with`, which is why there is no version discipline
+# here beyond a number that exists.
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "coder-eval-codex"
+version = "0.1.0"
+description = "A Codex agent kind for coder-eval, used by the daily-driver eval suites."
+readme = "README.md"
+# Matches `coder-eval`'s own floor. It is installed into that tool's
+# environment, so a lower floor here would buy nothing.
+requires-python = ">=3.13"
+license = { text = "LicenseRef-Anti-License" }
+authors = [{ name = "Jason McVetta", email = "jason.mcvetta@gmail.com" }]
+
+# The `codex` extra, not the bare package: `coder_eval`'s Codex agent imports
+# `openai_codex` inside `start()` and raises "Codex SDK not installed" without
+# it, at run time, once the money is committed. Declaring the extra here is what
+# makes `make evals-install` pull the SDK — the Makefile's own pin is
+# `coder-eval==<version>` with no extras, and adding one there would pin the
+# extra to every arm including the two that do not need it.
+#
+# Deliberately NOT pinned to the exact `CODER_EVAL_VERSION` in the Makefile, for
+# the reason `coder-eval-omp` gives: `uv tool install coder-eval==<pin> --with .`
+# resolves both, and an equality pin here would fight that pin rather than agree
+# with it. The floor is the release the pin names.
+dependencies = ["coder-eval[codex]>=0.11.6"]
+
+# The seam. `coder_eval` scans installed distributions for this group and calls
+# each target with its agent registry.
+[project.entry-points."coder_eval.plugins"]
+daily_driver_codex = "coder_eval_codex.plugin:register"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/coder_eval_codex"]

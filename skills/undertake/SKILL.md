@@ -3,23 +3,18 @@ name: undertake
 description: >-
   This skill should be used whenever a GitHub issue, or a task this skill is
   explicitly invoked on, is being taken from its description to a pull request
-  ready for review — including when the user says "/undertake", "undertake #34",
-  "undertake adding a retry loop", "take #7", "work on issue 12", "start on
-  that issue", "let's build #4", or "implement #191" — and on Claude's own
-  move from reading an issue to writing code for it. It covers keeping that
-  pull request current after it goes ready too — "the PR is behind master",
-  "the branch is out of date", "bring the branch up to date with master".
-  Two things fire the sequence from its start: an issue handed over to be
-  worked on, or an explicit invocation of this skill.
-  The issue is no longer required — an invocation carrying none opens one
-  itself — but one of the two still is. "Implement a retry loop", "build the
-  parser" and "fix this function", with neither an issue nor an invocation,
-  are ordinary work and must NOT fire it. Supplies the order of the steps, the
-  gates between them, the ready gate — which a branch behind its base does not
-  pass — and the base merge that keeps the branch current before ready and
-  after it; the review round it runs is `review-cycle`'s. Not for merely reading, summarising or
-  discussing an issue, since "what does #191 say" is a question rather than an
-  assignment.
+  ready for review — "/undertake", "undertake #34", "undertake adding a retry
+  loop", "implement #191" — and on Claude's own move from reading an issue to
+  writing code for it. It covers keeping that pull request current after it
+  goes ready too: "the PR is behind master", "bring the branch up to date".
+  Two things fire it: an issue handed over to be worked on, or an explicit
+  invocation. An invocation carrying no issue opens one itself, but one of the
+  two is still required — "implement a retry loop" and "fix this function",
+  with neither, are ordinary work and must NOT fire it. Supplies the order of
+  the steps, the gates between them, the ready gate a branch behind its base
+  does not pass, and the base merge that keeps it current; the round is
+  `review-cycle`'s. Not for reading or discussing an issue: "what does #191
+  say" is a question, not an assignment.
 ---
 
 # Undertake
@@ -44,7 +39,8 @@ What this skill owns is the sequencing and the gates between the steps.
 **The routes are per harness, and they live beside this file.** Every call the
 steps below need is named in words here and resolved to a route there:
 [`references/claude.md`](references/claude.md) for Claude Code,
-[`references/omp.md`](references/omp.md) for Oh My Pi. Read the one for the
+[`references/omp.md`](references/omp.md) for Oh My Pi,
+[`references/codex.md`](references/codex.md) for Codex. Read the one for the
 harness in use before `Claim the issue`, which is the first step that writes
 anything.
 

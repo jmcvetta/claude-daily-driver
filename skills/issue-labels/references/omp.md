@@ -2,7 +2,7 @@
 
 `SKILL.md` names each operation in words. This file names the call, for a
 session running in Oh My Pi. Claude Code's routes are in
-[`claude.md`](claude.md).
+[`claude.md`](claude.md), Codex's in [`codex.md`](codex.md).
 
 Two clients share the work, as they do for `undertake`: the built-in `github`
 tool reads what it covers, `gh` writes, and `issue://<number>` resolves a read

@@ -2,7 +2,7 @@
 
 `SKILL.md` names each operation in words. This file names the call, for a
 session running in Oh My Pi. Claude Code's routes are in
-[`claude.md`](claude.md).
+[`claude.md`](claude.md), Codex's in [`codex.md`](codex.md).
 
 Omp blocks its `ask` tool in the runtime adapter `extensions/daily-driver.js`.
 The adapter intercepts the call, refuses it, and tells the model not to retry

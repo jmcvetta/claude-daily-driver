@@ -3,15 +3,15 @@ name: judgement-call
 description: >-
   This skill should be used at the moment a choice between ways of doing the
   same task is about to be put to the user — on the harness's own use of the
-  question widget (Claude's `AskUserQuestion` or Omp's `ask`), on a reply
-  about to offer alternatives where one is quicker, less complete, or a
-  departure from the standard way ("fix it properly, or leave a TODO?",
-  "which approach do you prefer?", "should I …, or …?"), and when the user
-  hands the same choice back ("properly, or a TODO?", "you decide"). It also
-  fires on "/judgement-call", "just decide", "you pick", "use your judgement"
-  (or "judgment") and "stop asking me".
-  Supplies the test that separates a question only the user can answer from one
-  Claude can answer himself, and the rule that answers the second kind. It
+  question widget (Claude's `AskUserQuestion`, Omp's `ask`, Codex's
+  `request_user_input`), on a reply about to offer alternatives where one is
+  quicker, less complete, or a departure from the standard way ("fix it
+  properly, or leave a TODO?", "which approach do you prefer?", "should I …,
+  or …?"), and when the user hands the same choice back ("properly, or a
+  TODO?", "you decide"). It also fires on "/judgement-call", "just decide",
+  "you pick", "use your judgement" (or "judgment") and "stop asking me".
+  Supplies the test that separates a question only the user can answer from
+  one Claude can answer himself, and the rule that answers the second kind. It
   waives no confirmation another rule requires — the constitution's discussion
   of an unavoidable workaround among them — and relaxes nothing governing an
   irreversible, destructive or outward-facing action.
@@ -27,8 +27,9 @@ round trip costs the user a word nobody should have had to type.
 **The widget is denied per harness, and the adapter that denies it lives
 beside this file.** [`references/claude.md`](references/claude.md) names the
 Claude Code adapter, [`references/omp.md`](references/omp.md) the Oh My Pi
-one. Read the one for the harness in use before putting a question to the
-user: it says what the denial does when the widget is reached for.
+one, and [`references/codex.md`](references/codex.md) the Codex one. Read
+the one for the harness in use before putting a question to the user: it
+says what the denial does when the widget is reached for.
 
 
 The gate
@@ -101,10 +102,10 @@ genuinely does not settle it:
   anything. This skill overrides none of them.
 
 **A question that survives is asked in prose, not in the widget.**
-The widget is closed on both harnesses, each by its own deny adapter — the
+The widget is closed on every harness, each by its own deny adapter — the
 reference file for the harness in use names the adapter and what it does
 when the model reaches for the widget.
-[`0009`](../../docs/notes/0009-deny-the-question-widget.md) is why either
+[`0009`](../../docs/notes/0009-deny-the-question-widget.md) is why every
 harness closes the widget at all. So the question goes in the chat reply:
 the question written out, the options as a short list, and the one
 recommended named with its reason. That deny and this gate are ordered

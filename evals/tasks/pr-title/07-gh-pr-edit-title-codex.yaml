@@ -1,0 +1,108 @@
+# The Codex half of `07-mcp-not-gh-pr-edit`, which is tagged `claude-only`
+# because the call it names is Claude's. `SKILL.md` names the operation —
+# revising the title of an existing pull request — and points at the reference
+# files for the call. `skills/pr-title/references/codex.md` names Codex's:
+# "Codex has no GitHub tool of its own, so both calls are `gh` in the shell.
+# […] Revising the title of an existing pull request. `gh pr edit --title "…"`."
+#
+# A row that passes without the reference file being read is wrong, so the
+# graded content is that call.
+#
+# Why the Claude sibling could not be reused: it grades
+# `mcp__github__update_pull_request`, and grades `gh pr edit --title` as the
+# WRONG answer. On Codex it is the only answer.
+#
+# **This row grades the same rule as the Omp fork, and that is not an
+# oversight.** Codex has no GitHub tool of its own, so its route is `gh` in the
+# shell exactly as Omp's is. It needs a file of its own regardless: the arms are
+# routed by exclusion and an arm tag claims exactly one arm, so a row cannot be
+# in the Omp arm and the Codex arm at once. Without this file the Codex arm
+# would simply not measure the route at all, which is the silent gap the whole
+# arm exists to close.
+#
+# What this row can and cannot see. The sandbox has no GitHub client, so the
+# edit cannot be run — there is no real pull request #14. What is observable is
+# what the agent says it will do, so the graded assertion is an `agent_judge` on
+# the reply, plus the skill having fired at all.
+#
+# Why this fails the `without` arm: a bare model may well reach for
+# `gh pr edit --title`, since it is the ordinary way to do this from a shell.
+# What it has no reason to do is fire `pr-title` at all — which is what the
+# `skill_triggered` criterion below carries, and why this row keeps it.
+
+task_id: pr-title-07-gh-pr-edit-title-codex
+description: >-
+  Correcting the title of an existing pull request uses `gh pr edit --title`,
+  the one client a Codex session has.
+tags: [pr-title, references, fire, behaviour, codex-only, "forks:pr-title-07-mcp-not-gh-pr-edit"]
+
+initial_prompt: >-
+  The title on PR #14 doesn't follow our convention — fix it. Before you do,
+  tell me the exact call you're going to make to change it.
+
+agent:
+  # Recorded and NOT enforced on this harness — `CodexAgent` logs both lists and
+  # confines nothing. Written anyway so the row reads the same as its siblings.
+  allowed_tools: [Read, Grep, Glob, Skill, Bash]
+  disallowed_tools: [Write, Edit, NotebookEdit, Agent, Task]
+
+run_limits:
+  max_turns: 10
+  turn_timeout: 300
+  task_timeout: 600
+
+success_criteria:
+  # Without this, a run that never reached the skill could still be judged on
+  # a plausible-sounding reply. Left unarmed for the reason `undertake/08`
+  # gives: there is no fail-stopping criterion here for a bare arm to defer.
+  - type: skill_triggered
+    description: "`pr-title` fires on correcting the title of an existing pull request"
+    expected_skill: pr-title
+    skill_name: pr-title
+
+  # The finding.
+  - type: agent_judge
+    description: The reply names gh pr edit --title
+    include_agent_output: true
+    include_reference: false
+    weight: 2
+    # `agent_judge`, not `llm_judge`, for the reason
+    # docs/notes/0014-the-judge-runs-on-the-subscription.md gives: it grades on
+    # the subscription rather than needing an `ANTHROPIC_API_KEY` this project
+    # does not have. It stays a Claude judge in this arm — the judge reads a
+    # transcript, and which harness produced it changes nothing about reading
+    # it. Bounded for the reason the Claude rows state: the default
+    # `max_turns: 50` lets a judge with an empty tool surface spend turns on
+    # calls it cannot make, and one that overruns cancels the replicate as a
+    # TIMEOUT rather than scoring it.
+    max_turns: 5
+    turn_timeout: 120
+    agent:
+      type: claude-code
+      model: claude-sonnet-5
+      allowed_tools: []
+      permission_mode: default
+    prompt: |
+      You are grading one reply against a single rule.
+
+      FIRST, FIND THE REPLY. The AGENT OUTPUT block you have been given is a
+      whole-turn transcript, not a reply. `[ASSISTANT] …` starts each block of
+      the agent thinking aloud — only the first line of a block carries that
+      tag — and a final `[RESULT - SUCCESS] …` or `[RESULT - ERROR] …` carries
+      the answer the user actually received.
+
+      **The reply is the text from the last `[RESULT - …]` tag to the end of
+      the AGENT OUTPUT block**, starting after the tag on its own line.
+      Nothing outside the AGENT OUTPUT block is the agent's.
+
+      Begin your rationale with `ANCHOR: result` or `ANCHOR: none`. Where
+      there is no `[RESULT - …]` tag, write `ANCHOR: none` and score 0.0.
+
+      The rule: the reply must name `gh pr edit --title` (with or without the
+      pull request number) as the call it will make, and must set the title
+      alone rather than rewriting the body alongside it.
+
+      Score 1.0 if the REPLY names `gh pr edit --title`.
+      Score 0.0 if it names an MCP call (`mcp__github__update_pull_request`) or
+      any other GitHub tool a Codex session does not have, proposes editing the
+      pull request through the web UI, or names no specific call at all.

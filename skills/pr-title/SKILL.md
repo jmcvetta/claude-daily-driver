@@ -5,15 +5,13 @@ description: >-
   being written or revised — including when the user says "fix the PR title",
   "rename the PR", "that title is wrong", or asks what a PR should be called,
   and including any call Claude makes on its own initiative to
-  `mcp__github__create_pull_request`, to
-  `mcp__github__update_pull_request` that sets a `title`, to
-  `gh pr edit --title` on a harness that still reaches for it, or to Omp's
-  `github` tool's `pr_create` op (`title`) and `gh pr edit --title` for
-  revisions. Supplies the
-  Conventional Commits convention the title must conform to; the type itself
-  comes from `conventional-commits-type`. Not for commit messages, not for
-  the PR body — that is `pr-body` — and not for the session's own name —
-  that is `session-title`.
+  `mcp__github__create_pull_request`, to `mcp__github__update_pull_request`
+  that sets a `title`, to Omp's `github` tool's `pr_create` op (`title`), or
+  to `gh pr create --title` / `gh pr edit --title`, which is the route on Omp
+  and on Codex. Supplies the Conventional Commits convention the title must
+  conform to; the type itself comes from `conventional-commits-type`. Not for
+  commit messages, not for the PR body — that is `pr-body` — and not for the
+  session's own name — that is `session-title`.
 ---
 
 # PR Title
@@ -30,8 +28,9 @@ The title of a pull request, whether it is being opened or corrected.
 
 **The call that sets the title is per harness, and it lives beside this
 file.** [`references/claude.md`](references/claude.md) is the route for
-Claude Code, [`references/omp.md`](references/omp.md) for Oh My Pi. Read
-the one for the harness in use before the first call.
+Claude Code, [`references/omp.md`](references/omp.md) for Oh My Pi, and
+[`references/codex.md`](references/codex.md) for Codex. Read the one for
+the harness in use before the first call.
 
 
 The type
