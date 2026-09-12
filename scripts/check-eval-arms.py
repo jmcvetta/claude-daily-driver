@@ -1,43 +1,57 @@
 #!/usr/bin/env python3
-"""Hold the two eval arms in step: one tag each way, and a pair for every fork.
+"""Hold the three eval arms in step: one tag each way, and a pair for every fork.
 
-Ten rows under `evals/tasks/` cannot be graded identically on Claude Code and
-on Omp — the call they name differs, or the rule itself is Claude Code only per
-`docs/notes/0011`. Each of those is two files: the Claude one tagged
-`claude-only`, the Omp one tagged `omp-only`. `make evals-run` excludes
-`omp-only` and `make evals-run-omp` excludes `claude-only`, so the tag is what
-routes a row to its arm.
+Rows under `evals/tasks/` that cannot be graded identically on every harness are
+forked. Each fork is its own file carrying the arm tag of the arm it belongs to
+— `claude-only`, `omp-only` or `codex-only` — and `make evals-run`,
+`make evals-run-omp` and `make evals-run-codex` each exclude the other two arms'
+tags. The tag is what routes a row to its arm.
 
-The `review-depth` rows are tagged `claude-only` too, without a counterpart:
-they pin `agent.type: claude-code` and drive Claude's own settings and hooks,
-so they have no Omp form at all. Untagged, they would run inside the Omp arm as
-Claude sessions and be reported as Omp results.
+A row that runs in some arms but not all of them cannot say so with an arm tag,
+because an arm tag claims exactly one arm. `skip:<arm>` is the tag for that: it
+takes the row out of the named arm and leaves it in the rest. Today the
+`constitution` rows carry `skip:codex`, because `coder_eval`'s Codex agent links
+skills and installs no hooks, so no constitution reaches that arm.
 
-Nothing else checks any of that. A fork whose tag is missing runs in BOTH arms
-and grades one harness's route under the other's, which fails for a reason that
-has nothing to do with the skill. A sibling that loses its own tag does the
-same in the other direction. Neither is visible in a report; both are visible
-here, in `make check`, for free.
+The `review-depth` rows are tagged `claude-only` without a counterpart: they pin
+`agent.type: claude-code` and drive Claude's own settings and hooks, so they
+have no form on another harness. Untagged, they would run inside the other arms
+as Claude sessions and be billed and reported as those arms' results.
+
+Nothing else checks any of that. A fork whose tag is missing runs in EVERY arm
+and grades one harness's route under another's, which fails for a reason that
+has nothing to do with the skill. A sibling that loses its own tag does the same
+in the other direction. Neither is visible in a report; both are visible here,
+in `make check`, for free.
 
 WHAT IT ASSERTS
 
-    No task carries both arm tags.
-    Every `omp-only` row names the Claude row it forks, as a `forks:<task_id>`
-    tag, and that row exists and is tagged `claude-only`. Seven of the ten
-    forks are not their sibling's name plus `-omp` -- the sibling's name states
-    Claude's route, which on Omp is the wrong answer -- so the pairing is
-    declared rather than inferred from a filename. It is also what catches the
-    sibling losing its own tag, which would run Claude's route in the Omp arm.
+    No task carries more than one arm tag.
+    Every row outside the `claude` arm names the row it forks, as a
+    `forks:<task_id>` tag, and that row exists and carries an arm tag of its
+    own. Most forks are not their sibling's name plus a suffix -- the sibling's
+    name states one harness's route, which on another is the wrong answer -- so
+    the pairing is declared rather than inferred from a filename. It is also
+    what catches the sibling losing its own tag, which would run its route in
+    every arm. The `claude` arm is exempt because its rows are the originals.
+    A `forks:` tag belongs to a row that carries an arm tag, and never points at
+    a row in its own arm.
     Every `task_id` in the tree is unique. Forking a file and forgetting its
     `task_id` is the easy mistake, and `coder_eval` keys its report on that id.
-    A `task_id` that ends in `-omp` carries the `omp-only` tag, and no other
+    A `task_id` whose suffix names an arm carries that arm's tag, and no other
     task carries it. The name and the tag are two statements of the same fact.
+    A `skip:<arm>` names a known arm, is not contradicted by the row's own arm
+    tag, and does not take the row out of every arm -- a row in no arm is a row
+    nothing runs, which is spelled by deleting it.
     A task that pins `agent.type` is tagged for the arm that kind belongs to.
     The `review-depth` rows pin `claude-code` because they drive Claude's own
-    settings and hooks, and an untagged one would run in the Omp arm as a
-    Claude session -- billed to that arm, and reported as it.
-    Every experiment file parses, declares variants, and names an agent kind
-    for each -- read with `evals-variants.py`'s own parser, so the parser that
+    settings and hooks, and an untagged one would run in the other arms as a
+    Claude session -- billed to them, and reported as them.
+    Each arm's `make evals-run…` target excludes every other arm's tag and its
+    own `skip:`, in ONE comma-separated `--exclude-tags` value. The routing is
+    stated in this file and in the Makefile, and neither half reads the other.
+    Every experiment file parses, declares variants, and names an agent kind for
+    each -- read with `evals-variants.py`'s own parser, so the parser that
     guards a paid run is itself exercised here.
 
 WHAT IT DOES NOT ASSERT
@@ -45,8 +59,8 @@ WHAT IT DOES NOT ASSERT
     That an arm resolves to a registered agent. That needs a `coder-eval`
     install, so it is `make evals-plan`'s guard (`scripts/evals-variants.py`)
     rather than a `check` leg.
-    That the two halves of a fork grade equivalent rules. Nothing but reading
-    them can say that.
+    That the halves of a fork grade equivalent rules. Nothing but reading them
+    can say that.
 
 No third-party imports beyond PyYAML, which `evals-preflight.py` already
 requires of this repository.
@@ -68,12 +82,26 @@ ROOT = Path(__file__).resolve().parent.parent
 TASKS = ROOT / "evals" / "tasks"
 EXPERIMENTS = ROOT / "evals" / "experiments"
 
-CLAUDE_TAG = "claude-only"
-OMP_TAG = "omp-only"
+# Every arm, by its short name: the tag that claims a row for it, the `task_id`
+# suffix that says so a second time, and the `agent.type` kinds that belong to
+# it. `claude` has no id suffix because it is where the suites started and its
+# rows are the ones the others fork.
+ARMS: dict[str, dict[str, object]] = {
+    "claude": {"tag": "claude-only", "id_suffix": None, "kinds": ("claude-code",)},
+    "omp": {"tag": "omp-only", "id_suffix": "-omp", "kinds": ("omp",)},
+    "codex": {"tag": "codex-only", "id_suffix": "-codex", "kinds": ("codex-daily-driver",)},
+}
 
-# The namespaced tag an Omp row names its Claude sibling with. `coder_eval`
+ARM_TAGS = {str(arm["tag"]): name for name, arm in ARMS.items()}
+KIND_ARMS = {kind: name for name, arm in ARMS.items() for kind in arm["kinds"]}  # type: ignore[union-attr]
+
+# The namespaced tag a forked row names the row it forks with. `coder_eval`
 # accepts a `key:value` tag, so the pairing needs no field of its own.
 FORK_TAG = "forks:"
+
+# The namespaced tag that takes a row out of ONE arm while leaving it in the
+# rest. An arm tag cannot say that: it claims exactly one arm.
+SKIP_TAG = "skip:"
 
 
 class CheckFailed(Exception):
@@ -114,56 +142,85 @@ def load_tasks() -> list[tuple[Path, dict]]:
     return tasks
 
 
+def _tags(path: Path, document: dict) -> list[str]:
+    """The row's tags, checked to be a list before anything reads them."""
+    tags = document.get("tags") or []
+    if not isinstance(tags, list):
+        raise CheckFailed(f"{path.relative_to(ROOT)}: `tags` is not a list")
+    return [tag for tag in tags if isinstance(tag, str)]
+
+
+def _arm_of(path: Path, tags: list[str]) -> str | None:
+    """The arm a row is claimed for, or None where it runs in every arm."""
+    claimed = [ARM_TAGS[tag] for tag in tags if tag in ARM_TAGS]
+    if len(claimed) > 1:
+        raise CheckFailed(
+            f"{path.relative_to(ROOT)} carries more than one arm tag ({sorted(claimed)}); an arm tag claims "
+            f"exactly one arm, every arm is spelled by carrying none, and some-but-not-all is `{SKIP_TAG}<arm>`"
+        )
+    return claimed[0] if claimed else None
+
+
 def check_arm_tags(tasks: list[tuple[Path, dict]]) -> None:
     """One arm tag at most per row, and every fork paired with its sibling."""
-    claude_rows: dict[str, Path] = {}
-    forks: list[tuple[Path, str]] = []
+    arm_of_id: dict[str, str] = {}
+    forks: list[tuple[Path, str, str]] = []
 
     for path, document in tasks:
-        tags = document.get("tags") or []
-        if not isinstance(tags, list):
-            raise CheckFailed(f"{path.relative_to(ROOT)}: `tags` is not a list")
-        arm_tags = [tag for tag in (CLAUDE_TAG, OMP_TAG) if tag in tags]
-        if len(arm_tags) > 1:
-            raise CheckFailed(
-                f"{path.relative_to(ROOT)} carries both arm tags; a row belongs to one arm or to both, "
-                "and both is spelled by carrying neither"
-            )
+        tags = _tags(path, document)
+        arm = _arm_of(path, tags)
         task_id = document.get("task_id")
-        if CLAUDE_TAG in tags and isinstance(task_id, str):
-            claude_rows[task_id] = path
+        if arm is not None and isinstance(task_id, str):
+            arm_of_id[task_id] = arm
 
-        declared = [tag.split(":", 1)[1] for tag in tags if isinstance(tag, str) and tag.startswith(FORK_TAG)]
-        if OMP_TAG in tags:
-            if len(declared) != 1:
-                raise CheckFailed(
-                    f"{path.relative_to(ROOT)}: an {OMP_TAG} row must name the Claude row it forks, "
-                    f"as exactly one `{FORK_TAG}<task_id>` tag; found {declared}"
-                )
-            forks.append((path, declared[0]))
-        elif declared:
-            raise CheckFailed(f"{path.relative_to(ROOT)}: carries a `{FORK_TAG}` tag but is not tagged {OMP_TAG}")
+        declared = [tag.split(":", 1)[1] for tag in tags if tag.startswith(FORK_TAG)]
+        if declared and arm is None:
+            raise CheckFailed(
+                f"{path.relative_to(ROOT)}: carries a `{FORK_TAG}` tag but no arm tag, so it would run in "
+                "every arm and grade one harness's route under the others"
+            )
+        # The `claude` arm is where the suites started, so its rows are
+        # originals and declare nothing. A row in any other arm exists because a
+        # Claude row could not be graded there, so it must say which row that
+        # was -- which is also what catches the sibling losing its own tag and
+        # starting to run in every arm. A genuinely harness-native row with no
+        # Claude counterpart would need this rule revisited; there is none, and
+        # making that a deliberate decision rather than a silent gap is the
+        # point of requiring it.
+        if arm is not None and ARMS[arm]["id_suffix"] is not None and len(declared) != 1:
+            raise CheckFailed(
+                f"{path.relative_to(ROOT)}: an {ARMS[arm]['tag']} row must name the row it forks, as exactly "
+                f"one `{FORK_TAG}<task_id>` tag; found {declared}"
+            )
+        if declared and arm is not None:
+            forks.append((path, declared[0], arm))
 
         pinned = document.get("agent")
         pinned_kind = pinned.get("type") if isinstance(pinned, dict) else None
-        if pinned_kind == "claude-code" and CLAUDE_TAG not in tags:
-            raise CheckFailed(
-                f"{path.relative_to(ROOT)}: pins `agent.type: claude-code` but is not tagged {CLAUDE_TAG}, "
-                "so the Omp run would bill a Claude session to the Omp arm and report it as one"
-            )
-        if pinned_kind == "omp" and OMP_TAG not in tags:
-            raise CheckFailed(f"{path.relative_to(ROOT)}: pins `agent.type: omp` but is not tagged {OMP_TAG}")
+        if isinstance(pinned_kind, str) and pinned_kind in KIND_ARMS:
+            wanted = KIND_ARMS[pinned_kind]
+            if arm != wanted:
+                raise CheckFailed(
+                    f"{path.relative_to(ROOT)}: pins `agent.type: {pinned_kind}` but is not tagged "
+                    f"{ARMS[wanted]['tag']}, so another arm's run would bill a {wanted} session to itself "
+                    "and report it as one"
+                )
 
-    for path, sibling in forks:
-        if sibling not in claude_rows:
+    for path, sibling, arm in forks:
+        if sibling not in arm_of_id:
             raise CheckFailed(
-                f"{path.relative_to(ROOT)} forks {sibling!r}, which is not a task tagged {CLAUDE_TAG}; "
-                "either the sibling lost its tag — and now runs in both arms — or the id is wrong"
+                f"{path.relative_to(ROOT)} forks {sibling!r}, which is not a task carrying an arm tag; "
+                "either the sibling lost its tag — and now runs in every arm — or the id is wrong"
+            )
+        if arm_of_id[sibling] == arm:
+            raise CheckFailed(
+                f"{path.relative_to(ROOT)} forks {sibling!r}, which is in the same arm ({arm}); a fork "
+                "grades another harness's answer to the same question, so the two sit in different arms"
             )
 
 
 def check_task_ids(tasks: list[tuple[Path, dict]]) -> None:
-    """Ids are unique, and an `-omp` id is an `omp-only` row."""
+    """Ids are unique, and an arm's id suffix means that arm's tag."""
     seen: dict[str, Path] = {}
     for path, document in tasks:
         task_id = document.get("task_id")
@@ -176,11 +233,94 @@ def check_task_ids(tasks: list[tuple[Path, dict]]) -> None:
             )
         seen[task_id] = path
 
-        tags = document.get("tags") or []
-        if task_id.endswith("-omp") and OMP_TAG not in tags:
-            raise CheckFailed(f"{path.relative_to(ROOT)}: task_id ends in -omp but the row is not tagged {OMP_TAG}")
-        if OMP_TAG in tags and not task_id.endswith("-omp"):
-            raise CheckFailed(f"{path.relative_to(ROOT)}: tagged {OMP_TAG} but its task_id does not end in -omp")
+        tags = _tags(path, document)
+        arm = _arm_of(path, tags)
+        for name, spec in ARMS.items():
+            suffix = spec["id_suffix"]
+            if not isinstance(suffix, str):
+                continue
+            if task_id.endswith(suffix) and arm != name:
+                raise CheckFailed(
+                    f"{path.relative_to(ROOT)}: task_id ends in {suffix} but the row is not tagged "
+                    f"{spec['tag']}"
+                )
+            if arm == name and not task_id.endswith(suffix):
+                raise CheckFailed(
+                    f"{path.relative_to(ROOT)}: tagged {spec['tag']} but its task_id does not end in {suffix}"
+                )
+
+
+def check_skips(tasks: list[tuple[Path, dict]]) -> None:
+    """A `skip:<arm>` names a known arm, and leaves the row in at least one."""
+    for path, document in tasks:
+        tags = _tags(path, document)
+        skipped = {tag.split(":", 1)[1] for tag in tags if tag.startswith(SKIP_TAG)}
+        if not skipped:
+            continue
+        unknown = sorted(skipped - set(ARMS))
+        if unknown:
+            raise CheckFailed(
+                f"{path.relative_to(ROOT)}: `{SKIP_TAG}` names {unknown}, which is not an arm; the arms are "
+                f"{sorted(ARMS)}"
+            )
+        arm = _arm_of(path, tags)
+        if arm is not None:
+            if arm in skipped:
+                raise CheckFailed(
+                    f"{path.relative_to(ROOT)}: tagged {ARMS[arm]['tag']} and `{SKIP_TAG}{arm}`, which claims "
+                    "the row for an arm and takes it out of the same one"
+                )
+            raise CheckFailed(
+                f"{path.relative_to(ROOT)}: carries an arm tag and a `{SKIP_TAG}` tag; an arm tag already "
+                "names the only arm the row runs in, so the skip says nothing the run does not already know"
+            )
+        if skipped >= set(ARMS):
+            raise CheckFailed(
+                f"{path.relative_to(ROOT)}: skipped from every arm, so nothing runs it; that is spelled by "
+                "deleting the row"
+            )
+
+
+def check_makefile_routing() -> None:
+    """Each arm's run target excludes every other arm, and its own `skip:`.
+
+    The routing is stated twice — in `ARMS` above and in the Makefile's
+    `--exclude-tags` lists — and neither half reads the other. An arm added here
+    but not there runs the other arms' forks and grades one harness's route
+    under another's; an arm whose `skip:` exclusion is missing runs the rows
+    somebody deliberately took out of it. Both are silent in a report, and both
+    are paid for.
+
+    It also catches the trap that made this check worth writing:
+    `--exclude-tags` is a single comma-separated option, so a SECOND
+    `--exclude-tags` on one command line replaces the first instead of adding to
+    it. A target written that way reads correct and excludes one tag.
+    """
+    makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
+    targets = {"claude": "evals-run", "omp": "evals-run-omp", "codex": "evals-run-codex"}
+
+    for arm, target in targets.items():
+        # The recipe: from its target line to the first blank line.
+        start = makefile.find(f"\n{target}:")
+        if start < 0:
+            raise CheckFailed(f"Makefile declares no `{target}` target, so the {arm} arm cannot be run")
+        recipe = makefile[start + 1 :].split("\n\n", 1)[0]
+
+        occurrences = recipe.count("--exclude-tags")
+        if occurrences != 1:
+            raise CheckFailed(
+                f"Makefile `{target}` passes --exclude-tags {occurrences} time(s); it takes ONE "
+                "comma-separated value, and a repeated flag silently replaces the earlier one"
+            )
+        value = recipe.split("--exclude-tags", 1)[1].split()[0]
+        excluded = {tag.strip() for tag in value.split(",") if tag.strip()}
+
+        wanted = {str(spec["tag"]) for name, spec in ARMS.items() if name != arm} | {f"{SKIP_TAG}{arm}"}
+        if excluded != wanted:
+            raise CheckFailed(
+                f"Makefile `{target}` excludes {sorted(excluded)}; the {arm} arm must exclude "
+                f"{sorted(wanted)} — every other arm's tag, and its own skip"
+            )
 
 
 def check_experiments() -> None:
@@ -203,51 +343,102 @@ def check_experiments() -> None:
 def check_the_checks() -> None:
     """Prove the assertions above can fail, against synthetic rows.
 
-    A check that cannot fail is a check that passes for ever, silently, which
-    is the same class of defect as the drift it is here to catch. These rows
-    never touch the filesystem, so the cost is nothing.
+    A check that cannot fail is a check that passes for ever, silently, which is
+    the same class of defect as the drift it is here to catch. These rows never
+    touch the filesystem, so the cost is nothing.
     """
+    here = TASKS / "pr"
     cases: list[tuple[str, list[tuple[Path, dict]], object]] = [
         (
-            "both arm tags on one row",
-            [(TASKS / "pr" / "x.yaml", {"task_id": "x", "tags": [CLAUDE_TAG, OMP_TAG]})],
+            "two arm tags on one row",
+            [(here / "x.yaml", {"task_id": "x", "tags": ["claude-only", "omp-only"]})],
             check_arm_tags,
         ),
         (
-            "an omp row naming no sibling",
-            [(TASKS / "pr" / "x.yaml", {"task_id": "x-omp", "tags": [OMP_TAG]})],
+            "a forked row naming no sibling",
+            [(here / "x.yaml", {"task_id": "x-omp", "tags": ["omp-only"]})],
             check_arm_tags,
         ),
         (
-            "an omp row whose sibling is not tagged",
+            "a forked row whose sibling is not tagged",
             [
-                (TASKS / "pr" / "x.yaml", {"task_id": "x-omp", "tags": [OMP_TAG, f"{FORK_TAG}x"]}),
-                (TASKS / "pr" / "y.yaml", {"task_id": "x", "tags": []}),
+                (here / "x.yaml", {"task_id": "x-omp", "tags": ["omp-only", "forks:x"]}),
+                (here / "y.yaml", {"task_id": "x", "tags": []}),
             ],
             check_arm_tags,
         ),
         (
+            "a forked row pointing inside its own arm",
+            [
+                (here / "x.yaml", {"task_id": "x-codex", "tags": ["codex-only", "forks:y-codex"]}),
+                (here / "y.yaml", {"task_id": "y-codex", "tags": ["codex-only", "forks:y"]}),
+                (here / "z.yaml", {"task_id": "y", "tags": ["claude-only"]}),
+            ],
+            check_arm_tags,
+        ),
+        (
+            "a `forks:` tag on a row in every arm",
+            [(here / "x.yaml", {"task_id": "x", "tags": ["forks:y"]})],
+            check_arm_tags,
+        ),
+        (
             "a claude-code task with no arm tag",
-            [(TASKS / "pr" / "x.yaml", {"task_id": "x", "tags": [], "agent": {"type": "claude-code"}})],
+            [(here / "x.yaml", {"task_id": "x", "tags": [], "agent": {"type": "claude-code"}})],
+            check_arm_tags,
+        ),
+        (
+            "a codex task tagged for another arm",
+            [
+                (
+                    here / "x.yaml",
+                    {"task_id": "x-omp", "tags": ["omp-only", "forks:x"], "agent": {"type": "codex-daily-driver"}},
+                ),
+                (here / "y.yaml", {"task_id": "x", "tags": ["claude-only"]}),
+            ],
             check_arm_tags,
         ),
         (
             "a duplicated task_id",
             [
-                (TASKS / "pr" / "a.yaml", {"task_id": "same", "tags": []}),
-                (TASKS / "pr" / "b.yaml", {"task_id": "same", "tags": []}),
+                (here / "a.yaml", {"task_id": "same", "tags": []}),
+                (here / "b.yaml", {"task_id": "same", "tags": []}),
             ],
             check_task_ids,
         ),
         (
             "an -omp id without the arm tag",
-            [(TASKS / "pr" / "a.yaml", {"task_id": "pr-01-omp", "tags": []})],
+            [(here / "a.yaml", {"task_id": "pr-01-omp", "tags": []})],
             check_task_ids,
         ),
         (
             "an omp-only tag without the -omp id",
-            [(TASKS / "pr" / "a.yaml", {"task_id": "pr-01", "tags": [OMP_TAG]})],
+            [(here / "a.yaml", {"task_id": "pr-01", "tags": ["omp-only"]})],
             check_task_ids,
+        ),
+        (
+            "a -codex id without the arm tag",
+            [(here / "a.yaml", {"task_id": "pr-01-codex", "tags": []})],
+            check_task_ids,
+        ),
+        (
+            "a codex-only tag without the -codex id",
+            [(here / "a.yaml", {"task_id": "pr-01", "tags": ["codex-only"]})],
+            check_task_ids,
+        ),
+        (
+            "a skip naming no arm this repository has",
+            [(here / "a.yaml", {"task_id": "x", "tags": ["skip:opencode"]})],
+            check_skips,
+        ),
+        (
+            "a skip beside an arm tag",
+            [(here / "a.yaml", {"task_id": "x-codex", "tags": ["codex-only", "skip:omp"]})],
+            check_skips,
+        ),
+        (
+            "a row skipped from every arm",
+            [(here / "a.yaml", {"task_id": "x", "tags": ["skip:claude", "skip:omp", "skip:codex"]})],
+            check_skips,
         ),
     ]
     for name, rows, checker in cases:
@@ -263,9 +454,21 @@ def main() -> None:
     tasks = load_tasks()
     check_arm_tags(tasks)
     check_task_ids(tasks)
+    check_skips(tasks)
+    check_makefile_routing()
     check_experiments()
-    forks = sum(1 for _, document in tasks if OMP_TAG in (document.get("tags") or []))
-    print(f"check-eval-arms: {len(tasks)} task(s), {forks} fork(s) paired with their siblings, every variant named")
+
+    counts = []
+    for name, spec in ARMS.items():
+        rows = sum(1 for _, document in tasks if str(spec["tag"]) in (document.get("tags") or []))
+        counts.append(f"{rows} {name}")
+    skipped = sum(
+        1 for _, document in tasks if any(str(tag).startswith(SKIP_TAG) for tag in (document.get("tags") or []))
+    )
+    print(
+        f"check-eval-arms: {len(tasks)} task(s), arm-tagged {', '.join(counts)}, "
+        f"{skipped} skipped from an arm, every fork paired and every variant named"
+    )
 
 
 if __name__ == "__main__":

@@ -234,13 +234,19 @@ check-infra:
 
 # evals-install: the pinned harness, from PyPI. `uv` fetches Python 3.13 itself,
 # so this is the whole setup.
-# `--with` puts the Omp agent kind in the same environment as the pinned
+# Each `--with` puts an agent kind in the same environment as the pinned
 # `coder-eval`, which is where `coder_eval` looks for its plugin entry points.
-# Without it `agent: {type: omp}` does not resolve, and `plan` says so and
-# exits 0 anyway -- which is what `evals-variants` is for.
+# Without them `agent: {type: omp}` and `agent: {type: codex-daily-driver}` do
+# not resolve, and `plan` says so and exits 0 anyway -- which is what
+# `evals-variants` is for.
+#
+# `coder-eval-codex` declares `coder-eval[codex]`, so the Codex SDK arrives with
+# it. The pin above stays extras-free on purpose: the extra belongs to the one
+# arm that needs it, not to the two that do not.
 evals-install:
 	uv tool install --python 3.13 coder-eval==$(CODER_EVAL_VERSION) \
-		--with ./evals/coder-eval-omp
+		--with ./evals/coder-eval-omp \
+		--with ./evals/coder-eval-codex
 
 # evals-plan: validate every eval case without calling a model. Free, and it
 # catches the config errors that otherwise cost a paid run to discover -- so
@@ -258,6 +264,7 @@ evals-install:
 evals-plan: evals-variants
 	cd evals && $(CODER_EVAL) plan -e experiments/with-without.yaml tasks/*/*.yaml
 	cd evals && $(CODER_EVAL) plan -e experiments/omp.yaml tasks/*/*.yaml
+	cd evals && $(CODER_EVAL) plan -e experiments/codex.yaml tasks/*/*.yaml
 
 # evals-variants: refuse to start when an arm's agent kind is not registered.
 # `coder-eval plan` PRINTS "Variant 'omp': resolution failed" and then exits 0,
@@ -269,8 +276,8 @@ evals-plan: evals-variants
 evals-variants:
 	python3 scripts/evals-variants.py evals/experiments/*.yaml
 
-# evals-run: the whole suite, both arms. Costs real money -- see evals/README.md
-# for what and why. Narrow it with TASKS=, e.g.
+# evals-run: the whole suite on Claude Code, both variants. Costs real money --
+# see evals/README.md for what and why. Narrow it with TASKS=, e.g.
 #   make evals-run TASKS='tasks/pr/*.yaml'
 TASKS ?= tasks/*/*.yaml
 
@@ -288,12 +295,17 @@ TASKS ?= tasks/*/*.yaml
 evals-preflight:
 	cd evals && python3 ../scripts/evals-preflight.py $(TASKS)
 
-# The Claude arms exclude the Omp forks, and the Omp arm excludes the rows
-# whose rule is Claude Code only. The tag is what routes a row to its arm, and
-# `make check-eval-arms` is what keeps the two sets in step.
+# Each arm excludes the other two arms' forks, plus any row tagged out of it
+# with `skip:<arm>`. The tag is what routes a row to its arm, and
+# `make check-eval-arms` is what keeps the three sets in step.
+#
+# ONE COMMA-SEPARATED VALUE, never a repeated flag. `--exclude-tags` is a single
+# `str` option that `coder_eval` splits on commas, so a second `--exclude-tags`
+# replaces the first rather than adding to it -- and the exclusions it dropped
+# come back as rows run in the wrong arm, silently, at full price.
 evals-run: evals-plan evals-preflight
 	cd evals && $(CODER_EVAL) run -e experiments/with-without.yaml \
-		--exclude-tags omp-only $(TASKS)
+		--exclude-tags omp-only,codex-only,skip:claude $(TASKS)
 
 # evals-run-omp: the same suites on Oh My Pi. Needs `omp` on PATH and a model
 # configured in the caller's own `~/.omp/agent/`, which the agent borrows
@@ -301,7 +313,20 @@ evals-run: evals-plan evals-preflight
 # like its sibling, and narrows the same way with TASKS=.
 evals-run-omp: evals-plan evals-preflight
 	cd evals && $(CODER_EVAL) run -e experiments/omp.yaml \
-		--exclude-tags claude-only $(TASKS)
+		--exclude-tags claude-only,codex-only,skip:omp $(TASKS)
+
+# evals-run-codex: the same suites on Codex. Needs the Codex SDK, which
+# `evals-install` brings in with `coder-eval-codex`, and OpenAI credentials the
+# SDK can authenticate with. Costs real money, like its siblings, and narrows
+# the same way with TASKS=.
+#
+# `skip:codex` is not a spare exclusion: `tasks/constitution/*` carries it,
+# because `coder_eval`'s Codex agent links skills and installs no hooks, so no
+# constitution reaches that arm and both rows would score 0 for the wrong
+# reason. See docs/notes/0015-the-codex-arm.md.
+evals-run-codex: evals-plan evals-preflight
+	cd evals && $(CODER_EVAL) run -e experiments/codex.yaml \
+		--exclude-tags claude-only,omp-only,skip:codex $(TASKS)
 
 # mcp-usage: which GitHub MCP tools were actually called, rolled up to the
 # toolsets that supply them. Laptop-only like git_sync — it reads Claude

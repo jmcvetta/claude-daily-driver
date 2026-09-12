@@ -27,15 +27,20 @@ HOW IT DECIDES
 WHAT IT FLAGS
 
     An experiment variant whose agent kind no agent is registered for — the
-    measured failure above, which is what an un-installed `coder-eval-omp`
-    looks like.
+    measured failure above, which is what an un-installed `coder-eval-omp` or
+    `coder-eval-codex` looks like.
     An experiment file that does not parse, or that declares no variants.
 
 WHAT IT DOES NOT FLAG
 
     Whether the arm then works. A registered kind can still fail to start
-    `omp`, fail to install the plugin, or load nothing; those failures are
-    loud at run time by design, and `environment_info` records what loaded.
+    `omp` or the Codex app-server, fail to install the plugin, or load nothing;
+    those failures are loud at run time by design, and `environment_info`
+    records what loaded.
+    That the RIGHT Codex kind is named. `codex` is a registered built-in and
+    resolves cleanly, and it is the wrong kind for these suites: it hands the
+    judge bare text, so every judged row scores 0.0. `evals/experiments/codex.yaml`
+    says so where it names `codex-daily-driver`; nothing here can.
     Whether the model named by a variant exists.
 
 No third-party imports beyond PyYAML, which the sibling guard already requires.
@@ -60,6 +65,7 @@ except ImportError as exc:  # pragma: no cover - PyYAML is a house-wide given
 _REMEDY = (
     "An arm whose agent kind is not registered runs nothing and reports zeros.\n"
     "  - `omp` comes from evals/coder-eval-omp/, installed by `make evals-install`.\n"
+    "  - `codex-daily-driver` comes from evals/coder-eval-codex/, installed by the same target.\n"
     "  - Re-run `make evals-install` if the tool environment was rebuilt.\n"
     "Then run `make evals-plan` again."
 )
