@@ -16,7 +16,7 @@ The issue
 | ---- | --------- | ---- |
 | `Open the issue` | Search the open issues | `gh search issues` |
 | `Open the issue` | Open one, labelled | `gh issue create --label task` |
-| `Read the issue and its edges` | Read the body and the graph | `gh issue view <number> --json body,labels,blockedBy,subIssues,parent` |
+| `Read the issue and its edges` | Read the body, the graph and the comments | `gh issue view <number> --json body,labels,comments,blockedBy,subIssues,parent` |
 | `Read the issue and its edges` | Label an issue that carries none | `gh issue edit <number> --add-label task` |
 | `Claim the issue` | Comment on the issue | `gh issue comment <number> --body-file <path>` |
 
@@ -24,6 +24,10 @@ The issue
 links, and a double-quoted shell argument substitutes the backticks before
 `gh` sees them. `pr-body`'s [`codex.md`](../../pr-body/references/codex.md)
 makes the same argument at length.
+
+`comments` is in that field list because `Claim the issue` needs it: a claim
+already on the issue is what says the sequence is being re-entered, or that
+another session got there first. A read without it cannot tell either.
 
 The `--json` fields in the read row need `gh` at its stated floor.
 `issue-deps` owns the edge reads and picks its own client — two clients here
@@ -43,10 +47,11 @@ The pull request
 | `A round after ready goes back to draft` | Return it to draft | `gh pr ready <number> --undo` |
 
 Reading a pull request is `gh pr view <number>`. `Review the head` and
-`Fix, answer, resolve, push` are `review-cycle`'s, and that skill carries no
-Codex routes yet: until it does, run the round from what its body says and
-take nothing from its Claude reference file, whose thread protocol rests on a
-review surface this harness has not been shown to have.
+`Fix, answer, resolve, push` are `review-cycle`'s, and that skill has its own
+[`codex.md`](../../review-cycle/references/codex.md). Read it: the surface
+there is `codex exec review --base`, it reviews the checkout rather than the
+pull request, it posts nothing, and its wait is a single read rather than a
+loop — which is the same reason `Keep it current` below has no cadence.
 
 
 The session
