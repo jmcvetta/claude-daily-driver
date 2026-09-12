@@ -7,7 +7,8 @@ description: >-
   the wave", "start the next wave", "run these issues in parallel", "open a
   session for each of these", or "how is the epic going", and on Claude's own
   move from an epic whose plan is written to opening a session per task —
-  `mcp__Claude_Code_Remote__create_session` on Claude Code. Supplies the wave
+  `mcp__Claude_Code_Remote__create_session` on Claude Code, `create_thread` on
+  Codex. Supplies the wave
   it reads off the graph, the session it opens per task on the model that task
   issue records, the muster roll it posts to the epic instead of asking, the
   watch it keeps through the pull requests rather than through the session
@@ -37,10 +38,12 @@ come back.
 **The routes are per harness, and they live beside this file.** Every call the
 steps below need is named in words here and resolved to a route there:
 [`references/claude.md`](references/claude.md) for Claude Code,
-[`references/omp.md`](references/omp.md) for Oh My Pi. Read the one for the
+[`references/omp.md`](references/omp.md) for Oh My Pi,
+[`references/codex.md`](references/codex.md) for Codex. Read the one for the
 harness in use before `Read the epic`, which is the first step with a route in
-either table. Omp has no session-opening client at all, so that file is a stop
-rather than a table, and it says so.
+any of them. **Only one of the three is a table.** Omp has no session-opening
+client, and Codex has one this skill cannot reach, so those two files are
+stops, and each says so and says why.
 
 **Every step has a name, and the name is how it is cited.** The numbers order
 the sequence and do nothing else: insert one and all of them move, while a name
@@ -341,10 +344,13 @@ Five, and two of them are reports rather than questions.
 - **An issue that is not an epic**, at `Read the epic`. A report: say which
   issue it is and which skill takes it — `undertake` for a task issue, `epic`
   for work not yet decomposed.
-- **A harness with no session-opening client.** The whole skill, not one step.
-  Say so, name the tasks whose blockers are closed, and stop — which is `epic`'s
-  `Hand off` reached without a fleet.
-  [`references/omp.md`](references/omp.md) is the harness this is written for.
+- **A harness with no session-opening client this skill can reach.** The whole
+  skill, not one step. Say so, name the tasks whose blockers are closed, and
+  stop — which is `epic`'s `Hand off` reached without a fleet.
+  [`references/omp.md`](references/omp.md) and
+  [`references/codex.md`](references/codex.md) are the two harnesses this is
+  written for, and they are that case for different reasons: one has no client,
+  the other has one an unattended session is not offered.
 - **No wave to take**, at `Take the wave`. A report: every open task is blocked
   by something open, so name the issue that blocks and wait for it.
 - **A session that stopped to ask**, at `Recover a session`. Name the task, its

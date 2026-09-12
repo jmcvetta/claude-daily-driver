@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Close the AskUserQuestion widget, so the question is asked in the chat reply.
+"""Close the question widget, so the question is asked in the chat reply.
 
-`AskUserQuestion` renders a multiple-choice widget. On a phone it is harder to
-work with than plain text, and the operator's answer to it is the same every
-time: ask in chat instead. A preference answered the same way every time is not
-a judgement, and prose that asks for it is prose that can be read and not
-followed. So the tool is denied, and the denial reason carries the instruction
-that replaces it.
+The widget has a name per harness — `AskUserQuestion` on Claude Code,
+`request_user_input` on Codex — and one behaviour: it renders a multiple-choice
+prompt. On a phone it is harder to work with than plain text, and the
+operator's answer to it is the same every time: ask in chat instead. A
+preference answered the same way every time is not a judgement, and prose that
+asks for it is prose that can be read and not followed. So the tool is denied,
+and the denial reason carries the instruction that replaces it.
 
 This is deliberately not a rule in `rules/constitution.md`. That file states
 its own admission test — a rule earns its place only if it changes behaviour in
@@ -36,17 +37,21 @@ from __future__ import annotations
 import json
 import sys
 
-# The one tool this hook is wired to. The matcher in `hooks.json` is what
-# selects it; the name here is only used to notice that the matcher has gone
-# wrong — see `decide()`.
-TOOL = "AskUserQuestion"
+# The tools this hook is wired to: one widget, one name per harness. Codex has
+# no `AskUserQuestion` at all — the string does not occur in the binary — so a
+# matcher naming only Claude Code's spelling reaches nothing there, which is
+# the whole reason both names are here. The matcher in `hooks.json` is what
+# selects the call; the names here are only used to notice that the matcher has
+# gone wrong — see `decide()`.
+TOOLS = ("AskUserQuestion", "request_user_input")
 
 # What Claude is told when the call is denied. Claude Code shows this text and
 # nothing else, so it is written to be acted on rather than read: the tool is
 # shut, a retry buys nothing, and here is the thing to do instead.
 REASON = (
-    "The AskUserQuestion widget is closed in this configuration. Calling it "
-    "again will be denied in the same way, so do not retry it.\n\n"
+    "The question widget is closed in this configuration — `AskUserQuestion` "
+    "on Claude Code, `request_user_input` on Codex. Calling it again will be "
+    "denied in the same way, so do not retry it.\n\n"
     "Ask the same question in your chat reply instead. Write the question as "
     "prose, give the options as a short list, and name the one you recommend "
     "and why. The user answers in chat.\n\n"
@@ -64,11 +69,11 @@ def decide(event: dict) -> tuple[dict, str | None]:
     Returns `(payload, None)` for the denial, and `(payload, note)` where the
     call was let through and somebody should know why.
 
-    The rule is: deny unless the event positively names a different tool. The
+    The rule is: deny unless the event positively names some other tool. The
     matcher in `hooks.json` is what identifies the call, so an event this
     script cannot read does not overturn it — an empty or malformed event is
-    still an `AskUserQuestion` call, and failing open there would hand the
-    widget back on exactly the harness glitch nobody would notice.
+    still a call to the widget, and failing open there would hand it back on
+    exactly the harness glitch nobody would notice.
 
     An event that names some *other* tool is the one case that is let through.
     That means the matcher is wrong, and denying an unrelated tool on a broken
@@ -76,10 +81,12 @@ def decide(event: dict) -> tuple[dict, str | None]:
     and give a misleading reason for it.
     """
     tool = event.get("tool_name")
-    if isinstance(tool, str) and tool != TOOL:
+    if isinstance(tool, str) and tool not in TOOLS:
+        names = ", ".join(repr(name) for name in TOOLS)
         note = (
-            f"ask-in-chat was invoked on {tool!r}, not {TOOL!r}, so the call "
-            f"was allowed. The PreToolUse matcher in hooks/hooks.json is wrong."
+            f"ask-in-chat was invoked on {tool!r}, which is none of {names}, "
+            f"so the call was allowed. The PreToolUse matcher in "
+            f"hooks/hooks.json is wrong."
         )
         return {"hookSpecificOutput": {"hookEventName": "PreToolUse"}}, note
 

@@ -7,8 +7,8 @@ description: >-
   "that session title is wrong", and on Claude's own initiative when work on a
   GitHub issue begins, when the session's subject changes materially, or on
   any call to the harness's session-title tool —
-  `mcp__Claude_Code_Remote__set_session_title` or Omp's
-  `daily_driver_set_session_title`. Supplies the
+  `mcp__Claude_Code_Remote__set_session_title`, Omp's
+  `daily_driver_set_session_title`, or Codex's `set_thread_title`. Supplies the
   character budget a title is written to for the Claude mobile list, and
   the two forms that title may take. Not the title of a pull request —
   that is `pr-title`.
@@ -16,14 +16,16 @@ description: >-
 
 # Session title
 
-The name this session carries in the Claude session lists, web and mobile
-alike. It is read in a column of a dozen siblings, on a phone, at a glance.
-That is the whole design constraint.
+The name this session carries in the harness's own session list. It is read in
+a column of a dozen siblings, at a glance — on a phone in the Claude lists, in
+a picker in a terminal elsewhere, and in one harness it is an address as well
+as a label. That is the whole design constraint.
 
 **The call that sets the title is per harness, and it lives beside this
 file.** [`references/claude.md`](references/claude.md) is the route for
-Claude Code, [`references/omp.md`](references/omp.md) for Oh My Pi. Read
-the one for the harness in use before the first call.
+Claude Code, [`references/omp.md`](references/omp.md) for Oh My Pi, and
+[`references/codex.md`](references/codex.md) for Codex. Read the one for the
+harness in use before the first call.
 
 
 Budget: 40 characters
@@ -103,9 +105,11 @@ Setting the title is the harness's own call — each harness names its own
 surface, and how many calls that takes differs between them. The reference
 file for the harness in use gives the exact path.
 
-Where no such surface exists — a session on neither harness — there is no
-way to set the title from here: say so and stop, rather than reaching for a
-substitute.
+Where no such surface exists — a harness that has none, or one whose surface
+this session has not been offered — there is no way to set the title from
+here: say so and stop, rather than reaching for a substitute. Whether the
+harness in use is such a case is the reference file's answer, not a guess made
+here.
 
 
 When to set it

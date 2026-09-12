@@ -70,8 +70,9 @@ moment, and says something the harness does not already say — it is paid for i
 every session and every subagent, forever. Amendments are pull requests against
 this repository.
 
-**Whether a session got it**: `scripts/check-constitution.py` drives both
-injection points and asserts they carry the file verbatim and identically. The
+**Whether a session got it**: `scripts/check-constitution.py` drives every
+injection point, on both harnesses, and asserts they carry the file verbatim
+and identically. The
 `constitution-reaches-subagent` eval covers the half a script cannot: it asks a
 subagent, with every file-reading tool closed, for a phrase only the injected
 constitution could have told it.
@@ -82,23 +83,36 @@ answer under every pressure to write ten and counts the lines that come back.
 `Before you reply` is the rule it measures because that rule's compliance is
 countable; the rest of the file needs a judgment about engineering instead.
 
-**How it arrives**: a plugin cannot ship a `CLAUDE.md`, so two injection
-points deliver the file — `SessionStart` for the session, `PreToolUse` on the
-`Agent` tool for every subagent, which `SessionStart` alone does not reach.
-Both read the one file by exact path and fail loudly. The measurement behind
-the second injection point is in [the planning
-doc](docs/planning/plugin-replaces-global-memory.md) under R2.
+**How it arrives**: a plugin cannot ship a `CLAUDE.md`, so three injection
+points deliver the file — `SessionStart` for the session, and `PreToolUse` on
+the `Agent` tool plus `SubagentStart` for every subagent, neither of which
+`SessionStart` alone reaches. All three read the one file by exact path and
+fail loudly. The measurement behind the second injection point is in [the
+planning doc](docs/planning/plugin-replaces-global-memory.md) under R2; the
+third is there for Codex, which delegates through `multi_agent_v1` and so has
+no `Agent` tool for the matcher to catch.
 
 ## The hooks, and the Omp extension
 
 A plugin cannot ship a `CLAUDE.md`, and it cannot ship a preference either. Two
-hooks do both jobs on Claude Code, and they do them for the same reason: prose
-can be read and not followed.
+hooks do both jobs on Claude Code and on Codex, and they do them for the same
+reason: prose can be read and not followed.
 
 | Hook | Event | What it does |
 | ---- | ----- | ------------ |
-| `inject-constitution.py` | `SessionStart`, and `PreToolUse` on `Agent`/`Task` | Delivers `rules/constitution.md` to the session and to every subagent. |
-| `ask-in-chat.py` | `PreToolUse` on `AskUserQuestion` | Denies the multiple-choice widget, and tells Claude to ask the question in the chat reply instead. |
+| `inject-constitution.py` | `SessionStart`, `SubagentStart`, and `PreToolUse` on `Agent`/`Task` | Delivers `rules/constitution.md` to the session and to every subagent. |
+| `ask-in-chat.py` | `PreToolUse` on `AskUserQuestion`/`request_user_input` | Denies the multiple-choice widget, and tells Claude to ask the question in the chat reply instead. |
+
+**Codex runs the same two scripts.** Its hook wire contract is Claude Code's —
+same stdin, same `hookSpecificOutput` — so `hooks/hooks.json` carries one extra
+matcher and one extra event rather than a second copy of anything. The widget
+is `request_user_input` there and `AskUserQuestion` does not exist; delegation
+goes through `multi_agent_v1`, so `SubagentStart` is the only route a Codex
+subagent's constitution can arrive by. Claude Code fires `SubagentStart` too
+and honours the same `additionalContext`, so a Claude Code subagent is handed
+the constitution twice — the price of one `hooks.json` serving both, since
+neither subagent route carries anything that would let it see the other had
+fired.
 
 **Why the second one is a hook** and not a skill or a constitution rule: the
 preference has no exceptions to weigh, so it should be enforced rather than
@@ -140,8 +154,9 @@ daily-driver/
 ├── docs/                   how this repository is meant to be used
 ├── evals/                  the trigger suites, and the constitution's live half
 ├── extensions/             the Omp runtime adapter
-├── hooks/                  the Claude Code adapter: the constitution's two
-│                           injection points, and the deny on AskUserQuestion
+├── hooks/                  the hook adapter, read by Claude Code and Codex:
+│                           the constitution's three injection points, and
+│                           the deny on the question widget
 ├── infra/github/           the repository's own settings, as OpenTofu
 ├── scripts/                the checks CI runs, the stanza, the MCP tally
 ├── skills/                 one directory per skill in the table above, each
