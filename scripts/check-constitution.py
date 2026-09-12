@@ -160,33 +160,41 @@ PRE_TOOL_USE_EVENT = {
     "tool_use_id": "toolu_check",
 }
 
-# The keys Codex wraps every hook event in, measured in issue #181:
-# `transcript_path`, `model` and `permission_mode` beside the common
-# `session_id`, `cwd` and `hook_event_name`.
-CODEX_ENVELOPE = {
-    "session_id": "01a0962d-check-constitution",
-    "transcript_path": str(ROOT / "rollout-check.jsonl"),
-    "cwd": str(ROOT),
-    "model": "stub-model",
-    "permission_mode": "bypassPermissions",
-}
+def codex(hook_event_name: str, **event: object) -> dict:
+    """A Codex-shaped hook event: its envelope, then this event's own keys.
+
+    The envelope is the stdin measured in issue #181 — `transcript_path`,
+    `model` and `permission_mode` beside the common `session_id`, `cwd` and
+    `hook_event_name`. Built here rather than derived from the Claude Code
+    events above, because a Codex event carrying a Claude Code key would be a
+    fixture claiming to be measured and not being one.
+    """
+    return {
+        "session_id": "01a0962d-check-constitution",
+        "transcript_path": str(ROOT / "rollout-check.jsonl"),
+        "cwd": str(ROOT),
+        "model": "stub-model",
+        "permission_mode": "bypassPermissions",
+        "hook_event_name": hook_event_name,
+        **event,
+    }
 
 
-def codex(event: dict, **extra: object) -> dict:
-    """The same event as Codex sends it: its envelope, then this event's keys."""
-    return {**CODEX_ENVELOPE, **event, **extra}
-
-
-# Codex's own spelling of the SessionStart reason is `source`, where Claude
-# Code's is `startup_reason`; its PreToolUse carries a `turn_id` and a
-# `call_`-prefixed tool use id. The SubagentStart shape is the one thing here
-# that is not measured — #181 could not reach Codex's delegation path at all —
-# and it costs nothing to be wrong about, because `subagent-start` reads no
-# part of its event. That is the reason it reads none.
-CODEX_SESSION_START_EVENT = codex(SESSION_START_EVENT, source="startup")
-CODEX_SUBAGENT_START_EVENT = codex(SUBAGENT_START_EVENT)
+# Codex spells the SessionStart reason `source` where Claude Code spells it
+# `startup_reason`, and its PreToolUse carries a `turn_id` beside a
+# `call_`-prefixed tool use id. Its SubagentStart carries the envelope and
+# nothing this repository has seen: #181 could not reach Codex's delegation
+# path at all, so no field is invented for it here. That costs nothing, because
+# `subagent-start` reads no part of its event — which is the reason it reads
+# none.
+CODEX_SESSION_START_EVENT = codex("SessionStart", source="startup")
+CODEX_SUBAGENT_START_EVENT = codex("SubagentStart")
 CODEX_PRE_TOOL_USE_EVENT = codex(
-    PRE_TOOL_USE_EVENT, tool_use_id="call_check", turn_id="01a09630-check"
+    "PreToolUse",
+    tool_name="Agent",
+    tool_input=dict(PRE_TOOL_USE_EVENT["tool_input"]),
+    tool_use_id="call_check",
+    turn_id="01a09630-check",
 )
 
 # Every event that carries the constitution as context, and the mode that

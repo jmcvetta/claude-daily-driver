@@ -70,8 +70,9 @@ moment, and says something the harness does not already say — it is paid for i
 every session and every subagent, forever. Amendments are pull requests against
 this repository.
 
-**Whether a session got it**: `scripts/check-constitution.py` drives both
-injection points and asserts they carry the file verbatim and identically. The
+**Whether a session got it**: `scripts/check-constitution.py` drives every
+injection point, on both harnesses, and asserts they carry the file verbatim
+and identically. The
 `constitution-reaches-subagent` eval covers the half a script cannot: it asks a
 subagent, with every file-reading tool closed, for a phrase only the injected
 constitution could have told it.
@@ -153,8 +154,9 @@ claude-daily-driver/
 ├── docs/                   how this repository is meant to be used
 ├── evals/                  the trigger suites, and the constitution's live half
 ├── extensions/             the Omp runtime adapter
-├── hooks/                  the Claude Code adapter: the constitution's two
-│                           injection points, and the deny on the widget
+├── hooks/                  the hook adapter, read by Claude Code and Codex:
+│                           the constitution's three injection points, and
+│                           the deny on the question widget
 ├── infra/github/           the repository's own settings, as OpenTofu
 ├── scripts/                the checks CI runs, the stanza, the MCP tally
 ├── skills/                 one directory per skill in the table above, each
