@@ -1,0 +1,196 @@
+# The Codex arm
+
+**Status:** decided, 2026-09-12.
+**Provenance:** the spike in
+[#181](https://github.com/jmcvetta/claude-daily-driver/issues/181#issuecomment-5646398831)
+measured what this plugin loads under a real `codex` binary; this note records
+the decisions taken while building the arm, in
+[#185](https://github.com/jmcvetta/claude-daily-driver/issues/185).
+**Extends:** [`0013`](0013-the-omp-arm.md), which built the second arm and set
+the shape this one follows, and [`0011`](0011-two-harnesses-one-skill-tree.md),
+which made the skills portable in the first place.
+
+`0013` said it for Omp and it is true again for Codex: a trigger that stops
+firing on a harness reads exactly like a skill that never fires. The Claude and
+Omp arms say nothing about the third harness. This arm is the measurement.
+
+It is a much smaller piece of work than `0013` was, and the reason is the whole
+first decision below.
+
+## Decided
+
+**The agent kind is a subclass of a built-in, not a new driver.** `coder_eval`
+0.11.6 ships a `codex` kind that drives the Codex SDK, links a `plugins:` root's
+skills into `<cwd>/.agents/skills/`, and records command telemetry in the
+vocabulary the criteria are written in. Every bit of that is inherited.
+`evals/coder-eval-codex/` adds one override and one record, through the same
+`coder_eval.plugins` entry-point seam `coder-eval-omp` uses.
+
+*Rejected: registering as `codex` itself.* The registry refuses two
+implementations claiming one kind, so this would have to replace the built-in
+rather than sit beside it — changing what `codex` means for every other
+`coder_eval` user in the same environment. The distinct kind also makes the
+routing readable: `scripts/check-eval-arms.py` maps a pinned `agent.type` to the
+arm tag it must carry, and `codex-daily-driver` names exactly one arm.
+
+**One normalisation, where the Omp arm needed three.** Only the `[RESULT - …]`
+transcript. `coder_eval` builds it for its Claude Code agent alone and hands the
+judge `result_text` — the turn's assistant deltas joined — from its Codex agent.
+Every rubric under `evals/tasks/` locates the reply at the last `[RESULT - …]`
+tag and scores 0.0 where there is none, deliberately and with no fallback, so an
+arm that shipped without this would score every judged row 0.0: most of the
+`references` suites, and both halves of the constitution suite had they been in
+this arm at all. `coder_eval_codex/transcript.py` renders the shape, and
+`scripts/check-codex-agent.py` asserts it is byte-identical to
+`coder_eval_omp.rpc.render_agent_output` for one block — the two packages render
+one contract and neither depends on the other, so that equality is what holds
+them in step.
+
+Tool names need no renaming: the built-in already records `commandExecution` as
+`Bash` with `parameters["command"]`, which is what `command_executed` reads.
+
+**The second normalisation #185 asked for is not needed, and the issue was
+written against a reading #181 corrected.** #185 says Codex engages a skill
+through `skill://<name>`, the spelling Omp uses, which `skill_triggered` cannot
+see. Both halves of that turn out to be wrong.
+
+- #181 drove a real `codex-cli 0.154.0` and found the model is handed a skills
+  table in a developer message and opens `SKILL.md` with an ordinary shell call.
+  A prompt of `skill://daily-driver:pr` reached the model as that literal text,
+  unexpanded.
+- `coder_eval`'s `skill_triggered` already detects the read Codex actually does.
+  Its regex matches `skills/<name>/` in any string tool parameter, and its own
+  docstring names Codex as the agent that branch exists for. The Codex SDK types
+  `CommandExecutionThreadItem.command` as `str`;
+  `CodexAgent._extract_command_telemetry` puts that string in
+  `parameters["command"]`; and `_setup_skills` links each skill at
+  `.agents/skills/<name>/`. The substring is there to match.
+
+Measured here rather than reasoned about: running the built-in's own
+`_setup_skills` against this repository as the plugin root links all fourteen
+skills, named bare — `pr`, `undertake`, `review-cycle` — which is the spelling
+every row's `skill_name` already uses.
+
+Adding a mapping would have renamed something already named, and it would have
+been untestable: there would be nothing for `check-codex-agent` to drive.
+
+**Three arms, routed by tag, in three runs.** `0013`'s reasoning holds and the
+mechanism generalises: a `coder_eval` variant applies to every task in the run,
+so one invocation carrying more than one arm's rows grades one harness's routes
+under another's and pays for it. `make evals-run` excludes `omp-only` and
+`codex-only`; `make evals-run-omp` excludes `claude-only` and `codex-only`;
+`make evals-run-codex` excludes both of the others. A `codex-only` row will name
+its sibling with a `forks:<task_id>` tag, and `scripts/check-eval-arms.py` pairs
+them.
+
+*`--exclude-tags` takes ONE comma-separated value.* It is a single `str` option
+that `coder_eval` splits on commas, so a second `--exclude-tags` on the same
+command line replaces the first rather than adding to it. A target written the
+obvious way would read correct, exclude one tag, and run the other arms' forks
+at full price. `check-eval-arms` now reads the Makefile and asserts each target
+passes the flag exactly once, with exactly the right set.
+
+**`skip:<arm>` is a new tag, because an arm tag cannot say "two of three".** An
+arm tag claims exactly one arm and every arm is spelled by carrying none. A row
+that runs in the Claude and Omp arms but not the Codex one has no third thing to
+say, and the routing is exclusion-based, so the honest primitive is an
+exclusion. `skip:codex` takes a row out of that arm and leaves it in the rest.
+`check-eval-arms` asserts it names a known arm, is never combined with an arm
+tag, and never takes a row out of every arm.
+
+**`tasks/constitution/*` carries `skip:codex`, and that is the arm's biggest
+hole.** `coder_eval`'s Codex agent symlinks skills and installs nothing else —
+no `hooks/hooks.json`, so no `SessionStart` and no `PreToolUse` on the `Agent`
+tool. The constitution never reaches the session. `reaches-subagent` measures
+whether the text arrives and `reply-is-concise` measures whether it lands; both
+would score 0 for a reason that has nothing to do with the constitution, which
+is the exact failure `0013` built the Omp arm's `omp plugin link` to avoid.
+
+The Omp arm's fix does not transfer. #181 measured that a real Codex session
+does load `hooks/hooks.json` and does deliver the constitution as a developer
+message — behind two gates it also measured: persisted **hook trust**, whose
+documented escape hatch is `codex exec --dangerously-bypass-hook-trust`, and an
+exactly-echoed `hookEventName`. `coder_eval` drives the Codex SDK and the
+app-server, not `codex exec`, and whether the app-server honours a trust bypass
+is not something this session could measure: it has no OpenAI credentials and no
+`codex` binary. Building an install path on a guess about that is the
+workaround the constitution forbids. So the rows are tagged out, the reason is
+written on each of them, and lifting it needs a live Codex session to measure
+against — which is the same thing the arm's first paid run needs.
+
+**`review-depth` stays Claude Code only, and the third arm is why that tag
+earns its keep again.** Measured: `coder-eval plan -e experiments/codex.yaml`
+resolves those rows as `Variant 'codex': claude-code (gpt-5-codex)` — seven
+Claude sessions inside the Codex arm, billed to it and reported as it. That is
+what `0013` measured for Omp, reproduced for Codex, and it is what the
+`claude-only` tag prevents.
+
+**One Codex variant, and no bare-Codex control.** `0013`'s decision, unchanged
+and for the same reason: the arm reports the treated side alone, the control is
+a positive row and a negative row in one run, and a second variant doubles what
+the arm costs. It is the obvious addition the day the delta is what someone is
+reading.
+
+**There are no `codex-only` rows yet, and that is deliberate.** Ten rows are
+forked between the Claude and Omp arms today. Seven of them grade a route stated
+in a `skills/<name>/references/omp.md`, and their Codex counterparts would grade
+a `references/codex.md` that does not exist: writing those files is
+[#183](https://github.com/jmcvetta/claude-daily-driver/issues/183) and
+[#184](https://github.com/jmcvetta/claude-daily-driver/issues/184), in the same
+wave as this issue rather than before it. The remaining three grade a rule
+`0011` makes Claude Code only, and what replaces that rule on Codex is #184's
+call too. Forking them now means inventing the routes those issues decide, which
+is guessing at intent.
+
+What this issue owes them is the mechanism, and that is complete: the tag, the
+pairing, the run target, the exclusions and the guard. A `codex-only` row added
+by #183 or #184 needs nothing built for it.
+
+## Known limits, recorded rather than fixed
+
+**`allowed_tools` and `disallowed_tools` are not enforced in this arm.** Worse
+than Omp's version of the same gap, because it is not a missing feature but a
+deliberate one: `CodexAgent._log_config_enforcement` logs both fields and its
+own security notice says Codex runs full-access on *every* `permission_mode`,
+with `coder_eval`'s per-run sandbox as the only boundary. The trigger rows use
+`disallowed_tools` to stop a denied read of `skills/<name>/SKILL.md` scoring as
+an engagement, and that mitigation is unavailable here — which bites harder than
+on Omp, because on Codex the shell read *is* the engagement signal rather than a
+near-miss for one. A no-fire row is therefore weaker in this arm than in the
+Claude arms, and a no-fire row that scores badly should be read as that before
+it is read as a skill firing when it should not.
+
+`experiments/codex.yaml` therefore sets no `allowed_tools` at all, where the
+other two experiments set `[Skill]`. On Codex that list would name a tool that
+does not exist and omit the shell the engagement runs through, and it would be
+inert either way; writing it would only mislead a reader of the file.
+
+**The model pin is unverified.** `gpt-5-codex`, chosen so a report says which
+model produced it and so the arms differ only in the harness. Nothing in this
+repository has started a Codex session through the SDK, so that string has not
+been resolved against an account. It is the first field to correct.
+
+**Skill discovery is `coder_eval`'s claim, not this repository's
+measurement.** That Codex auto-discovers `.agents/skills/` from the working
+directory upwards is what the built-in agent's own docstring says, and #181
+measured discovery through an *installed plugin* rather than through that
+directory. What is measured here is one half: the linker links all fourteen
+skills into it. Whether a session then sees them is what the first run answers.
+
+**The arm has not been run.** Nothing here has touched a live Codex session, and
+no paid run has happened. What is measured is:
+
+- Both in-repo agent kinds register through the entry-point seam, and
+  `coder-eval plan -e experiments/codex.yaml tasks/*/*.yaml` resolves
+  `Variant 'codex': codex-daily-driver (gpt-5-codex)` on every task it applies
+  to, with no resolution failure and exit 0.
+- `make check` proves the transcript rendering is the shape the rubrics read and
+  agrees with the Omp arm's byte for byte (`scripts/check-codex-agent.py`), and
+  that the three arms' task sets and the Makefile's routing stay in step
+  (`scripts/check-eval-arms.py`).
+
+The next thing to do is one paid run of a narrow slice — non-zero on a positive
+row, zero on a negative one, and a judged row scoring on its rubric rather than
+on a missing anchor. It needs OpenAI credentials, which this session had none
+of. The Omp arm's equivalent run is still outstanding too, and `0013` records
+it.

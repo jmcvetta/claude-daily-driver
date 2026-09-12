@@ -11,7 +11,8 @@ the `claude` binary, so there is no version to hold back.
 evals/
 ├── experiments/
 │   ├── with-without.yaml           the ablation every Claude case is measured under
-│   └── omp.yaml                    the same suites, on Omp — see "The Omp arm"
+│   ├── omp.yaml                    the same suites, on Omp — see "The Omp arm"
+│   └── codex.yaml                  the same suites, on Codex — see "The Codex arm"
 ├── tasks/
 │   ├── pr/              does `pr` fire when a PR is opened, and only then?
 │   ├── pr-title/        … when a title is written, and only then?
@@ -32,7 +33,8 @@ evals/
 ├── fixtures/review-depth/
 │   ├── shared/          builds the git repository every case starts from
 │   └── cases/<name>/    one `case.sh`, mounted alone beside `shared/`
-└── coder-eval-omp/      the `omp` agent kind, so the same cases run on Omp
+├── coder-eval-omp/      the `omp` agent kind, so the same cases run on Omp
+└── coder-eval-codex/    `coder_eval`'s Codex agent, with the judge's anchor put back
 ```
 
 ## Running them
@@ -40,12 +42,13 @@ evals/
 ```sh
 make evals-install    # coder-eval, pinned; uv fetches Python 3.13 itself
 make evals-plan       # validate every case. Costs ZERO tokens. Do this first.
-make evals-run        # the whole suite, both arms. Costs real money.
+make evals-run        # the whole suite on Claude Code, both variants. Real money.
 
 make evals-run TASKS='tasks/pr/*.yaml'     # one suite
 make evals-run TASKS='tasks/*/*-neg-*.yaml' # just the no-fire half
 
 make evals-run-omp    # the same suites on Omp. Needs `omp` and a model.
+make evals-run-codex  # the same suites on Codex. Needs the Codex SDK and a key.
 ```
 
 The `*-neg-*` selector is a filename glob, and one absence assertion does not
@@ -372,6 +375,11 @@ row records a false negative a full run would never have produced.
 
 ## The constitution suite: reach, then compliance
 
+Both rows carry `skip:codex` and are absent from the Codex arm. `coder_eval`'s
+Codex agent links skills and installs no hooks, so the constitution never
+reaches that session and a zero there would say nothing about the constitution.
+See "The Codex arm" below.
+
 `subagent-reports-the-token` was `regex` on `last_message`, weight 2 — the
 grader that *is* the finding. It now has the subagent write its answer to a
 file, and `file_matches_regex` reads it. That keeps determinism, which is what
@@ -644,15 +652,16 @@ the short version is that Omp engages a skill by reading `skill://<name>`,
 which `skill_triggered` cannot see, and that `coder_eval` builds the
 `[RESULT - …]` transcript these rubrics anchor on for its Claude agent alone.
 
-**Two experiment files, two runs, and tags in between.** Ten rows cannot be
-graded identically on both harnesses — the call they name differs, or the rule
-is Claude Code only per `0011` — so each is two files, tagged `claude-only` and
-`omp-only`, with `-omp` on the second's `task_id`. A `coder_eval` variant
-applies to every task in the run, so one invocation carrying both sets would
-grade Omp's routes under a Claude arm and pay for it. `make evals-run` excludes
-`omp-only`; `make evals-run-omp` excludes `claude-only`. `make check-eval-arms`
-holds the two sets in step, because a fork that loses its tag runs in both arms
-and fails for a reason that has nothing to do with the skill.
+**An experiment file per arm, a run per arm, and tags in between.** Ten rows
+cannot be graded identically on both harnesses — the call they name differs, or
+the rule is Claude Code only per `0011` — so each is two files, tagged
+`claude-only` and `omp-only`, with `-omp` on the second's `task_id`. A
+`coder_eval` variant applies to every task in the run, so one invocation
+carrying both sets would grade Omp's routes under a Claude arm and pay for it.
+`make evals-run` excludes `omp-only`; `make evals-run-omp` excludes
+`claude-only`; and with the Codex arm each also excludes `codex-only`.
+`make check-eval-arms` holds the sets in step, because a fork that loses its tag
+runs in every arm and fails for a reason that has nothing to do with the skill.
 
 | Suite | Claude-only row | Omp counterpart |
 | --- | --- | --- |
@@ -673,8 +682,8 @@ tag and starts running in both arms.
 
 The seven `review-depth` rows carry `claude-only` with no counterpart. They pin
 `agent.type: claude-code` and drive Claude's own settings and dispatch hook, so
-they have no Omp form; untagged, they would run inside the Omp arm as Claude
-sessions and be billed and reported as Omp results.
+they have no form on another harness; untagged, they would run inside the other
+arms as Claude sessions and be billed and reported as those arms' results.
 
 Seven counterparts are not the sibling stem plus `-omp`, and that is
 deliberate: those stems name Claude's route, and on Omp the row grades the
@@ -708,6 +717,81 @@ so a report is read with them in mind.
 `omp_skills_loaded`, `omp_linked_plugins` and `omp_extension_errors` land in
 each run's `environment_info` for the same reason the paragraph above exists:
 a red arm and an arm whose plugin never arrived must not read alike.
+
+## The Codex arm
+
+The same suites, the same skills, a third harness.
+`docs/notes/0015-the-codex-arm.md` is the decision; this is how it is run.
+
+```sh
+make evals-run-codex                          # the Codex arm
+make evals-run-codex TASKS='tasks/pr/*.yaml'  # one suite of it
+```
+
+It needs the Codex SDK, which `make evals-install` brings in with
+`coder-eval-codex`, and OpenAI credentials the SDK can authenticate with
+(`CODEX_API_KEY`, or an existing ChatGPT login on the machine).
+
+**`agent: {type: codex-daily-driver}` is not the built-in `codex` kind**, and
+the difference is not cosmetic. `coder_eval` already ships a `codex` agent that
+does almost all of this — it drives the SDK, links a `plugins:` root's skills
+into `<cwd>/.agents/skills/`, and records `commandExecution` as `Bash` with its
+command string. What it does not do is build the `[RESULT - …]` transcript, and
+every rubric here anchors on that tag and scores 0.0 without it. Point the
+experiment at `codex` and the suite runs, costs money, and reports zeros that
+read exactly like a plugin that never loaded. `coder-eval-codex/` is the
+built-in subclassed with that one thing added; its README says what and why.
+
+**This arm needs no skill-engagement normalisation, and the Omp arm does.**
+Omp reads `skill://<name>`, which `skill_triggered` cannot see. Codex has no
+skill tool at all: the model is handed a skills table and opens
+`.agents/skills/<name>/SKILL.md` with the shell, and `skill_triggered` matches
+`skills/<name>/` in any string tool parameter — its own docstring names Codex as
+the agent that branch was written for. Issue #185 expected the Omp spelling
+here; the spike in #181 measured that Codex does not use it.
+
+**There are no `codex-only` rows yet.** The mechanism is in place — the tag, the
+`forks:` pairing, the run target, the exclusions and `make check-eval-arms`
+guarding all three sets — and the rows are not, because each one would grade a
+route stated in a `skills/<name>/references/codex.md` that issues #183 and #184
+write. So the Codex arm today runs the rows that are common to every arm, and a
+`codex-only` row added later needs nothing built for it.
+
+**`tasks/constitution/*` is not in this arm**, and carries `skip:codex` to say
+so. That tag takes a row out of one arm and leaves it in the rest, which an arm
+tag cannot express. The reason is that `coder_eval`'s Codex agent links skills
+and installs nothing else — no `hooks/hooks.json`, so no `SessionStart` and no
+`PreToolUse` on the `Agent` tool, and no constitution in the session. Both rows
+would score 0 for a reason that has nothing to do with the constitution. #181
+measured that a *real* Codex session does load the hook file and does deliver
+the constitution, behind persisted hook trust and an exactly-echoed
+`hookEventName`; whether the SDK's app-server can be driven through those gates
+is unmeasured, and `0015` says what settling it needs.
+
+**Four things this arm measures more weakly than the Claude arms**, recorded so
+a report is read with them in mind.
+
+- **No bare-Codex control.** As with Omp: the arm reports the treated side
+  alone, so a row's score has no delta beside it, and the no-fire rows in the
+  same run are what say the skills reached the session at all.
+- **`allowed_tools` and `disallowed_tools` are not enforced**, and Codex runs
+  full-access on every `permission_mode` by the built-in agent's own design —
+  `coder_eval`'s per-run sandbox is the boundary. That costs more here than on
+  Omp: the mitigation under "How the graders ported" removes `Read` so a denied
+  read of `skills/<name>/SKILL.md` cannot score as an engagement, and on Codex
+  that read *is* the engagement signal. A no-fire row scoring badly in this arm
+  should be read as that before it is read as a skill firing when it should not.
+- **The constitution suite is absent**, per the paragraph above.
+- **The model pin is unverified.** `gpt-5-codex`, pinned so a report says what
+  produced it. Nothing here has resolved it against an account.
+
+`codex_skills_linked`, `codex_transcripts_retagged` and
+`codex_transcripts_already_tagged` land in each run's `environment_info`, for
+the reason the Omp arm's equivalents do: a red arm and an arm whose skills never
+arrived must not read alike. The last of those should be zero on every run under
+the pinned `CODER_EVAL_VERSION`; any other number means the built-in has started
+rendering the transcript itself and `coder-eval-codex` has become a no-op worth
+deleting.
 
 ## Two defaults, decided on purpose
 
