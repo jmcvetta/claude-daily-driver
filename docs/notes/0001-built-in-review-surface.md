@@ -246,6 +246,33 @@ and it was identical — but a session lacking both routes would have no way to
 post at all, which is the failure the degradation branch in `review-cycle`
 covers.
 
+**A third route exists, and it is the one to reach for when the first two are
+absent — measured 2026-09-12, on PR #190.** A Claude Code session on the web, in
+the remote execution environment, carries neither `create_inline_comment` nor
+the GitHub MCP: its GitHub access is a token and `curl`. Two rounds ran there,
+and they did not behave alike.
+
+The first reported that `--comment` could not be honoured and returned its
+findings in the result and nowhere else. The second, on the same session and the
+same pull request, posted both findings as inline review threads by calling
+`POST /repos/{owner}/{repo}/pulls/{n}/comments` with the environment's
+`GITHUB_TOKEN` — `#discussion_r3996850117` and `#discussion_r3996850849`. So the
+REST API is a posting route, the reply-and-resolve protocol applies unchanged
+over it, and the first round's report was a route not taken rather than a
+capability that was missing.
+
+Two things follow. `review-cycle`'s degradation branch is narrower than this
+environment: reach for the token before concluding that findings cannot be
+posted. And a round that does conclude it should say which routes it tried,
+because "could not be honoured" read as a property of the session when it was a
+property of that attempt.
+
+What a genuinely unpostable round costs is the record: findings that do not
+outlive the session, and nothing on the pull request saying why the branch was
+judged ready. On #190's first round the answer went into the commit messages
+instead, which is the fallback — one of those three findings was a defect that
+would have voided a paid eval run.
+
 ### 5. Claude Approvals and PR Steward were not verifiable here
 
 Both are described in this session's harness prompt — Approvals as a

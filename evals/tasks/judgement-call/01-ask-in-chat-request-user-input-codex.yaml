@@ -1,0 +1,119 @@
+# The Codex half of `01-ask-in-chat-hook`, which is tagged `claude-only` because
+# the widget it names is Claude's. `SKILL.md` says the widget is closed and
+# points at the reference files for how.
+# `skills/judgement-call/references/codex.md` names Codex's:
+#
+#   "Codex's question widget is `request_user_input` […] `AskUserQuestion` does
+#   not exist here, so the matcher written for Claude reaches nothing on its
+#   own. Codex denies the widget through the `PreToolUse` hook
+#   `hooks/ask-in-chat.py`, the same hook Claude Code uses and the same one copy
+#   of it: the matcher names both widgets."
+#
+#   "The harness narrows the widget as well, before the hook does. The tool's
+#   own description says it is available in Plan mode alone, and the binary
+#   refuses it outright in `exec` mode."
+#
+# A row that passes without the reference file being read is wrong, so the
+# graded content is the widget's Codex name and the one hook that denies it.
+#
+# Why the Claude sibling could not be reused: it grades a hook matcher naming
+# `AskUserQuestion`, a tool that does not exist on Codex — #181 measured zero
+# occurrences of that string in the binary. A Codex run against that rubric
+# would fail for naming its own widget.
+#
+# Why not the Omp fork either: Omp blocks its `ask` tool in
+# `extensions/daily-driver.js`, a runtime adapter rather than a hook. Codex
+# shares Claude Code's hook and its file, which is the fact worth measuring.
+#
+# What this row can and cannot see. The widget cannot be reached here — which is
+# also true of a real unattended Codex run, since the binary refuses it in
+# `exec` mode — so what is observable is what the agent says, and the graded
+# assertion is an `agent_judge` on the reply plus the skill having fired.
+#
+# Why this fails the `without` arm: a model with no plugin loaded, told to ask
+# and to explain why it is not using the widget, has no widget to explain away
+# on this harness and no reason to name a hook it has never loaded. It will say
+# it is simply asking in chat, which is the right behaviour for the wrong
+# reason, and it will not name `request_user_input` or `hooks/ask-in-chat.py`.
+
+task_id: judgement-call-01-ask-in-chat-request-user-input-codex
+description: >-
+  A question that survives the gate goes in the chat reply, and the reply names
+  Codex's own widget and the hook that denies it.
+tags: [judgement-call, references, fire, behaviour, codex-only, "forks:judgement-call-01-ask-in-chat-hook"]
+
+initial_prompt: >-
+  Before you write the report, I genuinely don't have a preference: JSON or CSV
+  output, your call — go ahead and ask me which, and tell me in your answer why
+  you're not going to pop up the question widget for it.
+
+agent:
+  # Recorded and NOT enforced on this harness — `CodexAgent` logs both lists and
+  # confines nothing. Written anyway so the row reads the same as its siblings.
+  allowed_tools: [Read, Grep, Glob, Skill]
+  disallowed_tools: [Write, Edit, NotebookEdit, Bash, Agent, Task]
+
+run_limits:
+  max_turns: 8
+  turn_timeout: 300
+  task_timeout: 600
+
+success_criteria:
+  # Without this, a run that never reached the skill could still be judged on
+  # a plausible-sounding reply. Left unarmed for the reason `undertake/08`
+  # gives: there is no fail-stopping criterion here for a bare arm to defer.
+  - type: skill_triggered
+    description: "`judgement-call` fires at the moment a genuine trade-off is put to the user"
+    expected_skill: judgement-call
+    skill_name: judgement-call
+
+  # The finding.
+  - type: agent_judge
+    description: The reply names request_user_input and the hook that denies it
+    include_agent_output: true
+    include_reference: false
+    weight: 2
+    # `agent_judge`, not `llm_judge`, for the reason
+    # docs/notes/0014-the-judge-runs-on-the-subscription.md gives: it grades on
+    # the subscription rather than needing an `ANTHROPIC_API_KEY` this project
+    # does not have. It stays a Claude judge in this arm — the judge reads a
+    # transcript, and which harness produced it changes nothing about reading
+    # it. Bounded for the reason the Claude rows state: the default
+    # `max_turns: 50` lets a judge with an empty tool surface spend turns on
+    # calls it cannot make, and one that overruns cancels the replicate as a
+    # TIMEOUT rather than scoring it.
+    max_turns: 5
+    turn_timeout: 120
+    agent:
+      type: claude-code
+      model: claude-sonnet-5
+      allowed_tools: []
+      permission_mode: default
+    prompt: |
+      You are grading one reply against a single rule.
+
+      FIRST, FIND THE REPLY. The AGENT OUTPUT block you have been given is a
+      whole-turn transcript, not a reply. `[ASSISTANT] …` starts each block of
+      the agent thinking aloud — only the first line of a block carries that
+      tag — and a final `[RESULT - SUCCESS] …` or `[RESULT - ERROR] …` carries
+      the answer the user actually received.
+
+      **The reply is the text from the last `[RESULT - …]` tag to the end of
+      the AGENT OUTPUT block**, starting after the tag on its own line.
+      Nothing outside the AGENT OUTPUT block is the agent's.
+
+      Begin your rationale with `ANCHOR: result` or `ANCHOR: none`. Where
+      there is no `[RESULT - …]` tag, write `ANCHOR: none` and score 0.0.
+
+      The rule: the reply must ask the question in the chat text itself, AND
+      say that the question widget is closed by a `PreToolUse` hook —
+      `hooks/ask-in-chat.py`, or plainly "a PreToolUse hook that denies it" —
+      naming Codex's widget as `request_user_input`. Saying additionally that
+      the harness itself narrows the widget (Plan mode only, refused in `exec`
+      mode) is correct and does not change the score.
+
+      Score 1.0 if the REPLY asks in chat AND names both the widget
+      `request_user_input` and a hook as what denies it.
+      Score 0.5 if it asks in chat and names one of the two.
+      Score 0.0 if it names `AskUserQuestion` as the widget it is avoiding, or
+      names neither the widget nor the hook, or does not ask in chat at all.

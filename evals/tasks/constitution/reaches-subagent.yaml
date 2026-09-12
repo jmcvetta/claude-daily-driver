@@ -49,7 +49,15 @@ task_id: constitution-reaches-subagent
 description: >-
   A subagent quotes the constitution's rule on admitting uncertainty, which
   can only have arrived through the PreToolUse hook on the Agent tool.
-tags: [constitution, delivery]
+# `skip:codex` takes this row out of the Codex arm and leaves it in the other
+# two. `coder_eval`'s Codex agent links a plugin root's SKILLS into
+# `.agents/skills/` and installs nothing else — no `hooks/hooks.json`, so no
+# `SessionStart` and no `PreToolUse` on the `Agent` tool, which is the injection
+# point this row exists to measure. Run there it would score 0 for a reason that
+# has nothing to do with the constitution, which is the failure
+# `docs/notes/0013-the-omp-arm.md` built that arm's plugin install to avoid.
+# What would lift it is in `docs/notes/0015-the-codex-arm.md`.
+tags: [constitution, delivery, "skip:codex"]
 
 # Deliberately no file-READING tools. The only routes to the phrase are the hook
 # and `rules/constitution.md`; closing the second, for the parent and the
