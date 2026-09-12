@@ -86,7 +86,6 @@ ROUTES = {
     "daily_driver_": re.compile(r"daily_driver_"),
     "run_watch": re.compile(r"run_watch"),
     "skill://": re.compile(r"skill://"),
-    "request_user_input": re.compile(r"request_user_input"),
     "codex CLI": re.compile(
         r"\bcodex (?:exec|review|queue|agents|resume|fork|archive|unarchive"
         r"|delete|plugin|app-server)\b"
