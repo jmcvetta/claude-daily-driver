@@ -2,7 +2,8 @@
 
 `SKILL.md` names each operation in words, and this file is where the calls for
 a session running in Oh My Pi would be. There are none. Claude Code's routes
-are in [`claude.md`](claude.md).
+are in [`claude.md`](claude.md); [`codex.md`](codex.md) is a stop like this
+one, and not for this one's reason.
 
 
 This skill does not run here
