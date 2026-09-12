@@ -761,26 +761,34 @@ skill tool at all: the model is handed a skills table and opens
 the agent that branch was written for. Issue #185 expected the Omp spelling
 here; the spike in #181 measured that Codex does not use it.
 
-**Three `codex-only` rows, and seven still to come.** Each forked row grades a
-route stated in a `skills/<name>/references/*.md`, so a Codex counterpart needs
-a `references/codex.md` to grade against. #184 wrote three of those, and these
-are their rows:
+**Ten `codex-only` rows.** Each forked row grades a route stated in a
+`skills/<name>/references/*.md`, so a Codex counterpart needs a
+`references/codex.md` to grade against; #183 and #184 wrote all twelve.
 
-| Suite | Claude-only row | Codex counterpart |
-| --- | --- | --- |
-| `session-title` | `07-get-session-before-set` | `07-one-call-or-no-surface-codex` |
-| `review-cycle` | `07-wait-for-ci-is-not-a-sleep` | `07-there-is-no-wait-codex` |
-| `review-cycle` | `08-subscribe-before-first-read` | `08-both-endpoints-once-codex` |
+| Suite | Claude row | Codex counterpart | What the Codex row grades |
+| --- | --- | --- | --- |
+| `deps` | `05-references-search-not-list` | `05-gh-search-not-list-codex` | `author:app/dependabot` inside a `--search` query |
+| `judgement-call` | `01-ask-in-chat-hook` | `01-ask-in-chat-request-user-input-codex` | `request_user_input`, denied by the same `hooks/ask-in-chat.py` |
+| `pr` | `07-one-call-sets-both` | `07-one-gh-pr-edit-sets-both-codex` | one `gh pr edit` carrying both |
+| `pr-title` | `07-mcp-not-gh-pr-edit` | `07-gh-pr-edit-title-codex` | `gh pr edit --title` |
+| `pr-body` | `07-mcp-not-gh-pr-edit` | `07-body-file-not-body-codex` | `gh pr edit --body-file`, not `--body` |
+| `review-cycle` | `07-wait-for-ci-is-not-a-sleep` | `07-there-is-no-wait-codex` | no sleep on a harness that ships one, and the stop |
+| `review-cycle` | `08-subscribe-before-first-read` | `08-both-endpoints-once-codex` | the check runs and the commit statuses, one read each |
+| `session-title` | `07-get-session-before-set` | `07-one-call-or-no-surface-codex` | one `agent_tasks` call with `threadId` omitted, or the stop |
+| `undertake` | `08-wake-slot-is-refilled` | `08-no-wake-to-keep-codex` | no durable wake, so the cadence is handed on |
+| `undertake` | `09-session-fields-for-claim` | `09-claim-carries-the-branch-alone-codex` | branch from git, model and session recorded as absent |
 
 None is its sibling's stem plus `-codex`, for the reason the Omp table above
 gives: the stem states Claude's route, and on Codex the row grades the opposite.
 Two of them grade a *stop* — Codex is the first harness where the right answer
 to "title this session" and to "wait for CI" is that there is no way to do it.
 
-The other seven wait on #183, which writes the reference files they would grade.
-The mechanism does not: the tag, the `forks:` pairing, the run target, the
-exclusions and `make check-eval-arms` are all in place, so a `codex-only` row
-added later needs nothing built for it.
+Three of the ten — `pr`, `pr-title` and `deps` — grade the same `gh` call their
+Omp counterpart does, because Codex has no GitHub tool of its own either. They
+need their own files regardless: an arm tag claims exactly one arm, so without
+them the Codex arm would not measure those routes at all. `pr-body` is the
+exception among the `gh` rows: Codex prescribes `--body-file` where Omp's row
+grades `--body`.
 
 **`tasks/constitution/*` is not in this arm**, and carries `skip:codex` to say
 so. That tag takes a row out of one arm and leaves it in the rest, which an arm

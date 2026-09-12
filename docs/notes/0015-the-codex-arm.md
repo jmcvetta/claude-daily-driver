@@ -172,37 +172,53 @@ a positive row and a negative row in one run, and a second variant doubles what
 the arm costs. It is the obvious addition the day the delta is what someone is
 reading.
 
-**Three `codex-only` rows, not ten, and the other seven wait on a reference
-file that does not exist yet.** Ten rows are forked between the Claude and Omp
-arms today, and each grades a route stated in a `skills/<name>/references/*.md`.
-[#184](https://github.com/jmcvetta/claude-daily-driver/issues/184) merged while
-this work was in review and wrote three of the Codex ones, so three forks became
-writable and are here:
+**Ten `codex-only` rows.** Every forked row grades a route stated in a
+`skills/<name>/references/*.md`, so a Codex counterpart needs a
+`references/codex.md` to grade against. [#184](https://github.com/jmcvetta/claude-daily-driver/issues/184)
+wrote three of those and [#183](https://github.com/jmcvetta/claude-daily-driver/issues/183)
+the rest, both while this work was in review, so the set is complete:
 
 | Suite | Claude row | Codex counterpart | What the Codex row grades |
 | --- | --- | --- | --- |
-| `session-title` | `07-get-session-before-set` | `07-one-call-or-no-surface-codex` | one `agent_tasks` call with `threadId` omitted, or the stop where the namespace is absent — and no invented shell route |
-| `review-cycle` | `07-wait-for-ci-is-not-a-sleep` | `07-there-is-no-wait-codex` | no sleep on a harness that ships one, and the stop rather than an improvised wait |
-| `review-cycle` | `08-subscribe-before-first-read` | `08-both-endpoints-once-codex` | the check runs and the commit statuses, one read of each |
+| `deps` | `05-references-search-not-list` | `05-gh-search-not-list-codex` | `author:app/dependabot` inside a `--search` query |
+| `judgement-call` | `01-ask-in-chat-hook` | `01-ask-in-chat-request-user-input-codex` | `request_user_input`, denied by the same `hooks/ask-in-chat.py` |
+| `pr` | `07-one-call-sets-both` | `07-one-gh-pr-edit-sets-both-codex` | one `gh pr edit` carrying both |
+| `pr-title` | `07-mcp-not-gh-pr-edit` | `07-gh-pr-edit-title-codex` | `gh pr edit --title` |
+| `pr-body` | `07-mcp-not-gh-pr-edit` | `07-body-file-not-body-codex` | `gh pr edit --body-file`, not `--body` |
+| `review-cycle` | `07-wait-for-ci-is-not-a-sleep` | `07-there-is-no-wait-codex` | no sleep on a harness that ships one, and the stop |
+| `review-cycle` | `08-subscribe-before-first-read` | `08-both-endpoints-once-codex` | the check runs and the commit statuses, one read each |
+| `session-title` | `07-get-session-before-set` | `07-one-call-or-no-surface-codex` | one `agent_tasks` call with `threadId` omitted, or the stop |
+| `undertake` | `08-wake-slot-is-refilled` | `08-no-wake-to-keep-codex` | no durable wake, so the cadence is handed on |
+| `undertake` | `09-session-fields-for-claim` | `09-claim-carries-the-branch-alone-codex` | branch from git, model and session recorded as absent |
 
-None of the three is its sibling's stem plus `-codex`, and that is the same
-reason `0013` gives for seven of the Omp counterparts: the sibling's stem states
-Claude's route, and on Codex the row grades the opposite. Two of them grade a
-*stop* rather than a call, which is new — Codex is the first harness where the
-correct answer to "title this session" and to "wait for CI" is that there is no
-way to do it.
+None is its sibling's stem plus `-codex`, and that is the same reason `0013`
+gives for seven of the Omp counterparts: the sibling's stem states Claude's
+route, and on Codex the row grades the opposite.
 
-The remaining seven grade routes
-[#183](https://github.com/jmcvetta/claude-daily-driver/issues/183) writes, and
-it is still open. Forking them now means inventing the routes that issue
-decides, which is guessing at intent. What this issue owes it is the mechanism,
-and that is complete: the tag, the pairing, the run target, the exclusions and
-the guard. A `codex-only` row added by #183 needs nothing built for it.
+**Three of the ten grade the same rule as their Omp counterpart**, and that is
+structural rather than lazy. Codex has no GitHub tool of its own, so `pr`,
+`pr-title` and `deps` resolve to the same `gh` calls Omp uses. Each still needs
+a file of its own: the arms are routed by exclusion and an arm tag claims
+exactly one arm, so a row cannot sit in two. Without the duplicate the Codex arm
+would not measure the route at all, which is the silent gap the arm exists to
+close. Each of the three says so in its own header.
 
-*The scope of this was put to the user rather than decided here*, because
-picking between a coherent ten-row set later and a three-of-ten set now is a
-question about the deliverable rather than about craft. The answer was to write
-the three that #184 unblocked.
+**`pr-body` is the one `gh` row where the arms genuinely disagree.** Codex's
+reference file prescribes `gh pr edit --body-file`; Omp's names `--body`, and
+says in its own words that the hazard is `gh`'s rather than Codex's. So the
+Codex row is the only one of the three arms grading the spelling that survives a
+body full of backticks.
+
+**Two of the ten grade a *stop* rather than a call**, which is new. Codex is the
+first harness where the right answer to "title this session" is that the
+`agent_tasks` namespace is not offered in an unattended run, and the right
+answer to "wait for CI" is that nothing here can wait.
+
+*The scope of this was put to the user twice rather than decided here*, because
+picking between a coherent set later and a partial one now is a question about
+the deliverable rather than about craft. The first answer was to write the three
+#184 unblocked; #183 then merged, and the rest were written on the same
+principle.
 
 ## Known limits, recorded rather than fixed
 

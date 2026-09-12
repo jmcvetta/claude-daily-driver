@@ -1,0 +1,115 @@
+# The Codex half of `07-mcp-not-gh-pr-edit`, which is tagged `claude-only`
+# because the call it names is Claude's. This is the one of the four `gh` rows
+# whose Codex answer differs from Omp's as well, and the difference is the whole
+# row. `skills/pr-body/references/codex.md`:
+#
+#   "Revising the body of an existing pull request. `gh pr edit --body-file
+#   <path>`."
+#
+#   "`--body-file` rather than `--body`. The body this skill writes carries
+#   backticks, headings and a salutation in verse, and a double-quoted shell
+#   argument substitutes every backtick and `$…` in it before `gh` sees the
+#   text. Write the body to a file and hand over the path."
+#
+# A row that passes without the reference file being read is wrong, so the
+# graded content is `--body-file` and the reason for it.
+#
+# Why neither sibling could be reused. The Claude row grades
+# `mcp__github__update_pull_request`, a call a Codex session does not have. The
+# Omp row grades `gh pr edit --body`, and `references/codex.md` says in its own
+# words that the hazard is `gh`'s rather than Codex's — so `--body` is no safer
+# on Omp, it is simply what that arm's rows currently grade. This row grades the
+# spelling the Codex reference file actually prescribes, and it is the only one
+# of the three arms that does.
+#
+# What this row can and cannot see. The sandbox has no GitHub client, so the
+# edit cannot be run — there is no real pull request #14. What is observable is
+# what the agent says it will do, so the graded assertion is an `agent_judge` on
+# the reply, plus the skill having fired at all.
+#
+# Why this fails the `without` arm: `gh pr edit --body "…"` is the obvious
+# spelling and the one a bare model reaches for. That a body carrying backticks
+# and `$` must go through a file instead, because the shell substitutes them
+# before `gh` sees the text, is stated nowhere but this skill's own reference
+# file.
+
+task_id: pr-body-07-body-file-not-body-codex
+description: >-
+  Setting a pull request body hands `gh pr edit` a `--body-file` path, because
+  the shell would substitute the backticks in a quoted `--body`.
+tags: [pr-body, references, fire, behaviour, codex-only, "forks:pr-body-07-mcp-not-gh-pr-edit"]
+
+initial_prompt: >-
+  PR #14's description is one thin sentence — flesh it out properly. Before you
+  do, tell me the exact call you're going to make to set the new body.
+
+agent:
+  # Recorded and NOT enforced on this harness — `CodexAgent` logs both lists and
+  # confines nothing. Written anyway so the row reads the same as its siblings.
+  allowed_tools: [Read, Grep, Glob, Skill, Bash]
+  disallowed_tools: [Write, Edit, NotebookEdit, Agent, Task]
+
+run_limits:
+  max_turns: 10
+  turn_timeout: 300
+  task_timeout: 600
+
+success_criteria:
+  # Without this, a run that never reached the skill could still be judged on
+  # a plausible-sounding reply. Left unarmed for the reason `undertake/08`
+  # gives: there is no fail-stopping criterion here for a bare arm to defer.
+  - type: skill_triggered
+    description: "`pr-body` fires on fleshing out the body of an existing pull request"
+    expected_skill: pr-body
+    skill_name: pr-body
+
+  # The finding.
+  - type: agent_judge
+    description: The reply names gh pr edit --body-file, not --body
+    include_agent_output: true
+    include_reference: false
+    weight: 2
+    # `agent_judge`, not `llm_judge`, for the reason
+    # docs/notes/0014-the-judge-runs-on-the-subscription.md gives: it grades on
+    # the subscription rather than needing an `ANTHROPIC_API_KEY` this project
+    # does not have. It stays a Claude judge in this arm — the judge reads a
+    # transcript, and which harness produced it changes nothing about reading
+    # it. Bounded for the reason the Claude rows state: the default
+    # `max_turns: 50` lets a judge with an empty tool surface spend turns on
+    # calls it cannot make, and one that overruns cancels the replicate as a
+    # TIMEOUT rather than scoring it.
+    max_turns: 5
+    turn_timeout: 120
+    agent:
+      type: claude-code
+      model: claude-sonnet-5
+      allowed_tools: []
+      permission_mode: default
+    prompt: |
+      You are grading one reply against a single rule.
+
+      FIRST, FIND THE REPLY. The AGENT OUTPUT block you have been given is a
+      whole-turn transcript, not a reply. `[ASSISTANT] …` starts each block of
+      the agent thinking aloud — only the first line of a block carries that
+      tag — and a final `[RESULT - SUCCESS] …` or `[RESULT - ERROR] …` carries
+      the answer the user actually received.
+
+      **The reply is the text from the last `[RESULT - …]` tag to the end of
+      the AGENT OUTPUT block**, starting after the tag on its own line.
+      Nothing outside the AGENT OUTPUT block is the agent's.
+
+      Begin your rationale with `ANCHOR: result` or `ANCHOR: none`. Where
+      there is no `[RESULT - …]` tag, write `ANCHOR: none` and score 0.0.
+
+      The rule: the reply must name `gh pr edit --body-file <path>` — writing
+      the body to a file and handing over the path — rather than
+      `gh pr edit --body "…"`. Giving the reason (a double-quoted shell
+      argument substitutes backticks and `$…` before `gh` sees the text) is
+      correct and does not change the score; naming `--body-file` is what does.
+
+      Score 1.0 if the REPLY names `--body-file` (or plainly "write the body to
+      a file and pass the path").
+      Score 0.5 if it names `gh pr edit` for the body but leaves the flag
+      unstated.
+      Score 0.0 if it names `gh pr edit --body` with the text inline, names an
+      MCP call a Codex session does not have, or names no specific call at all.
